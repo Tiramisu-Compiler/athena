@@ -1,31 +1,69 @@
+import json
 import re
 from pathlib import Path
+from typing import Dict
+from athena.tiramisu.compiling_service import CompilingService
+from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 from athena.utils.config import BaseConfig
 
 
 class TiramisuProgram:
-    def __init__(self, file_path: str):
-        self.file_path = file_path
-        self.annotations = None
-        self.comps = None
-        self.name = None
+    """
+    This class represents a tiramisu function. It contains all the neccessary information
+    about the function to be able to generate the code for it.
+
+    Attributes
+    ----------
+    `file_path`: str
+        The path to the cpp file of the tiramisu function
+    `annotations`: dict
+        The tiramisu annotations of the function
+    `comps`: list[str]
+        The list of computations in the function
+    `name`: str
+        The name of the function
+    `schedules_legality`: dict
+        The legality of the schedules of the function
+    `schedules_solver`: dict
+        The solver results of the schedules of the function
+    `original_str`: str
+        The original code string of the function
+    `wrappers`: dict
+        The wrappers of the function
+    `initial_execution_times`: dict
+        The initial execution times of the function
+    `current_machine_initial_execution_time`: float
+        The initial execution time of the function on the current machine
+    `tree`: TiramisuTree
+        The tree of the function
+    """
+
+    def __init__(self):
+        self.file_path = ""
+        self.annotations: Dict = None
+        self.comps: list[str] = None
+        self.name: str = None
         self.schedules_legality = {}
         self.schedules_solver = {}
-        self.original_str = None
-        self.wrappers = None
+        self.original_str: str = None
+        self.wrappers: Dict = None
         self.initial_execution_times = {}
-        self.current_machine_initial_execution_time = None
-        if file_path:
-            self.load_code_lines()
+        self.current_machine_initial_execution_time: float = None
+        self.tree: TiramisuTree = None
 
     # Since there is no factory constructors in python, I am creating this class method to replace the factory pattern
     @classmethod
     def from_dict(
-        cls, name: str, data: dict, original_str: str = None, wrappers: dict = None
-    ):
+        cls,
+        name: str,
+        data: dict,
+        original_str: str = None,
+        wrappers: dict = None,
+        load_code_lines: bool = True,
+    ) -> "TiramisuProgram":
         # Initiate an instante of the TiramisuProgram class
-        tiramisu_prog = cls(None)
+        tiramisu_prog = cls()
         tiramisu_prog.name = name
         tiramisu_prog.annotations = data["program_annotation"]
         if tiramisu_prog.annotations:
@@ -39,7 +77,8 @@ class TiramisuProgram:
             #     tiramisu_prog.current_machine_initial_execution_time = min(data[
             #         "initial_execution_times"][cfg.Config.config.tiramisu.hpc_name])
 
-        tiramisu_prog.load_code_lines(original_str)
+        if load_code_lines:
+            tiramisu_prog.load_code_lines(original_str)
 
         if wrappers:
             tiramisu_prog.wrappers = wrappers
@@ -59,10 +98,35 @@ class TiramisuProgram:
         return tiramisu_prog
 
     @classmethod
-    def from_file(cls, file_path: str, wrapper_cpp_path: str, wrapper_header_path: str):
-        # Initiate an instante of the TiramisuProgram class
-        tiramisu_prog = cls(file_path)
+    def from_file(
+        cls,
+        file_path: str,
+        wrapper_cpp_path: str,
+        wrapper_header_path: str,
+        load_annotations=False,
+    ) -> "TiramisuProgram":
+        """
+        This function loads a tiramisu function from its cpp file and its wrapper files.
 
+        Parameters
+        ----------
+        `file_path`: str
+            The path to the cpp file of the tiramisu function
+        `wrapper_cpp_path`: str
+            The path to the wrapper cpp file of the tiramisu function
+        `wrapper_header_path`: str
+            The path to the wrapper header file of the tiramisu function
+        `load_annotations`: bool
+            A flag to indicate if the annotations should be loaded or not
+
+        Returns
+        -------
+        `tiramisu_prog`: TiramisuProgram
+            An instance of the TiramisuProgram class
+        """
+        # Initiate an instante of the TiramisuProgram class
+        tiramisu_prog = cls()
+        tiramisu_prog.file_path = file_path
         # load the wrapper code
         with open(wrapper_cpp_path, "r") as f:
             wrapper_cpp = f.read()
@@ -70,6 +134,12 @@ class TiramisuProgram:
             wrapper_header = f.read()
 
         tiramisu_prog.wrappers = {"cpp": wrapper_cpp, "h": wrapper_header}
+        tiramisu_prog.load_code_lines()
+
+        if load_annotations:
+            tiramisu_prog.annotations = json.loads(
+                CompilingService.compile_annotations(tiramisu_prog)
+            )
 
         # After taking the neccessary fields return the instance
         return tiramisu_prog

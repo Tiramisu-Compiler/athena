@@ -25,7 +25,7 @@ class HybridDataService(BaseDataService):
         self.cpps_path = cpps_path
         self.cpps = {}
 
-        print(
+        logging.info(
             f"reading dataset in Hybrid format: dataset pkl from {self.dataset_path} and cpps from {self.cpps_path}"
         )
 

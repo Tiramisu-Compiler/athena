@@ -1,3 +1,4 @@
+import logging
 import pickle
 import random
 from typing import Literal
@@ -35,7 +36,7 @@ class PickleDataService(BaseDataService):
         self.cpps = {}
         self.wrappers = {}
 
-        print(
+        logging.info(
             f"reading dataset in full pkl format: dataset pkl from {self.dataset_path} and cpps pkl from {self.cpps_path}"
         )
 
@@ -46,7 +47,7 @@ class PickleDataService(BaseDataService):
         with open(self.cpps_path, "rb") as f:
             self.cpps = pickle.load(f)
 
-        print(f"reading wrappers pkl from {self.wrappers_path}")
+        logging.info(f"reading wrappers pkl from {self.wrappers_path}")
         with open(self.wrappers_path, "rb") as f:
             self.wrappers = pickle.load(f)
 

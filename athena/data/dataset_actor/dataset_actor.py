@@ -1,11 +1,17 @@
-from typing import Dict, Literal
+from __future__ import annotations
+
+from typing import Dict, Literal, TYPE_CHECKING
+
 import ray
 
 from athena.data.dataset_actor.config import DatasetConfig, DatasetFormat
-from athena.tiramisu.tiramisu_program import TiramisuProgram
+
 from .services.hybrid_data_service import HybridDataService
 from .services.pickle_data_service import PickleDataService
 
+
+if TYPE_CHECKING:
+    from athena.tiramisu.tiramisu_program import TiramisuProgram
 # Frequency at which the dataset is saved to disk
 SAVING_FREQUENCY = 10000
 

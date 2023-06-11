@@ -8,7 +8,7 @@ from typing import List, TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from athena.tiramisu.optimization_command import OptimizationCommand
+    from athena.tiramisu.tiramisu_actions.tiramisu_action import TiramisuAction
     from athena.tiramisu.schedule import Schedule
     from athena.tiramisu.tiramisu_program import TiramisuProgram
 
@@ -16,10 +16,30 @@ from athena.utils.config import BaseConfig
 
 
 class CompilingService:
+    """
+    Class responsible of compiling the generated code and running it to get the results
+    Contains nothing but class methods
+    """
+
     @classmethod
     def compile_legality(
-        cls, tiramisu_program: TiramisuProgram, optims_list: List[OptimizationCommand]
+        cls, tiramisu_program: TiramisuProgram, optims_list: List[TiramisuAction]
     ):
+        """
+        Compile the generated code with the added code to check legality of the schedule
+
+        Parameters
+        ----------
+        `tiramisu_program` : `TiramisuProgram`
+            The tiramisu program to compile
+        `optims_list` : `List[TiramisuAction]`
+            The list of optimizations to apply to the schedule
+
+        Returns
+        -------
+        `bool`
+            True if the schedule is legal, False otherwise
+        """
         output_path = os.path.join(
             BaseConfig.base_config.workspace, f"{tiramisu_program.name}_legality"
         )
@@ -27,19 +47,39 @@ class CompilingService:
         cpp_code = cls.get_legality_code(
             tiramisu_program=tiramisu_program, optims_list=optims_list
         )
-        return cls.run_cpp_code(cpp_code=cpp_code, output_path=output_path)
+
+        result = cls.run_cpp_code(cpp_code=cpp_code, output_path=output_path)
+
+        if result not in ["0", "1"]:
+            raise Exception(f"Error in legality check: {result}")
+        return result == "1"
 
     @classmethod
     def get_legality_code(
-        cls, tiramisu_program: TiramisuProgram, optims_list: List[OptimizationCommand]
+        cls, tiramisu_program: TiramisuProgram, optims_list: List[TiramisuAction]
     ):
+        """
+        Constructs the code to check legality of the schedule
+
+        Parameters
+        ----------
+        `tiramisu_program` : `TiramisuProgram`
+            The tiramisu program to compile
+        `optims_list` : `List[TiramisuAction]`
+            The list of optimizations to apply to the schedule
+
+        Returns
+        -------
+        `str`
+            The code to check legality of the schedule
+        """
         comps = tiramisu_program.comps
         first_comp = tiramisu_program.comps[0]
         # Add code to the original file to get legality result
-        legality_check_lines = """\n\tprepare_schedules_for_legality_checks();\n\tperform_full_dependency_analysis();\n\tbool is_legal=true;"""
+        legality_check_lines = """\n\tprepare_schedules_for_legality_checks();\n\tperforme_full_dependency_analysis();\n\tbool is_legal=true;"""
         for optim in optims_list:
             if optim.is_parallelization():
-                legality_check_lines += f"\n\tis_legal &= loop_parallelization_is_legal({optim.params_list[0]}, {{&{first_comp}}});\n"
+                legality_check_lines += f"\n\tis_legal &= loop_parallelization_is_legal({optim.params[0]}, {{&{first_comp}}});\n"
             # elif optim.is_unrolling():
             #     for branch in schedule_object.branches:
             #         comps = branch["comps"]
@@ -49,6 +89,7 @@ class CompilingService:
             legality_check_lines += optim.tiramisu_optim_str + "\n"
 
         legality_check_lines += """
+            prepare_schedules_for_legality_checks();
             is_legal &= check_legality_of_function();   
             std::cout << is_legal;
             """
@@ -59,7 +100,20 @@ class CompilingService:
         return cpp_code
 
     @classmethod
-    def compile_annotations(cls, tiramisu_program):
+    def compile_annotations(cls, tiramisu_program: TiramisuProgram):
+        """
+        Compile the generated code with the added code to get the annotations
+
+        Parameters
+        ----------
+        `tiramisu_program` : `TiramisuProgram`
+            The tiramisu program to compile
+
+        Returns
+        -------
+        `str`
+            The annotations in json format
+        """
         # TODO : add getting tree structure object from executing the file instead of building it
         output_path = os.path.join(
             BaseConfig.base_config.workspace, f"{tiramisu_program.name}_annotations"
@@ -80,6 +134,21 @@ class CompilingService:
 
     @classmethod
     def run_cpp_code(cls, cpp_code: str, output_path: str):
+        """
+        Helper function to compile and run the generated code
+
+        Parameters
+        ----------
+        `cpp_code` : `str`
+            The code to compile
+        `output_path` : `str`
+            The path to the output file
+
+        Returns
+        -------
+        `str`
+            The output of the compilation
+        """
         env_vars = [
             f"export {key}={value}"
             for key, value in BaseConfig.base_config.env_vars.items()
@@ -124,17 +193,31 @@ class CompilingService:
                 shell=True,
                 check=True,
             )
-            return compiler.stdout if compiler.stdout != "" else "0"
+
+            if compiler.stderr:
+                raise Exception(compiler.stderr)
+
+            if compiler.stdout:
+                return compiler.stdout
+            else:
+                raise Exception("Compiler returned no output")
+
         except subprocess.CalledProcessError as e:
-            print("Process terminated with error code", e.returncode)
-            print("Error output:", e.stderr)
-            return "0"
+            logging.error("Process terminated with error code", e.returncode)
+            logging.error("Error output:", e.stderr)
+            raise e
         except Exception as e:
-            print(e)
-            return "0"
+            raise e
 
     @classmethod
     def call_skewing_solver(cls, schedule_object, optim_list, params):
+        """
+        Calls the skewing solver to generate the skewing code
+
+        Parameters
+        ----------
+        TODO FINISH THE PARAMETERS
+        """
         legality_cpp_code = cls.get_legality_code(schedule_object, optim_list)
         to_replace = re.findall(r"std::cout << is_legal;", legality_cpp_code)[0]
         header = """
@@ -219,9 +302,22 @@ class CompilingService:
             return None
 
     @classmethod
-    def get_schedule_code(
-        cls, tiramisu_program, optims_list: List[OptimizationCommand]
-    ):
+    def get_schedule_code(cls, tiramisu_program, optims_list: List[TiramisuAction]):
+        """
+        Returns the code of the schedule after applying the optimizations in the optims_list
+
+        Parameters
+        ----------
+        `tiramisu_program`: `TiramisuProgram`
+            The program to optimize
+        `optims_list`: `List[TiramisuAction]`
+            The list of optimizations to apply on the program
+
+        Returns
+        -------
+        `str`
+            The schedule code to add to the original file
+        """
         # Add code to the original file to get the schedule code
         schedule_code = ""
         for optim in optims_list:
@@ -240,16 +336,45 @@ class CompilingService:
 
     @classmethod
     def write_to_disk(cls, cpp_code: str, output_path: str, extension: str = ".cpp"):
+        """
+        Writes the code to a file
+
+        Parameters
+        ----------
+        `cpp_code`: str
+            The code to write to the file
+        `output_path`: str
+            The path of the file to write to
+        `extension`: str
+            The extension of the file
+        """
         with open(output_path + extension, "w") as f:
             f.write(cpp_code)
 
     @classmethod
     def get_cpu_exec_times(
         cls,
-        tiramisu_program,
-        optims_list: List[OptimizationCommand],
+        tiramisu_program: TiramisuProgram,
+        optims_list: List[TiramisuAction],
         max_runs: int = None,
     ) -> List[float]:
+        """
+        Returns the execution times of the program on the CPU after applying the optimizations in the optims_list
+
+        Parameters
+        ----------
+        `tiramisu_program`: `TiramisuProgram`
+            The program to optimize
+        `optims_list`: `List[TiramisuAction]`
+            The list of optimizations to apply on the program
+        `max_runs`: `int`
+            The maximum number of times to run the program
+
+        Returns
+        -------
+        `List[float]`
+            The execution times of the program
+        """
         if max_runs is None:
             max_runs = BaseConfig.base_config.tiramisu.max_runs
         # Get the code of the schedule
@@ -288,8 +413,18 @@ class CompilingService:
             ]
 
         else:
-            # TODO
-            raise NotImplementedError
+            shell_script = [
+                f"cd {BaseConfig.base_config.workspace}",
+                # Compile intermidiate tiramisu file
+                f"$CXX -I$TIRAMISU_ROOT/3rdParty/Halide/include -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/isl/include  -Wl,--no-as-needed -ldl -g -fno-rtti   -lpthread -std=c++11 -O0 -o {tiramisu_program.name}.o -c {tiramisu_program.name}_schedule.cpp",
+                # Link generated file with executer
+                f"$CXX -Wl,--no-as-needed -ldl -g -fno-rtti -lpthread -std=c++11 -O0 {tiramisu_program.name}.o -o {tiramisu_program.name}.out   -L$TIRAMISU_ROOT/build  -L$TIRAMISU_ROOT/3rdParty/Halide/lib  -L$TIRAMISU_ROOT/3rdParty/isl/build/lib  -Wl,-rpath,$TIRAMISU_ROOT/build:$TIRAMISU_ROOT/3rdParty/Halide/lib:$TIRAMISU_ROOT/3rdParty/isl/build/lib -ltiramisu -ltiramisu_auto_scheduler -lHalide -lisl",
+                # Run the generator
+                f"./{tiramisu_program.name}.out",
+                # compile the wrapper
+                f"$CXX -shared -o {tiramisu_program.name}.o.so {tiramisu_program.name}.o",
+                f"$CXX -std=c++11 -fno-rtti -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/Halide/include -I$TIRAMISU_ROOT/3rdParty/isl/include/ -I$TIRAMISU_ROOT/benchmarks -L$TIRAMISU_ROOT/build -L$TIRAMISU_ROOT/3rdParty/Halide/lib/ -L$TIRAMISU_ROOT/3rdParty/isl/build/lib -o {tiramisu_program.name}_wrapper -ltiramisu -lHalide -ldl -lpthread -lm -Wl,-rpath,$TIRAMISU_ROOT/build {tiramisu_program.name}_wrapper.cpp ./{tiramisu_program.name}.o.so -ltiramisu -lHalide -ldl -lpthread -lm -lisl",
+            ]
 
         run_script = [
             # cd to the workspace
@@ -334,17 +469,17 @@ class CompilingService:
                 )
                 raise ScheduleExecutionCrashed("No output from schedule execution")
         except subprocess.CalledProcessError as e:
-            print("Process terminated with error code", e.returncode)
-            print("Error output:", e.stderr)
-            print("Output:", e.stdout)
+            logging.error("Process terminated with error code", e.returncode)
+            logging.error("Error output:", e.stderr)
+            logging.error("Output:", e.stdout)
             raise ScheduleExecutionCrashed(
                 f"Schedule execution crashed: function: {tiramisu_program.name}, schedule: {optims_list}"
             )
         except Exception as e:
-            print(e)
             raise e
 
 
 class ScheduleExecutionCrashed(Exception):
-    "Raised when the execution of the schedule crashes"
+    """Raised when the execution of the schedule crashes"""
+
     pass

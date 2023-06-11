@@ -1,8 +1,9 @@
 from dataclasses import dataclass, field
+import logging
 from typing import Any, Dict, List, Literal
 
 import yaml
-from athena.data.dataset_actor.dataset_actor import DatasetConfig
+from athena.data.dataset_actor.config import DatasetConfig
 
 
 @dataclass
@@ -62,3 +63,7 @@ class BaseConfig:
     def init(self, config_yaml="config.yaml"):
         parsed_yaml_dict = parse_yaml_file(read_yaml_file(config_yaml))
         BaseConfig.base_config = dict_to_config(parsed_yaml_dict)
+        logging.basicConfig(
+            level=logging.INFO,
+            format="|%(asctime)s|%(levelname)s| %(message)s",
+        )

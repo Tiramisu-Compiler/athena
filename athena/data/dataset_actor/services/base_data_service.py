@@ -1,4 +1,5 @@
 from abc import abstractmethod
+import logging
 import pickle
 from typing import Literal, Tuple
 
@@ -61,7 +62,7 @@ class BaseDataService:
         :param version: version of the dataset to save (1 or 2)
         :return: True if the dataset was saved successfully
         """
-        print("[Start] Save the legality_annotations_dict to disk")
+        logging.info("[Start] Save the legality_annotations_dict to disk")
 
         updated_dataset_name = (
             f"{self.path_to_save_dataset}/{self.dataset_name}_updated_{version}"
@@ -69,5 +70,5 @@ class BaseDataService:
         with open(f"{updated_dataset_name}.pkl", "wb") as f:
             pickle.dump(self.dataset, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-        print("[Done] Save the legality_annotations_dict to disk")
+        logging.info("[Done] Save the legality_annotations_dict to disk")
         return True
