@@ -86,7 +86,9 @@ class CompilingService:
             #         level = len(branch["iterators"]) - 1
             #         legality_check_lines += print(
             #             f"\n\tis_legal &= loop_unrolling_is_legal({level}, {{{', '.join([f'&{comp}' for comp in comps])}}});")
-            legality_check_lines += optim.tiramisu_optim_str + "\n"
+            legality_check_lines += (
+                optim.get_tiramisu_optim_str(tiramisu_program.tree) + "\n"
+            )
 
         legality_check_lines += """
             prepare_schedules_for_legality_checks();
@@ -194,9 +196,6 @@ class CompilingService:
                 check=True,
             )
 
-            if compiler.stderr:
-                raise Exception(compiler.stderr)
-
             if compiler.stdout:
                 return compiler.stdout
             else:
@@ -302,7 +301,9 @@ class CompilingService:
             return None
 
     @classmethod
-    def get_schedule_code(cls, tiramisu_program, optims_list: List[TiramisuAction]):
+    def get_schedule_code(
+        cls, tiramisu_program: TiramisuProgram, optims_list: List[TiramisuAction]
+    ):
         """
         Returns the code of the schedule after applying the optimizations in the optims_list
 
@@ -321,7 +322,7 @@ class CompilingService:
         # Add code to the original file to get the schedule code
         schedule_code = ""
         for optim in optims_list:
-            schedule_code += optim.tiramisu_optim_str + "\n"
+            schedule_code += optim.get_tiramisu_optim_str(tiramisu_program.tree) + "\n"
 
         # Add code gen line to the schedule code
         schedule_code += "\n\t" + tiramisu_program.code_gen_line + "\n"

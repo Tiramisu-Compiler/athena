@@ -41,8 +41,6 @@ class TiramisuAction:
     `comps`: `list`
         The computations that are concerned by the optimization command.
 
-    `tiramisu_optim_str`: `str`
-        The tiramisu code that represents the optimization command.
     """
 
     def __init__(self, type: TiramisuActionType, params: list, comps: list):
@@ -52,13 +50,14 @@ class TiramisuAction:
         # The type of the action
         self.type = type
         # The tiramisu code that represents the action
-        self.tiramisu_optim_str = ""
 
-    # def get_tiramisu_optim_str(self):
-    #     """Convert the optimization command into Tiramisu code.
-    #     Returns:
-    #         str: The tiramisu snippet that represents the optimization command.
-    #     """
+    def get_tiramisu_optim_str(self, tiramisu_tree: TiramisuTree) -> str:
+        """Convert the optimization command into Tiramisu code.
+        Returns:
+            str: The tiramisu snippet that represents the optimization command.
+        """
+        return ""
+
     #     if self.type == ActionType.INTERCHANGE:
     #         interchange_str = (
     #             ".interchange(" + ",".join([str(p) for p in self.params_list]) + ");"

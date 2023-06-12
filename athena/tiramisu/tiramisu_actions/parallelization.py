@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, TYPE_CHECKING
+from typing import Dict, TYPE_CHECKING, List
 
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
@@ -22,9 +22,13 @@ class Parallelization(TiramisuAction):
         super().__init__(
             type=TiramisuActionType.PARALLELIZATION, params=params, comps=comps
         )
-        self.tiramisu_optim_str = (
+
+    def get_tiramisu_optim_str(self, tiramisu_tree: TiramisuTree):
+        tiramisu_optim_str = (
             f"\n\t{self.comps[0]}.tag_parallel_level({self.params[0]});"
         )
+
+        return tiramisu_optim_str
 
     @classmethod
     def _get_candidates_of_node(
@@ -68,7 +72,7 @@ class Parallelization(TiramisuAction):
     @classmethod
     def get_candidate_computations(
         cls, candidate_node_name: str, program_tree: TiramisuTree
-    ) -> Dict:
+    ) -> List[str]:
         """Get the list of computations of the node to parallize.
 
         Parameters:
@@ -85,7 +89,7 @@ class Parallelization(TiramisuAction):
             List of computations of the node to parallize
         """
 
-        computations = []
+        computations: List[str] = []
         candidate_node = program_tree.iterators[candidate_node_name]
 
         computations += candidate_node.computations_list

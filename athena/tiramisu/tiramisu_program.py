@@ -41,15 +41,15 @@ class TiramisuProgram:
 
     def __init__(self):
         self.file_path = ""
-        self.annotations: Dict = None
-        self.comps: list[str] = None
-        self.name: str = None
+        self.annotations: Dict | None = None
+        self.comps: list[str] | None = None
+        self.name: str | None = None
         self.schedules_legality = {}
         self.schedules_solver = {}
-        self.original_str: str = None
-        self.wrappers: Dict = None
+        self.original_str: str | None = None
+        self.wrappers: Dict | None = None
         self.initial_execution_times = {}
-        self.current_machine_initial_execution_time: float = None
+        self.current_machine_initial_execution_time: float | None = None
         self.tree: TiramisuTree = None
 
     # Since there is no factory constructors in python, I am creating this class method to replace the factory pattern
@@ -58,8 +58,8 @@ class TiramisuProgram:
         cls,
         name: str,
         data: dict,
-        original_str: str = None,
-        wrappers: dict = None,
+        original_str: str | None = None,
+        wrappers: dict | None = None,
         load_code_lines: bool = True,
     ) -> "TiramisuProgram":
         # Initiate an instante of the TiramisuProgram class
@@ -144,10 +144,13 @@ class TiramisuProgram:
         # After taking the neccessary fields return the instance
         return tiramisu_prog
 
-    def load_code_lines(self, original_str: str = None):
+    def load_code_lines(self, original_str: str | None = None):
         """
         This function loads the file code , it is necessary to generate legality check code and annotations
         """
+        if BaseConfig.base_config is None:
+            raise Exception("BaseConfig.base_config is None")
+
         if self.name:
             # if self.name is None the program doesn't exist in the offline dataset but built from compiling
             # if self.name has a value than it is fetched from the dataset, we need the full path to read

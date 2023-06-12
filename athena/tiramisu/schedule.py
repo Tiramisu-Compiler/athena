@@ -1,4 +1,5 @@
 from __future__ import annotations
+from copy import deepcopy
 
 from typing import List, TYPE_CHECKING
 from athena.tiramisu.compiling_service import CompilingService
@@ -24,9 +25,15 @@ class Schedule:
     def __init__(self, tiramisu_program: TiramisuProgram) -> None:
         self.tiramisu_program = tiramisu_program
         self.optims_list: List[TiramisuAction] = []
+        self.tree = deepcopy(tiramisu_program.tree)
 
     def add_optimization(self, optim_cmd: TiramisuAction) -> None:
         self.optims_list.append(optim_cmd)
+
+        if optim_cmd.is_interchange():
+            print("before Interchange", self.tree)
+            self.tree.interchange(optim_cmd.params[0], optim_cmd.params[1])
+            print("after Interchange", self.tree)
 
     def pop_optimization(self) -> TiramisuAction:
         return self.optims_list.pop()
@@ -102,9 +109,9 @@ class Schedule:
                 if transformation.type == TiramisuActionType.INTERCHANGE:
                     sched_str += (
                         "I(L"
-                        + str(transformation.params[0])
+                        + str(self.tree.iterators[transformation.params[0]].level)
                         + ",L"
-                        + str(transformation.params[1])
+                        + str(self.tree.iterators[transformation.params[1]].level)
                         + ")"
                     )
 

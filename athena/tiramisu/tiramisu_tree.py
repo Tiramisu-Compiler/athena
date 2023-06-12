@@ -58,8 +58,13 @@ class TiramisuTree:
         iterators = annotations["iterators"]
 
         for iterator in iterators:
-            if iterators[iterator]["parent_iterator"] is None:
+            parent_iterator = iterators[iterator]["parent_iterator"]
+            iterator_level = None
+            if parent_iterator is None:
                 tiramisu_space.add_root(iterator)
+                iterator_level = 0
+            else:
+                iterator_level = tiramisu_space.iterators[parent_iterator].level + 1
 
             tiramisu_space.iterators[iterator] = IteratorNode(
                 name=iterator,
@@ -68,6 +73,7 @@ class TiramisuTree:
                 child_iterators=iterators[iterator]["child_iterators"],
                 computations_list=iterators[iterator]["computations_list"],
                 parent_iterator=iterators[iterator]["parent_iterator"],
+                level=iterator_level,
             )
             tiramisu_space.computations.extend(iterators[iterator]["computations_list"])
 
@@ -79,22 +85,28 @@ class TiramisuTree:
     def __repr__(self) -> str:
         return self.__str__()
 
-    def get_candidate_sections(self) -> List[List[str]]:
+    def get_candidate_sections(self) -> Dict[str, List[List[str]]]:
         """
-        Returns a list of candidate sections, also named Branches by the team, where transformations can potentially be applied in the Tiramisu program.
+        Returns a dictionary with lists of candidate sections for each root iterator.
 
         Returns:
         -------
-        `list_candidate_sections`: `List[List[str]]`
-            List of candidate sections in the Tiramisu program.
+
+        `candidate_sections`: `Dict[str, List[List[str]]]`
+            Dictionary with lists of candidate sections for each root iterator.
         """
-        nodes_to_visit = self.roots.copy()
-        list_candidate_sections = []
-        for node in nodes_to_visit:
-            candidate_section, new_nodes_to_visit = self._get_section_of_node(node)
-            list_candidate_sections.append(candidate_section)
-            nodes_to_visit.extend(new_nodes_to_visit)
-        return list_candidate_sections
+
+        candidate_sections = {}
+        for root in self.roots:
+            nodes_to_visit = [root]
+
+            for node in nodes_to_visit:
+                list_candidate_sections = []
+                candidate_section, new_nodes_to_visit = self._get_section_of_node(node)
+                list_candidate_sections.append(candidate_section)
+                nodes_to_visit.extend(new_nodes_to_visit)
+                candidate_sections[root] = list_candidate_sections
+        return candidate_sections
 
     def _get_section_of_node(self, node_name: str) -> Tuple[List[str], List[str]]:
         candidate_section = [node_name]
@@ -138,3 +150,81 @@ class TiramisuTree:
             node = self.iterators[node.parent_iterator]
 
         return level
+
+    def interchange(self, node1: str, node2: str) -> None:
+        """
+        Interchanges the positions of two nodes in the program tree.
+
+        Parameters:
+        ----------
+        `node1`: `str`
+            The name of the first node.
+
+        `node2`: `str`
+            The name of the second node.
+        """
+
+        node1_parent = self.iterators[node1].parent_iterator
+        node2_parent = self.iterators[node2].parent_iterator
+
+        if node2_parent == node1:
+            new_node1_parent = node2
+        else:
+            new_node1_parent = node2_parent
+
+        new_node1 = IteratorNode(
+            name=node1,
+            parent_iterator=new_node1_parent,
+            lower_bound=self.iterators[node1].lower_bound,
+            upper_bound=self.iterators[node1].upper_bound,
+            child_iterators=self.iterators[node2].child_iterators,
+            computations_list=self.iterators[node2].computations_list,
+            level=self.iterators[node2].level,
+        )
+
+        if node1_parent == node2:
+            new_node2_parent = node1
+        else:
+            new_node2_parent = node1_parent
+
+        new_node2 = IteratorNode(
+            name=node2,
+            parent_iterator=new_node2_parent,
+            lower_bound=self.iterators[node2].lower_bound,
+            upper_bound=self.iterators[node2].upper_bound,
+            child_iterators=self.iterators[node1].child_iterators,
+            computations_list=self.iterators[node1].computations_list,
+            level=self.iterators[node1].level,
+        )
+
+        if node1_parent:
+            if node1_parent == node2:
+                new_node1.child_iterators = [
+                    node2 if x == node1 else x for x in new_node1.child_iterators
+                ]
+            else:
+                parent_node = self.iterators[node1_parent]  # type: ignore
+
+                parent_node.child_iterators[
+                    parent_node.child_iterators.index(node1)
+                ] = node2
+        else:
+            self.roots[self.roots.index(node1)] = node2
+
+        if node2_parent:
+            if node2_parent == node1:
+                new_node2.child_iterators = [
+                    node1 if x == node2 else x for x in new_node2.child_iterators
+                ]
+
+            else:
+                parent_node = self.iterators[node2_parent]  # type: ignore
+
+                parent_node.child_iterators[
+                    parent_node.child_iterators.index(node2)
+                ] = node1
+        else:
+            self.roots[self.roots.index(node2)] = node1
+
+        self.iterators[node1] = new_node1
+        self.iterators[node2] = new_node2

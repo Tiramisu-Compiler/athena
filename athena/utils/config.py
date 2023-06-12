@@ -50,7 +50,7 @@ def dict_to_config(parsed_yaml: Dict[Any, Any]) -> AthenaConfig:
 
     return AthenaConfig(
         **parsed_yaml["athena"],
-        env_vars=parsed_yaml["env_vars"] if "env_vars" in parsed_yaml else [],
+        env_vars=parsed_yaml["env_vars"] if "env_vars" in parsed_yaml else {},
         dataset=dataset,
         tiramisu=tiramisu,
     )
@@ -60,7 +60,7 @@ class BaseConfig:
     base_config = None
 
     @classmethod
-    def init(self, config_yaml="config.yaml"):
+    def init(cls, config_yaml="config.yaml"):
         parsed_yaml_dict = parse_yaml_file(read_yaml_file(config_yaml))
         BaseConfig.base_config = dict_to_config(parsed_yaml_dict)
         logging.basicConfig(

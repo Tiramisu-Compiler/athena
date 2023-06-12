@@ -5,6 +5,7 @@ from athena.data.dataset_actor.dataset_actor import DatasetActor
 from athena.search_methods.sequential_parallelization import (
     parallelize_first_legal_outermost,
 )
+from athena.tiramisu.tiramisu_actions.interchange import Interchange
 from athena.tiramisu.tiramisu_iterator_node import IteratorNode
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 import athena.tiramisu.tiramisu_actions as tiramisu_actions
@@ -12,51 +13,70 @@ from athena.tiramisu.schedule import Schedule
 from athena.tiramisu.tiramisu_actions.parallelization import Parallelization
 from athena.tiramisu.tiramisu_program import TiramisuProgram
 from athena.utils.config import BaseConfig
-from tests.utils import load_test_data, tree_test_sample
+from tests.utils import (
+    benchmark_program_test_sample,
+    interchange_example,
+    load_test_data,
+    tree_test_sample,
+)
 
 
 if __name__ == "__main__":
     BaseConfig.init()
-    # load_annotations = False
-    load_annotations = True
-    tiramisu_func = TiramisuProgram.from_file(
-        "_tmp/function_matmul_MEDIUM.cpp",
-        "_tmp/function_matmul_MEDIUM_wrapper.cpp",
-        "_tmp/function_matmul_MEDIUM_wrapper.h",
-        # "_tmp/function_blur_MINI_generator.cpp",
-        # "_tmp/function_blur_MINI_wrapper.cpp",
-        # "_tmp/function_blur_MINI_wrapper.h",
-        load_annotations=load_annotations,
-    )
 
-    logging.info(tiramisu_func)
-    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
+    # # Parallelization example
+    # tiramisu_func = benchmark_program_test_sample()
+    # print(tiramisu_func.tree)
+    # schedule = parallelize_first_legal_outermost(tiramisu_func)
+    # logging.info(schedule)
 
-    # t_tree = tree_test()
+    # print(f"Unoptimized: {Schedule(tiramisu_func).apply_schedule(nb_exec_tiems=10)}")
+    # print(f"{schedule}: {schedule.apply_schedule(nb_exec_tiems=10)}")
 
-    # test_data, test_cpps = load_test_data()
-    # get program of first key from data
-    # key = list(test_data.keys())[0]
-    # program_data = test_data[key]
-    # program = TiramisuProgram.from_dict(key, program_data, test_cpps[key])
-    # program.tree = TiramisuTree.from_annotations(program.annotations)
+    # Interchange example
 
-    schedule = parallelize_first_legal_outermost(tiramisu_func)
-    logging.info(schedule)
+    interchange_program = interchange_example()
 
-    print(f"Unoptimized: {Schedule(tiramisu_func).apply_schedule(nb_exec_tiems=10)}")
-    print(f"{schedule}: {schedule.apply_schedule(nb_exec_tiems=10)}")
-    # # Create a schedule
-    # schedule = Schedule(tiramisu_func)
+    print(interchange_program)
 
-    # # Add optimizations to the schedule
-    # schedule.add_optimization(
-    #     tiramisu_actions.Parallelization(params=[0], comps=["comp02"])
-    # )
-    # start_time = time.time()
-    # legality = schedule.is_legal()
-    # end_time = time.time()
-    # print(f"Legality check time: {end_time - start_time}")
-    # if legality:
-    #     print(f"Schedule: {schedule} is legal")
-    #     print(f"Optimized: {schedule.apply_schedule()}")
+    print(interchange_program.tree)
+
+    print(interchange_program.tree.get_candidate_sections())
+
+    candidates = Interchange.get_candidates(interchange_program.tree)
+    print(candidates)
+
+    # paralel_sched = parallelize_first_legal_outermost(interchange_program)
+    paralel_sched = Schedule(interchange_program)
+    paralel_sched.add_optimization(Parallelization([0], ["comp00"]))
+    print(paralel_sched)
+    print(paralel_sched.is_legal())
+
+    paralel_sched = Schedule(interchange_program)
+    paralel_sched.add_optimization(Parallelization([1], ["comp00"]))
+    print(paralel_sched)
+    print(paralel_sched.is_legal())
+
+    print(paralel_sched.apply_schedule(nb_exec_tiems=10))
+
+    legal_par = Schedule(interchange_program)
+    legal_par.add_optimization(Interchange(["i0", "i1"], ["comp00"]))
+    legal_par.add_optimization(Parallelization([0], ["comp00"]))
+    print(legal_par.is_legal())
+    print(legal_par.apply_schedule(nb_exec_tiems=10))
+
+    # for root in candidates:
+    #     for params in candidates[root]:
+    #         schedule = Schedule(interchange_program)
+    #         schedule.add_optimization(
+    #             Interchange(
+    #                 params=params,
+    #                 comps=Interchange.get_candidate_computations(
+    #                     params[0], interchange_program.tree
+    #                 ),
+    #             )
+    #         )
+
+    #         print(schedule)
+    #         print(schedule.is_legal())
+    #         print("\n\n")
