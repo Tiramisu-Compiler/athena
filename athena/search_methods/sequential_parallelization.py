@@ -16,9 +16,7 @@ def parallelize_first_legal_outermost(
                 tmp_schedule.add_optimization(
                     Parallelization(
                         params=[index],
-                        comps=Parallelization.get_candidate_computations(
-                            node, tiramisu_program.tree
-                        ),
+                        comps=tiramisu_program.tree.get_candidate_computations(node),
                     ),
                 )
             if tmp_schedule.is_legal():
