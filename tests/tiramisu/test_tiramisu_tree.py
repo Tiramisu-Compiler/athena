@@ -43,3 +43,32 @@ def test_interchange():
 
     assert t_tree.iterators["i"].child_iterators == ["k"]
     assert not t_tree.iterators["j"].child_iterators
+
+    assert t_tree.iterators["k"].parent_iterator == "i"
+    assert t_tree.iterators["j"].computations_list == ["comp01"]
+
+    t_tree = tree_test_sample()
+
+    t_tree.interchange("j", "k")
+
+    assert t_tree.iterators["k"].parent_iterator == "root"
+    assert t_tree.iterators["k"].child_iterators == ["j"]
+
+    assert t_tree.iterators["j"].parent_iterator == "k"
+    assert t_tree.iterators["j"].child_iterators == ["l", "m"]
+
+    assert t_tree.iterators["l"].parent_iterator == "j"
+    assert t_tree.iterators["m"].parent_iterator == "j"
+
+    t_tree = tree_test_sample()
+
+    t_tree.interchange("root", "j")
+
+    assert t_tree.roots == ["j"]
+    assert t_tree.iterators["j"].parent_iterator == None
+    assert t_tree.iterators["j"].child_iterators == ["i", "root"]
+
+    assert t_tree.iterators["root"].parent_iterator == "j"
+    assert t_tree.iterators["root"].child_iterators == ["k"]
+
+    assert t_tree.iterators["k"].parent_iterator == "root"

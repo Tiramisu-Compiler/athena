@@ -225,6 +225,12 @@ class TiramisuTree:
         else:
             self.roots[self.roots.index(node2)] = node1
 
+        for child in self.iterators[node1].child_iterators:
+            self.iterators[child].parent_iterator = node2
+
+        for child in self.iterators[node2].child_iterators:
+            self.iterators[child].parent_iterator = node1
+
         self.iterators[node1] = new_node1
         self.iterators[node2] = new_node2
 
