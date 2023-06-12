@@ -99,13 +99,12 @@ class TiramisuTree:
         candidate_sections = {}
         for root in self.roots:
             nodes_to_visit = [root]
-
+            list_candidate_sections = []
             for node in nodes_to_visit:
-                list_candidate_sections = []
                 candidate_section, new_nodes_to_visit = self._get_section_of_node(node)
                 list_candidate_sections.append(candidate_section)
                 nodes_to_visit.extend(new_nodes_to_visit)
-                candidate_sections[root] = list_candidate_sections
+            candidate_sections[root] = list_candidate_sections
         return candidate_sections
 
     def _get_section_of_node(self, node_name: str) -> Tuple[List[str], List[str]]:
@@ -228,3 +227,30 @@ class TiramisuTree:
 
         self.iterators[node1] = new_node1
         self.iterators[node2] = new_node2
+
+    def get_candidate_computations(self, candidate_node_name: str) -> List[str]:
+        """Get the list of computations impacted by this node
+
+        Parameters:
+        ----------
+        `candidate_node`: `IteratorNode`
+            The candidate node for parallelization.
+
+        `program_tree`: `TiramisuTree`
+            The Tiramisu tree of the program.
+
+        Returns:
+        -------
+        `list`
+            List of computations impacted by the node
+        """
+
+        computations: List[str] = []
+        candidate_node = self.iterators[candidate_node_name]
+
+        computations += candidate_node.computations_list
+
+        for child in candidate_node.child_iterators:
+            computations += self.get_candidate_computations(child)
+
+        return computations

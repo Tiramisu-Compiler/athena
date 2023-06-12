@@ -68,33 +68,3 @@ class Parallelization(TiramisuAction):
             )
 
         return candidates
-
-    @classmethod
-    def get_candidate_computations(
-        cls, candidate_node_name: str, program_tree: TiramisuTree
-    ) -> List[str]:
-        """Get the list of computations of the node to parallize.
-
-        Parameters:
-        ----------
-        `candidate_node`: `IteratorNode`
-            The candidate node for parallelization.
-
-        `program_tree`: `TiramisuTree`
-            The Tiramisu tree of the program.
-
-        Returns:
-        -------
-        `list`
-            List of computations of the node to parallize
-        """
-
-        computations: List[str] = []
-        candidate_node = program_tree.iterators[candidate_node_name]
-
-        computations += candidate_node.computations_list
-
-        for child in candidate_node.child_iterators:
-            computations += cls.get_candidate_computations(child, program_tree)
-
-        return computations

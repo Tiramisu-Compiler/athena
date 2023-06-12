@@ -3,78 +3,8 @@ from athena.tiramisu.tiramisu_iterator_node import IteratorNode
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 
-def test_get_candidate_sections():
-    tiramisu_tree = TiramisuTree()
-    tiramisu_tree.add_root("root")
-    tiramisu_tree.iterators = {
-        "root": IteratorNode(
-            name="root",
-            parent_iterator=None,
-            lower_bound=0,
-            upper_bound=10,
-            child_iterators=["i", "j"],
-            computations_list=[],
-        ),
-        "i": IteratorNode(
-            name="i",
-            parent_iterator="root",
-            lower_bound=0,
-            upper_bound=10,
-            child_iterators=[],
-            computations_list=["comp01"],
-        ),
-        "j": IteratorNode(
-            name="j",
-            parent_iterator="root",
-            lower_bound=0,
-            upper_bound=10,
-            child_iterators=["k"],
-            computations_list=[],
-        ),
-        "k": IteratorNode(
-            name="k",
-            parent_iterator="j",
-            lower_bound=0,
-            upper_bound=10,
-            child_iterators=["l", "m"],
-            computations_list=[],
-        ),
-        "l": IteratorNode(
-            name="l",
-            parent_iterator="k",
-            lower_bound=0,
-            upper_bound=10,
-            child_iterators=[],
-            computations_list=["comp03"],
-        ),
-        "m": IteratorNode(
-            name="m",
-            parent_iterator="k",
-            lower_bound=0,
-            upper_bound=10,
-            child_iterators=[],
-            computations_list=["comp04"],
-        ),
-    }
-    tiramisu_tree.computations = [
-        "comp01",
-        "comp02",
-        "comp03",
-        "comp04",
-    ]
-
-    candidate_sections = tiramisu_tree.get_candidate_sections()
-
-    assert len(candidate_sections) == 5
-    assert candidate_sections[0] == ["root"]
-    assert candidate_sections[1] == ["i"]
-    assert candidate_sections[2] == ["j", "k"]
-    assert candidate_sections[3] == ["l"]
-    assert candidate_sections[4] == ["m"]
-
-
 def test_from_annotations():
-    data, _ = load_test_data()
+    data, _, _ = load_test_data()
     # get program of first key from data
     program = data[list(data.keys())[0]]
     tiramisu_tree = TiramisuTree.from_annotations(program["program_annotation"])
@@ -86,9 +16,18 @@ def test_get_candidate_sections():
 
     candidate_sections = t_tree.get_candidate_sections()
 
-    assert len(candidate_sections) == 5
-    assert candidate_sections[0] == ["root"]
-    assert candidate_sections[1] == ["i"]
-    assert candidate_sections[2] == ["j", "k"]
-    assert candidate_sections[3] == ["l"]
-    assert candidate_sections[4] == ["m"]
+    assert len(candidate_sections) == 1
+    assert len(candidate_sections["root"]) == 5
+    assert candidate_sections["root"][0] == ["root"]
+    assert candidate_sections["root"][1] == ["i"]
+    assert candidate_sections["root"][2] == ["j", "k"]
+    assert candidate_sections["root"][3] == ["l"]
+    assert candidate_sections["root"][4] == ["m"]
+
+
+def test_get_candidate_computations():
+    t_tree = tree_test_sample()
+
+    assert t_tree.get_candidate_computations("root") == ["comp01", "comp03", "comp04"]
+    assert t_tree.get_candidate_computations("i") == ["comp01"]
+    assert t_tree.get_candidate_computations("j") == ["comp03", "comp04"]
