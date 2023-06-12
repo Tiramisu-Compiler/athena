@@ -1,7 +1,7 @@
 import json
 import re
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List
 from athena.tiramisu.compiling_service import CompilingService
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 

@@ -209,7 +209,12 @@ class CompilingService:
             raise e
 
     @classmethod
-    def call_skewing_solver(cls, schedule_object, optim_list, params):
+    def call_skewing_solver(
+        cls,
+        tiramisu_prog: TiramisuProgram,
+        optim_list: List[TiramisuAction],
+        params: List[int],
+    ):
         """
         Calls the skewing solver to generate the skewing code
 
@@ -217,7 +222,12 @@ class CompilingService:
         ----------
         TODO FINISH THE PARAMETERS
         """
-        legality_cpp_code = cls.get_legality_code(schedule_object, optim_list)
+        if tiramisu_prog.comps is None:
+            raise Exception("The program is not loaded yet")
+
+        if BaseConfig.base_config is None:
+            raise Exception("The base config is not loaded yet")
+        legality_cpp_code = cls.get_legality_code(tiramisu_prog, optim_list)
         to_replace = re.findall(r"std::cout << is_legal;", legality_cpp_code)[0]
         header = """
         function * fct = tiramisu::global::get_implicit_function();\n"""
@@ -235,7 +245,7 @@ class CompilingService:
         solver_lines = (
             header
             + "\n\tauto auto_skewing_result = fct->skewing_local_solver({"
-            + ", ".join([f"&{comp}" for comp in schedule_object.comps])
+            + ", ".join([f"&{comp}" for comp in tiramisu_prog.comps])
             + "}"
             + ",{},{},1);\n".format(*params)
         )
@@ -263,24 +273,22 @@ class CompilingService:
             std::cout << outer3.front().first;
             std::cout << ",";
             std::cout << outer3.front().second;
-            std::cout << ",";
         }else {
-            std::cout << "None,None,";
+            std::cout << "None,None";
         }
         
             """
 
         solver_code = legality_cpp_code.replace(to_replace, solver_lines)
         output_path = os.path.join(
-            BaseConfig.base_config.workspace, f"{schedule_object.prog.name}skew_solver"
+            BaseConfig.base_config.workspace, f"{tiramisu_prog.name}_skewing_solver"
         )
+
         result_str = cls.run_cpp_code(cpp_code=solver_code, output_path=output_path)
-        if not result_str:
-            return None
-            # Refer to function run_cpp_code to see from where the "0" comes from
-        elif result_str == "0":
-            return None
+        print(result_str)
         result_str = result_str.split(",")
+        print(result_str)
+
         # Skewing Solver returns 3 solutions in form of tuples, the first tuple is for outer parallelism ,
         # second is for inner parallelism , and last one is for locality, we are going to use the first preferably
         # if availble , else , we are going to use the scond one if available, this policy of choosing factors may change

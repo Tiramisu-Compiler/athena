@@ -19,13 +19,15 @@ import tests.utils as test_utils
 if __name__ == "__main__":
     BaseConfig.init()
 
-    # Candidate sections
-    tiramisu_tree = test_utils.tree_test_sample()
-    print(tiramisu_tree.get_candidate_sections())
-    print(tiramisu_tree)
-    # Parallelization example
-    tiramisu_func = test_utils.benchmark_program_test_sample()
-    print(tiramisu_func.tree.get_candidate_sections())
+    # # Candidate sections
+    # tiramisu_tree = test_utils.tree_test_sample()
+    # print(tiramisu_tree.get_candidate_sections())
+    # print(tiramisu_tree)
+
+    # # Parallelization example
+    # tiramisu_func = test_utils.benchmark_program_test_sample()
+    # print(tiramisu_func.tree.get_candidate_sections())
+
     # print(Parallelization.get_candidates(tiramisu_func.tree))
     # schedule = parallelize_first_legal_outermost(tiramisu_func)
     # logging.info(schedule)
@@ -80,3 +82,24 @@ if __name__ == "__main__":
     #         print(schedule)
     #         print(schedule.is_legal())
     #         print("\n\n")
+
+    # Skewing example
+
+    skewing_program = test_utils.skewing_example()
+
+    print(skewing_program)
+
+    print(tiramisu_actions.Skewing.get_candidates(skewing_program.tree))
+
+    print(skewing_program.tree)
+
+    factors = tiramisu_actions.Skewing.get_factors(
+        loops=["i0", "i1"], current_schedule=[], tiramisu_program=skewing_program
+    )
+
+    schedule = Schedule(skewing_program)
+    params = ["i0", "i1"] + ([str(factor) for factor in factors])
+    schedule.add_optimization(tiramisu_actions.Skewing(params=params, comps=["comp00"]))
+    print(schedule)
+    print(schedule.is_legal())
+    print(schedule.apply_schedule(nb_exec_tiems=10))

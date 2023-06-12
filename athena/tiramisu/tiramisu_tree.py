@@ -80,7 +80,32 @@ class TiramisuTree:
         return tiramisu_space
 
     def __str__(self) -> str:
-        return f"Roots: {self.roots}\nComputations: {self.computations}\nIterators: {self.iterators}"
+        # return f"Roots: {self.roots}\nComputations: {self.computations}\nIterators: {self.iterators}"
+        representation = ""
+
+        for root in self.roots:
+            # representation += "-> " + repr(self.iterators[root]) + "\n"
+            representation += "-> " + root + "\n"
+            representation += self._get_subtree_representation(root)
+
+        return representation
+
+    def _get_subtree_representation(self, node_name: str) -> str:
+        representation = ""
+        for node in self.iterators[node_name].child_iterators:
+            # representation += (
+            #     "\t" * self.iterators[node].level
+            #     + "-> "
+            #     + repr(self.iterators[node])
+            #     + "\n"
+            # )
+            representation += "   " * self.iterators[node].level + "-> " + node + "\n"
+            for comp in self.iterators[node].computations_list:
+                representation += (
+                    "   " * (self.iterators[node].level + 1) + "- " + comp + "\n"
+                )
+            representation += self._get_subtree_representation(node)
+        return representation
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -122,33 +147,6 @@ class TiramisuTree:
         if current_node.child_iterators:
             return candidate_section, current_node.child_iterators
         return candidate_section, []
-
-    def get_level_of_node(self, node_name: str) -> int:
-        """
-        Returns the level of the node in the program tree.
-
-        Parameters:
-        ----------
-        `node_name`: `str`
-            The name of the node.
-
-        `program_tree`: `TiramisuTree`
-            The Tiramisu tree of the program.
-
-        Returns:
-        -------
-        int
-            The level of the node.
-        """
-
-        node = self.iterators[node_name]
-        level = 0
-
-        while node.parent_iterator:
-            level += 1
-            node = self.iterators[node.parent_iterator]
-
-        return level
 
     def interchange(self, node1: str, node2: str) -> None:
         """
@@ -260,3 +258,9 @@ class TiramisuTree:
             computations += self.get_candidate_computations(child)
 
         return computations
+
+    def get_iterator_levels(self, iterators_list: List[str]) -> List[int]:
+        """
+        This function returns the levels of the iterators in the computation
+        """
+        return [self.iterators[iterator].level for iterator in iterators_list]

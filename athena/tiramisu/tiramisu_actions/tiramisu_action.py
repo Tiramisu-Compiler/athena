@@ -43,7 +43,7 @@ class TiramisuAction:
 
     """
 
-    def __init__(self, type: TiramisuActionType, params: list, comps: list):
+    def __init__(self, type: TiramisuActionType, params: list | dict, comps: list):
         self.params = params
         # A list of concerned computations of the actions
         self.comps = comps
