@@ -31,3 +31,15 @@ def test_get_candidate_computations():
     assert t_tree.get_candidate_computations("root") == ["comp01", "comp03", "comp04"]
     assert t_tree.get_candidate_computations("i") == ["comp01"]
     assert t_tree.get_candidate_computations("j") == ["comp03", "comp04"]
+
+
+def test_interchange():
+    t_tree = tree_test_sample()
+
+    t_tree.interchange("i", "j")
+
+    assert t_tree.iterators["i"].parent_iterator == "root"
+    assert t_tree.iterators["j"].parent_iterator == "root"
+
+    assert t_tree.iterators["i"].child_iterators == ["k"]
+    assert not t_tree.iterators["j"].child_iterators
