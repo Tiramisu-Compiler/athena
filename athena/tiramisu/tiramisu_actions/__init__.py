@@ -4,3 +4,4 @@ from .interchange import Interchange
 from .skewing import Skewing
 from .reversal import Reversal
 from .unrolling import Unrolling
+from .tiling_2d import Tiling2D

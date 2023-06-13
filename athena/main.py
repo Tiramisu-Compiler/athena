@@ -151,61 +151,85 @@ if __name__ == "__main__":
     # print(schedule.is_legal())
     # print(schedule.apply_schedule(nb_exec_tiems=10))
 
-    # Unrolling example
+    # # Unrolling example
 
-    unrolling_program = test_utils.unrolling_sample()
+    # unrolling_program = test_utils.unrolling_sample()
 
-    print(unrolling_program)
+    # print(unrolling_program)
 
-    print(unrolling_program.tree)
+    # print(unrolling_program.tree)
 
-    print(tiramisu_actions.Unrolling.get_candidates(unrolling_program.tree))
+    # print(tiramisu_actions.Unrolling.get_candidates(unrolling_program.tree))
 
-    par_schedule = Schedule(unrolling_program)
+    # par_schedule = Schedule(unrolling_program)
 
-    par_schedule.add_optimization(
-        tiramisu_actions.Parallelization(params=[0], comps=["comp00"])
-    )
+    # par_schedule.add_optimization(
+    #     tiramisu_actions.Parallelization(params=[0], comps=["comp00"])
+    # )
 
-    print(par_schedule)
+    # print(par_schedule)
 
-    print(par_schedule.is_legal())
+    # print(par_schedule.is_legal())
 
-    # print(par_schedule.apply_schedule(nb_exec_tiems=10))
+    # # print(par_schedule.apply_schedule(nb_exec_tiems=10))
 
-    schedule = Schedule(unrolling_program)
+    # schedule = Schedule(unrolling_program)
 
-    schedule.add_optimization(
-        tiramisu_actions.Unrolling(params=["i1", 4], comps=["comp00"])
-    )
-    print(schedule)
+    # schedule.add_optimization(
+    #     tiramisu_actions.Unrolling(params=["i1", 4], comps=["comp00"])
+    # )
+    # print(schedule)
 
-    print(schedule.is_legal())
+    # print(schedule.is_legal())
 
-    schedule.add_optimization(
-        tiramisu_actions.Interchange(params=["i0", "i1"], comps=["comp00"])
-    )
+    # schedule.add_optimization(
+    #     tiramisu_actions.Interchange(params=["i0", "i1"], comps=["comp00"])
+    # )
 
-    schedule.add_optimization(
-        tiramisu_actions.Parallelization(params=[0], comps=["comp00"])
-    )
+    # schedule.add_optimization(
+    #     tiramisu_actions.Parallelization(params=[0], comps=["comp00"])
+    # )
 
-    print(schedule)
+    # print(schedule)
 
-    print(schedule.is_legal())
+    # print(schedule.is_legal())
+
+    # print(schedule.apply_schedule(nb_exec_tiems=10))
+
+    # print("Interchange with parallelization")
+
+    # schedule = Schedule(unrolling_program)
+
+    # schedule.add_optimization(
+    #     tiramisu_actions.Interchange(params=["i0", "i1"], comps=["comp00"])
+    # )
+
+    # schedule.add_optimization(
+    #     tiramisu_actions.Parallelization(params=[0], comps=["comp00"])
+    # )
+
+    # print(schedule)
+
+    # print(schedule.is_legal())
+
+    # print(schedule.apply_schedule(nb_exec_tiems=10))
+
+    # Tiling example
+
+    tiling_program = test_utils.tiling_2d_sample()
+
+    print(tiling_program)
+
+    print(tiling_program.tree)
+
+    print(tiramisu_actions.Tiling2D.get_candidates(tiling_program.tree))
+
+    schedule = Schedule(tiling_program)
 
     print(schedule.apply_schedule(nb_exec_tiems=10))
 
-    print("Interchange with parallelization")
-
-    schedule = Schedule(unrolling_program)
-
     schedule.add_optimization(
-        tiramisu_actions.Interchange(params=["i0", "i1"], comps=["comp00"])
-    )
-
-    schedule.add_optimization(
-        tiramisu_actions.Parallelization(params=[0], comps=["comp00"])
+        tiramisu_actions.Tiling2D(params=["i0", "i1", 32, 32], comps=["comp00"])
     )
 
     print(schedule)

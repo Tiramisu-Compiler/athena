@@ -68,8 +68,8 @@ class TiramisuTree:
 
             tiramisu_space.iterators[iterator] = IteratorNode(
                 name=iterator,
-                lower_bound=iterators[iterator]["lower_bound"],
-                upper_bound=iterators[iterator]["upper_bound"],
+                lower_bound=int(iterators[iterator]["lower_bound"]),
+                upper_bound=int(iterators[iterator]["upper_bound"]),
                 child_iterators=iterators[iterator]["child_iterators"],
                 computations_list=iterators[iterator]["computations_list"],
                 parent_iterator=iterators[iterator]["parent_iterator"],
@@ -84,8 +84,8 @@ class TiramisuTree:
         representation = ""
 
         for root in self.roots:
-            # representation += "-> " + repr(self.iterators[root]) + "\n"
-            representation += "-> " + root + "\n"
+            representation += "-> " + repr(self.iterators[root]) + "\n"
+            # representation += "-> " + root + "\n"
             representation += self._get_subtree_representation(root)
 
         return representation
@@ -93,13 +93,13 @@ class TiramisuTree:
     def _get_subtree_representation(self, node_name: str) -> str:
         representation = ""
         for node in self.iterators[node_name].child_iterators:
-            # representation += (
-            #     "\t" * self.iterators[node].level
-            #     + "-> "
-            #     + repr(self.iterators[node])
-            #     + "\n"
-            # )
-            representation += "   " * self.iterators[node].level + "-> " + node + "\n"
+            representation += (
+                "   " * self.iterators[node].level
+                + "-> "
+                + repr(self.iterators[node])
+                + "\n"
+            )
+            # representation += "   " * self.iterators[node].level + "-> " + node + "\n"
             for comp in self.iterators[node].computations_list:
                 representation += (
                     "   " * (self.iterators[node].level + 1) + "- " + comp + "\n"

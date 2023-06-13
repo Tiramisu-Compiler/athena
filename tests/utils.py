@@ -170,3 +170,20 @@ def unrolling_sample() -> TiramisuProgram:
     tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
 
     return tiramisu_func
+
+
+def tiling_2d_sample() -> TiramisuProgram:
+    test_data, test_cpps, test_wrappers = load_test_data()
+
+    tiramisu_func = TiramisuProgram.from_dict(
+        name="function554520",
+        data=test_data["function554520"],
+        original_str=test_cpps["function554520"],
+        wrappers=test_wrappers["function554520"],
+    )
+    if tiramisu_func.annotations is None:
+        raise ValueError("Annotations not found")
+
+    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
+
+    return tiramisu_func

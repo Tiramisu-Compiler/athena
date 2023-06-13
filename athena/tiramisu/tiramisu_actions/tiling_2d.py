@@ -2,8 +2,6 @@ from __future__ import annotations
 import itertools
 
 from typing import Dict, TYPE_CHECKING, List, Tuple
-from athena.tiramisu.compiling_service import CompilingService
-from athena.tiramisu.tiramisu_program import TiramisuProgram
 
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
@@ -13,29 +11,32 @@ from athena.tiramisu.tiramisu_actions.tiramisu_action import (
 )
 
 
-class Skewing(TiramisuAction):
+class Tiling2D(TiramisuAction):
     """
-    Skewing optimization command.
+    2D Tiling optimization command.
     """
 
     def __init__(self, params: list, comps: list):
-        # Interchange  takes four parameters of the 2 loops to skew and their factors
+        # 2D Tiling takes four parameters:
+        # 1. The first loop to tile
+        # 2. The second loop to tile
+        # 3. The tile size for the first loop
+        # 4. The tile size for the second loop
         assert len(params) == 4
 
-        super().__init__(type=TiramisuActionType.SKEWING, params=params, comps=comps)
+        super().__init__(type=TiramisuActionType.TILING_2D, params=params, comps=comps)
 
     def set_string_representations(self, tiramisu_tree: TiramisuTree):
         self.tiramisu_optim_str = ""
-        levels_with_factors = [
+        loop_levels_and_factors = [
             str(tiramisu_tree.iterators[param].level) if index < 2 else str(param)
             for index, param in enumerate(self.params)
         ]
         for comp in self.comps:
             self.tiramisu_optim_str += (
-                f"\n\t{comp}.skew({', '.join(levels_with_factors)});"
+                f"\n\t{comp}.tile({', '.join(loop_levels_and_factors)});"
             )
-
-        self.str_representation = f"S(L{levels_with_factors[0]},L{levels_with_factors[1]},{levels_with_factors[2]},{levels_with_factors[3]})"
+        self.str_representation = "T2(L{},L{},{},{})".format(*loop_levels_and_factors)
 
     @classmethod
     def get_candidates(cls, program_tree: TiramisuTree) -> Dict:
@@ -50,21 +51,5 @@ class Skewing(TiramisuAction):
                 if len(section) > 1:
                     # Get all possible combinations of 2 successive iterators
                     candidates[root].extend(list(itertools.pairwise(section)))
-        return candidates
 
-    @classmethod
-    def get_factors(
-        cls,
-        loops: List[str],
-        current_schedule: List[TiramisuAction],
-        tiramisu_program: TiramisuProgram,
-    ) -> Tuple[int, int]:
-        factors = CompilingService.call_skewing_solver(
-            tiramisu_program,
-            current_schedule,
-            tiramisu_program.tree.get_iterator_levels(loops),
-        )
-        if factors is not None:
-            return factors
-        else:
-            raise ValueError("Skewing did not return any factors")
+        return candidates

@@ -51,10 +51,10 @@ class Schedule:
         -------
         The execution time of the Tiramisu program after applying the schedule.
         """
-        if self.legality is None:
+        if self.legality is None and self.optims_list:
             self.is_legal()
 
-        if not self.legality:
+        if self.legality == False:
             raise Exception("Schedule is not legal")
 
         return CompilingService.get_cpu_exec_times(
@@ -106,7 +106,10 @@ class Schedule:
                 if name not in transformation.comps:
                     continue
 
-                if transformation.type == TiramisuActionType.TILING:
+                if (
+                    transformation.type == TiramisuActionType.TILING_2D
+                    or transformation.type == TiramisuActionType.TILING_3D
+                ):
                     # T2
                     if len(transformation.params) == 4:
                         first_dim_index = transformation.params[0]

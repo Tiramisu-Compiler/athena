@@ -5,12 +5,12 @@ class IteratorNode:
     def __init__(
         self,
         name: str,
-        parent_iterator: str | None = None,
-        lower_bound: int | None = None,
-        upper_bound: int | None = None,
-        child_iterators: List[str] = [],
-        computations_list: List[str] = [],
-        level: int = None,
+        parent_iterator: str | None,
+        lower_bound: int,
+        upper_bound: int,
+        child_iterators: List[str],
+        computations_list: List[str],
+        level: int,
     ):
         self.name = name
         self.parent_iterator = parent_iterator

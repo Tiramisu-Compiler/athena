@@ -17,12 +17,13 @@ class TiramisuActionType(Enum):
     """The type of an optimization command."""
 
     INTERCHANGE = 0
-    TILING = 1
+    TILING_2D = 1
     PARALLELIZATION = 2
     SKEWING = 3
     UNROLLING = 4
     FUSION = 5
     REVERSAL = 6
+    TILING_3D = 7
 
 
 class TiramisuAction:
