@@ -27,11 +27,11 @@ class Skewing(TiramisuAction):
     def get_tiramisu_optim_str(self, tiramisu_tree: TiramisuTree):
         tiramisu_optim_str = ""
         levels_with_factors = [
-            str(tiramisu_tree.iterators[param].level) if index < 2 else param
+            str(tiramisu_tree.iterators[param].level) if index < 2 else str(param)
             for index, param in enumerate(self.params)
         ]
         for comp in self.comps:
-            tiramisu_optim_str += f"{comp}.skew({','.join(levels_with_factors)});\n\t"
+            tiramisu_optim_str += f"{comp}.skew({', '.join(levels_with_factors)});\n\t"
         return tiramisu_optim_str
 
     @classmethod

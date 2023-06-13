@@ -40,6 +40,9 @@ class CompilingService:
         `bool`
             True if the schedule is legal, False otherwise
         """
+        if not BaseConfig.base_config:
+            raise ValueError("BaseConfig not initialized")
+
         output_path = os.path.join(
             BaseConfig.base_config.workspace, f"{tiramisu_program.name}_legality"
         )
@@ -73,6 +76,9 @@ class CompilingService:
         `str`
             The code to check legality of the schedule
         """
+        if not tiramisu_program.comps or not tiramisu_program.original_str:
+            raise ValueError("No computations in the program")
+
         comps = tiramisu_program.comps
         first_comp = tiramisu_program.comps[0]
         # Add code to the original file to get legality result
@@ -116,6 +122,12 @@ class CompilingService:
         `str`
             The annotations in json format
         """
+        if not BaseConfig.base_config:
+            raise ValueError("BaseConfig not initialized")
+
+        if not tiramisu_program.original_str:
+            raise ValueError("Tiramisu program not initialized")
+
         # TODO : add getting tree structure object from executing the file instead of building it
         output_path = os.path.join(
             BaseConfig.base_config.workspace, f"{tiramisu_program.name}_annotations"
@@ -151,6 +163,9 @@ class CompilingService:
         `str`
             The output of the compilation
         """
+        if not BaseConfig.base_config:
+            raise ValueError("BaseConfig not initialized")
+
         env_vars = [
             f"export {key}={value}"
             for key, value in BaseConfig.base_config.env_vars.items()
@@ -285,9 +300,7 @@ class CompilingService:
         )
 
         result_str = cls.run_cpp_code(cpp_code=solver_code, output_path=output_path)
-        print(result_str)
         result_str = result_str.split(",")
-        print(result_str)
 
         # Skewing Solver returns 3 solutions in form of tuples, the first tuple is for outer parallelism ,
         # second is for inner parallelism , and last one is for locality, we are going to use the first preferably
@@ -327,6 +340,8 @@ class CompilingService:
         `str`
             The schedule code to add to the original file
         """
+        if not tiramisu_program.original_str:
+            raise ValueError("The program is not loaded yet")
         # Add code to the original file to get the schedule code
         schedule_code = ""
         for optim in optims_list:
@@ -365,7 +380,7 @@ class CompilingService:
         cls,
         tiramisu_program: TiramisuProgram,
         optims_list: List[TiramisuAction],
-        max_runs: int = None,
+        max_runs: int = 0,
     ) -> List[float]:
         """
         Returns the execution times of the program on the CPU after applying the optimizations in the optims_list
@@ -384,6 +399,14 @@ class CompilingService:
         `List[float]`
             The execution times of the program
         """
+        if not BaseConfig.base_config:
+            raise ValueError("BaseConfig not initialized")
+        if (
+            not tiramisu_program.name
+            or not tiramisu_program.original_str
+            or not tiramisu_program.wrappers
+        ):
+            raise ValueError("The program is not loaded yet")
         if max_runs is None:
             max_runs = BaseConfig.base_config.tiramisu.max_runs
         # Get the code of the schedule

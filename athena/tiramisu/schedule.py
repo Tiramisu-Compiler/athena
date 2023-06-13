@@ -31,15 +31,13 @@ class Schedule:
         self.optims_list.append(optim_cmd)
 
         if optim_cmd.is_interchange():
-            print("before Interchange", self.tree)
             self.tree.interchange(optim_cmd.params[0], optim_cmd.params[1])
-            print("after Interchange", self.tree)
 
     def pop_optimization(self) -> TiramisuAction:
         return self.optims_list.pop()
 
     def apply_schedule(
-        self, tiramisu_program: TiramisuProgram = None, nb_exec_tiems=1
+        self, tiramisu_program: TiramisuProgram | None = None, nb_exec_tiems=1
     ) -> List[float]:
         """
         Applies the schedule to the Tiramisu program.
