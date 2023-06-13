@@ -50,13 +50,16 @@ class TiramisuAction:
         # The type of the action
         self.type = type
         # The tiramisu code that represents the action
+        self.tiramisu_optim_str = ""
+        # The str representation of the action
+        self.str_representation = ""
 
-    def get_tiramisu_optim_str(self, tiramisu_tree: TiramisuTree) -> str:
+    def set_string_representations(self, tiramisu_tree: TiramisuTree) -> str:
         """Convert the optimization command into Tiramisu code.
         Returns:
             str: The tiramisu snippet that represents the optimization command.
         """
-        return ""
+        raise NotImplementedError
 
     #     if self.type == ActionType.INTERCHANGE:
     #         interchange_str = (

@@ -83,23 +83,70 @@ if __name__ == "__main__":
     #         print(schedule.is_legal())
     #         print("\n\n")
 
-    # Skewing example
+    # # Skewing example
 
-    skewing_program = test_utils.skewing_example()
+    # skewing_program = test_utils.skewing_example()
 
-    print(skewing_program)
+    # print(skewing_program)
 
-    print(tiramisu_actions.Skewing.get_candidates(skewing_program.tree))
+    # par_schedule = Schedule(skewing_program)
 
-    print(skewing_program.tree)
+    # par_schedule.add_optimization(Parallelization([0], ["comp00"]))
 
-    factors = tiramisu_actions.Skewing.get_factors(
-        loops=["i0", "i1"], current_schedule=[], tiramisu_program=skewing_program
+    # print(par_schedule)
+
+    # print(par_schedule.is_legal())
+
+    # print(tiramisu_actions.Skewing.get_candidates(skewing_program.tree))
+
+    # print(skewing_program.tree)
+
+    # factors = tiramisu_actions.Skewing.get_factors(
+    #     loops=["i0", "i1"], current_schedule=[], tiramisu_program=skewing_program
+    # )
+
+    # schedule = Schedule(skewing_program)
+    # params = ["i0", "i1"] + ([str(factor) for factor in factors])
+    # schedule.add_optimization(tiramisu_actions.Skewing(params=params, comps=["comp00"]))
+    # print(schedule)
+    # print(schedule.is_legal())
+
+    # Reversal example
+
+    reversal_program = test_utils.reversal_sample()
+
+    print(reversal_program)
+
+    print(reversal_program.tree)
+
+    print(tiramisu_actions.Reversal.get_candidates(reversal_program.tree))
+
+    par_schedule = Schedule(reversal_program)
+    par_schedule.add_optimization(Parallelization([0], ["comp00"]))
+    print(par_schedule)
+
+    print(par_schedule.is_legal())
+
+    # print(par_schedule.apply_schedule(nb_exec_tiems=10))
+
+    schedule = Schedule(reversal_program)
+
+    schedule.add_optimization(
+        tiramisu_actions.Reversal(params=["i1"], comps=["comp00"])
+    )
+    print(schedule)
+
+    print(schedule.is_legal())
+
+    print(schedule.apply_schedule(nb_exec_tiems=10))
+
+    schedule.add_optimization(
+        tiramisu_actions.Interchange(params=["i0", "i1"], comps=["comp00"])
     )
 
-    schedule = Schedule(skewing_program)
-    params = ["i0", "i1"] + ([str(factor) for factor in factors])
-    schedule.add_optimization(tiramisu_actions.Skewing(params=params, comps=["comp00"]))
+    schedule.add_optimization(
+        tiramisu_actions.Parallelization(params=[0], comps=["comp00"])
+    )
     print(schedule)
     print(schedule.is_legal())
     print(schedule.apply_schedule(nb_exec_tiems=10))

@@ -24,15 +24,18 @@ class Skewing(TiramisuAction):
 
         super().__init__(type=TiramisuActionType.SKEWING, params=params, comps=comps)
 
-    def get_tiramisu_optim_str(self, tiramisu_tree: TiramisuTree):
-        tiramisu_optim_str = ""
+    def set_string_representations(self, tiramisu_tree: TiramisuTree):
+        self.tiramisu_optim_str = ""
         levels_with_factors = [
             str(tiramisu_tree.iterators[param].level) if index < 2 else str(param)
             for index, param in enumerate(self.params)
         ]
         for comp in self.comps:
-            tiramisu_optim_str += f"{comp}.skew({', '.join(levels_with_factors)});\n\t"
-        return tiramisu_optim_str
+            self.tiramisu_optim_str += (
+                f"{comp}.skew({', '.join(levels_with_factors)});\n\t"
+            )
+
+        self.str_representation = f"S(L{levels_with_factors[0]},L{levels_with_factors[1]},{levels_with_factors[2]},{levels_with_factors[3]})"
 
     @classmethod
     def get_candidates(cls, program_tree: TiramisuTree) -> Dict:

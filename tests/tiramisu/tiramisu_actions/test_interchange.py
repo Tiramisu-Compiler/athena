@@ -1,3 +1,4 @@
+from athena.tiramisu.schedule import Schedule
 from athena.tiramisu.tiramisu_actions.interchange import Interchange
 from athena.utils.config import BaseConfig
 from tests.utils import interchange_example
@@ -9,14 +10,13 @@ def test_interchange_init():
     assert interchange.comps == ["comp00"]
 
 
-def test_get_tiramisu_optim_str():
+def test_set_string_representations():
     BaseConfig.init()
     sample = interchange_example()
     interchange = Interchange(["i0", "i1"], ["comp00"])
-    assert (
-        interchange.get_tiramisu_optim_str(sample.tree)
-        == "comp00.interchange(0,1);\n\t"
-    )
+    schedule = Schedule(sample)
+    schedule.add_optimization(interchange)
+    assert interchange.tiramisu_optim_str == "comp00.interchange(0,1);\n\t"
 
 
 def test_get_candidates():

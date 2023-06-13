@@ -26,9 +26,12 @@ class Schedule:
         self.tiramisu_program = tiramisu_program
         self.optims_list: List[TiramisuAction] = []
         self.tree = deepcopy(tiramisu_program.tree)
+        self.legality: bool | None = None
 
     def add_optimization(self, optim_cmd: TiramisuAction) -> None:
         self.optims_list.append(optim_cmd)
+
+        optim_cmd.set_string_representations(self.tree)
 
         if optim_cmd.is_interchange():
             self.tree.interchange(optim_cmd.params[0], optim_cmd.params[1])
@@ -36,28 +39,26 @@ class Schedule:
     def pop_optimization(self) -> TiramisuAction:
         return self.optims_list.pop()
 
-    def apply_schedule(
-        self, tiramisu_program: TiramisuProgram | None = None, nb_exec_tiems=1
-    ) -> List[float]:
+    def apply_schedule(self, nb_exec_tiems=1) -> List[float]:
         """
         Applies the schedule to the Tiramisu program.
 
         Parameters
         ----------
-        `tiramisu_program` : TiramisuProgram
-            The Tiramisu program to which the schedule will be applied. If None, the schedule will be applied to the Tiramisu program passed to the constructor.
         `nb_exec_times` : int
             The number of times the Tiramisu program will be executed after applying the schedule.
         Returns
         -------
         The execution time of the Tiramisu program after applying the schedule.
         """
-        if tiramisu_program is None:
-            tiramisu_prog = self.tiramisu_program
-        else:
-            tiramisu_prog = tiramisu_program
+        if self.legality is None:
+            self.is_legal()
+
+        if not self.legality:
+            raise Exception("Schedule is not legal")
+
         return CompilingService.get_cpu_exec_times(
-            tiramisu_prog, self.optims_list, nb_exec_tiems
+            self.tiramisu_program, self.optims_list, nb_exec_tiems
         )
 
     def is_legal(self) -> bool:
@@ -68,9 +69,10 @@ class Schedule:
         -------
         Boolean indicating if the schedule is legal.
         """
-        return CompilingService.compile_legality(
+        self.legality = CompilingService.compile_legality(
             self.tiramisu_program, self.optims_list
         )
+        return self.legality
 
     def __str__(self) -> str:
         comp_names = list(
@@ -104,35 +106,7 @@ class Schedule:
                 if name not in transformation.comps:
                     continue
 
-                if transformation.type == TiramisuActionType.INTERCHANGE:
-                    sched_str += (
-                        "I(L"
-                        + str(self.tree.iterators[transformation.params[0]].level)
-                        + ",L"
-                        + str(self.tree.iterators[transformation.params[1]].level)
-                        + ")"
-                    )
-
-                elif transformation.type == TiramisuActionType.REVERSAL:
-                    sched_str += f"R(L{str(transformation.params[0])})"
-
-                elif transformation.type == TiramisuActionType.SKEWING:
-                    sched_str += (
-                        "S(L"
-                        + str(transformation.params[0])
-                        + ",L"
-                        + str(transformation.params[1])
-                        + ","
-                        + str(transformation.params[2])
-                        + ","
-                        + str(transformation.params[3])
-                        + ")"
-                    )
-
-                elif transformation.type == TiramisuActionType.PARALLELIZATION:
-                    sched_str += "P(L" + str(transformation.params[0]) + ")"
-
-                elif transformation.type == TiramisuActionType.TILING:
+                if transformation.type == TiramisuActionType.TILING:
                     # T2
                     if len(transformation.params) == 4:
                         first_dim_index = transformation.params[0]
@@ -180,6 +154,8 @@ class Schedule:
                     sched_str += (
                         "U(L" + str(dim_index) + "," + str(unrolling_factor) + ")"
                     )
+                else:
+                    sched_str += transformation.str_representation
 
         return sched_str
 

@@ -24,13 +24,20 @@ class Interchange(TiramisuAction):
             type=TiramisuActionType.INTERCHANGE, params=params, comps=comps
         )
 
-    def get_tiramisu_optim_str(self, tiramisu_tree: TiramisuTree):
-        tiramisu_optim_str = ""
+    def set_string_representations(self, tiramisu_tree: TiramisuTree) -> str:
+        self.tiramisu_optim_str = ""
         levels = [tiramisu_tree.iterators[param].level for param in self.params]
         for comp in self.comps:
-            tiramisu_optim_str += f"{comp}.interchange({levels[0]},{levels[1]});\n\t"
-
-        return tiramisu_optim_str
+            self.tiramisu_optim_str += (
+                f"{comp}.interchange({levels[0]},{levels[1]});\n\t"
+            )
+        self.str_representation = (
+            "I(L"
+            + str(tiramisu_tree.iterators[self.params[0]].level)
+            + ",L"
+            + str(tiramisu_tree.iterators[self.params[1]].level)
+            + ")"
+        )
 
     @classmethod
     def get_candidates(cls, program_tree: TiramisuTree) -> Dict:

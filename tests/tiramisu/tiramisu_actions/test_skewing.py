@@ -1,3 +1,4 @@
+from athena.tiramisu.schedule import Schedule
 from athena.tiramisu.tiramisu_actions.skewing import Skewing
 from athena.utils.config import BaseConfig
 import tests.utils as test_utils
@@ -9,11 +10,13 @@ def test_skewing_init():
     assert skewing.comps == ["comp00"]
 
 
-def test_get_tiramisu_optim_str():
+def test_set_string_representations():
     BaseConfig.init()
     sample = test_utils.skewing_example()
     skewing = Skewing(["i0", "i1", 1, 1], ["comp00"])
-    assert skewing.get_tiramisu_optim_str(sample.tree) == "comp00.skew(0, 1, 1, 1);\n\t"
+    schedule = Schedule(sample)
+    schedule.add_optimization(skewing)
+    assert skewing.tiramisu_optim_str == "comp00.skew(0, 1, 1, 1);\n\t"
 
 
 def test_get_candidates():

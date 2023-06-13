@@ -23,12 +23,12 @@ class Parallelization(TiramisuAction):
             type=TiramisuActionType.PARALLELIZATION, params=params, comps=comps
         )
 
-    def get_tiramisu_optim_str(self, tiramisu_tree: TiramisuTree):
-        tiramisu_optim_str = (
+    def set_string_representations(self, tiramisu_tree: TiramisuTree):
+        self.tiramisu_optim_str = (
             f"\n\t{self.comps[0]}.tag_parallel_level({self.params[0]});"
         )
 
-        return tiramisu_optim_str
+        self.str_representation = "P(L" + str(self.params[0]) + ")"
 
     @classmethod
     def _get_candidates_of_node(

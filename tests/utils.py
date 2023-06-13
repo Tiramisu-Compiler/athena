@@ -136,3 +136,20 @@ def skewing_example() -> TiramisuProgram:
     tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
 
     return tiramisu_func
+
+
+def reversal_sample() -> TiramisuProgram:
+    test_data, test_cpps, test_wrappers = load_test_data()
+
+    tiramisu_func = TiramisuProgram.from_dict(
+        name="function824914",
+        data=test_data["function824914"],
+        original_str=test_cpps["function824914"],
+        wrappers=test_wrappers["function824914"],
+    )
+    if tiramisu_func.annotations is None:
+        raise ValueError("Annotations not found")
+
+    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
+
+    return tiramisu_func
