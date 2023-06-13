@@ -145,7 +145,7 @@ class TiramisuAction:
         return self.type == TiramisuActionType.REVERSAL
 
     def get_candidates(self, program_tree: TiramisuTree) -> list:
-        pass
+        raise NotImplementedError
 
     def __str__(self) -> str:
         return f"Action(type={self.type}, params={self.params}, comps={self.comps})"

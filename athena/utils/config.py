@@ -60,10 +60,10 @@ class BaseConfig:
     base_config = None
 
     @classmethod
-    def init(cls, config_yaml="config.yaml"):
+    def init(cls, config_yaml="config.yaml", logging_level=logging.DEBUG):
         parsed_yaml_dict = parse_yaml_file(read_yaml_file(config_yaml))
         BaseConfig.base_config = dict_to_config(parsed_yaml_dict)
         logging.basicConfig(
-            level=logging.INFO,
+            level=logging_level,
             format="|%(asctime)s|%(levelname)s| %(message)s",
         )

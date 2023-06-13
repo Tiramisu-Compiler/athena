@@ -51,6 +51,8 @@ class CompilingService:
             tiramisu_program=tiramisu_program, optims_list=optims_list
         )
 
+        logging.debug("Legality Code: \n" + cpp_code)
+
         result = cls.run_cpp_code(cpp_code=cpp_code, output_path=output_path)
 
         if result not in ["0", "1"]:
@@ -82,10 +84,10 @@ class CompilingService:
         comps = tiramisu_program.comps
         first_comp = tiramisu_program.comps[0]
         # Add code to the original file to get legality result
-        legality_check_lines = """\n\tprepare_schedules_for_legality_checks();\n\tperforme_full_dependency_analysis();\n\tbool is_legal=true;"""
+        legality_check_lines = """\n\tprepare_schedules_for_legality_checks();\n\tperforme_full_dependency_analysis();\n\tbool is_legal=true;\n"""
         for optim in optims_list:
             if optim.is_parallelization():
-                legality_check_lines += f"\n\tis_legal &= loop_parallelization_is_legal({optim.params[0]}, {{&{first_comp}}});\n"
+                legality_check_lines += f"\n\tis_legal &= loop_parallelization_is_legal({optim.params[0]}, {{&{first_comp}}});"
             # elif optim.is_unrolling():
             #     for branch in schedule_object.branches:
             #         comps = branch["comps"]
@@ -95,9 +97,9 @@ class CompilingService:
             legality_check_lines += optim.tiramisu_optim_str + "\n"
 
         legality_check_lines += """
-            prepare_schedules_for_legality_checks();
-            is_legal &= check_legality_of_function();   
-            std::cout << is_legal;
+        prepare_schedules_for_legality_checks();
+        is_legal &= check_legality_of_function();   
+        std::cout << is_legal;
             """
         # Paste the lines responsable of checking legality of schedule in the cpp file
         cpp_code = tiramisu_program.original_str.replace(
@@ -180,7 +182,7 @@ class CompilingService:
                     output_path, output_path
                 ),
                 # Run the program
-                "{}.out".format(output_path),
+                "{}.out &&".format(output_path),
                 # Clean generated files
                 "rm {}*".format(output_path),
             ]
@@ -195,7 +197,7 @@ class CompilingService:
                     output_path, output_path
                 ),
                 # Run the program
-                "{}.out".format(output_path),
+                f"{output_path}.out &&",
                 # Clean generated files
                 "rm {}*".format(output_path),
             ]
@@ -212,11 +214,12 @@ class CompilingService:
             if compiler.stdout:
                 return compiler.stdout
             else:
+                print(compiler.stderr)
                 raise Exception("Compiler returned no output")
 
         except subprocess.CalledProcessError as e:
-            logging.error("Process terminated with error code", e.returncode)
-            logging.error("Error output:", e.stderr)
+            logging.error(f"Process terminated with error code: {e.returncode}")
+            logging.error(f"Error output: {e.stderr}")
             raise e
         except Exception as e:
             raise e
@@ -477,6 +480,9 @@ class CompilingService:
                 shell=True,
                 check=True,
             )
+
+            halide_repr = compiler.stdout
+            logging.debug(f"Generated Halide code:\n{halide_repr}")
             # run the wrapper and get the execution times
             compiler = subprocess.run(
                 [" ; ".join(env_vars + run_script)],

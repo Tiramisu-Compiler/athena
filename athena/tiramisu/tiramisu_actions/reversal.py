@@ -26,7 +26,7 @@ class Reversal(TiramisuAction):
         self.tiramisu_optim_str = ""
         level = tiramisu_tree.iterators[self.params[0]].level
         for comp in self.comps:
-            self.tiramisu_optim_str += f"{comp}.loop_reversal({level});\n\t"
+            self.tiramisu_optim_str += f"\n\t{comp}.loop_reversal({level});"
 
         self.str_representation = "R(L" + str(level) + ")"
 

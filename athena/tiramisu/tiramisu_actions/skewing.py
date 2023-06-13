@@ -32,7 +32,7 @@ class Skewing(TiramisuAction):
         ]
         for comp in self.comps:
             self.tiramisu_optim_str += (
-                f"{comp}.skew({', '.join(levels_with_factors)});\n\t"
+                f"\n\t{comp}.skew({', '.join(levels_with_factors)});"
             )
 
         self.str_representation = f"S(L{levels_with_factors[0]},L{levels_with_factors[1]},{levels_with_factors[2]},{levels_with_factors[3]})"

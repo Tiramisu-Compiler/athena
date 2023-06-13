@@ -3,3 +3,4 @@ from .parallelization import Parallelization
 from .interchange import Interchange
 from .skewing import Skewing
 from .reversal import Reversal
+from .unrolling import Unrolling

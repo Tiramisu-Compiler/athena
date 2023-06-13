@@ -16,7 +16,7 @@ def test_set_string_representations():
     skewing = Skewing(["i0", "i1", 1, 1], ["comp00"])
     schedule = Schedule(sample)
     schedule.add_optimization(skewing)
-    assert skewing.tiramisu_optim_str == "comp00.skew(0, 1, 1, 1);\n\t"
+    assert skewing.tiramisu_optim_str == "\n\tcomp00.skew(0, 1, 1, 1);"
 
 
 def test_get_candidates():
@@ -24,6 +24,9 @@ def test_get_candidates():
     sample = test_utils.skewing_example()
     candidates = Skewing.get_candidates(sample.tree)
     assert candidates == {"i0": [("i0", "i1"), ("i1", "i2")]}
+
+    candidates = Skewing.get_candidates(test_utils.tree_test_sample())
+    assert candidates == {"root": [("j", "k")]}
 
 
 def test_get_factors():

@@ -17,7 +17,7 @@ import tests.utils as test_utils
 
 
 if __name__ == "__main__":
-    BaseConfig.init()
+    BaseConfig.init(logging_level=logging.DEBUG)
 
     # # Candidate sections
     # tiramisu_tree = test_utils.tree_test_sample()
@@ -111,34 +111,76 @@ if __name__ == "__main__":
     # print(schedule)
     # print(schedule.is_legal())
 
-    # Reversal example
+    # # Reversal example
 
-    reversal_program = test_utils.reversal_sample()
+    # reversal_program = test_utils.reversal_sample()
 
-    print(reversal_program)
+    # print(reversal_program)
 
-    print(reversal_program.tree)
+    # print(reversal_program.tree)
 
-    print(tiramisu_actions.Reversal.get_candidates(reversal_program.tree))
+    # print(tiramisu_actions.Reversal.get_candidates(reversal_program.tree))
 
-    par_schedule = Schedule(reversal_program)
-    par_schedule.add_optimization(Parallelization([0], ["comp00"]))
+    # par_schedule = Schedule(reversal_program)
+    # par_schedule.add_optimization(Parallelization([0], ["comp00"]))
+    # print(par_schedule)
+
+    # print(par_schedule.is_legal())
+
+    # # print(par_schedule.apply_schedule(nb_exec_tiems=10))
+
+    # schedule = Schedule(reversal_program)
+
+    # schedule.add_optimization(
+    #     tiramisu_actions.Reversal(params=["i1"], comps=["comp00"])
+    # )
+    # print(schedule)
+
+    # print(schedule.is_legal())
+
+    # print(schedule.apply_schedule(nb_exec_tiems=10))
+
+    # schedule.add_optimization(
+    #     tiramisu_actions.Interchange(params=["i0", "i1"], comps=["comp00"])
+    # )
+
+    # schedule.add_optimization(
+    #     tiramisu_actions.Parallelization(params=[0], comps=["comp00"])
+    # )
+    # print(schedule)
+    # print(schedule.is_legal())
+    # print(schedule.apply_schedule(nb_exec_tiems=10))
+
+    # Unrolling example
+
+    unrolling_program = test_utils.unrolling_sample()
+
+    print(unrolling_program)
+
+    print(unrolling_program.tree)
+
+    print(tiramisu_actions.Unrolling.get_candidates(unrolling_program.tree))
+
+    par_schedule = Schedule(unrolling_program)
+
+    par_schedule.add_optimization(
+        tiramisu_actions.Parallelization(params=[0], comps=["comp00"])
+    )
+
     print(par_schedule)
 
     print(par_schedule.is_legal())
 
     # print(par_schedule.apply_schedule(nb_exec_tiems=10))
 
-    schedule = Schedule(reversal_program)
+    schedule = Schedule(unrolling_program)
 
     schedule.add_optimization(
-        tiramisu_actions.Reversal(params=["i1"], comps=["comp00"])
+        tiramisu_actions.Unrolling(params=["i1", 4], comps=["comp00"])
     )
     print(schedule)
 
     print(schedule.is_legal())
-
-    print(schedule.apply_schedule(nb_exec_tiems=10))
 
     schedule.add_optimization(
         tiramisu_actions.Interchange(params=["i0", "i1"], comps=["comp00"])
@@ -147,6 +189,27 @@ if __name__ == "__main__":
     schedule.add_optimization(
         tiramisu_actions.Parallelization(params=[0], comps=["comp00"])
     )
+
     print(schedule)
+
     print(schedule.is_legal())
+
+    print(schedule.apply_schedule(nb_exec_tiems=10))
+
+    print("Interchange with parallelization")
+
+    schedule = Schedule(unrolling_program)
+
+    schedule.add_optimization(
+        tiramisu_actions.Interchange(params=["i0", "i1"], comps=["comp00"])
+    )
+
+    schedule.add_optimization(
+        tiramisu_actions.Parallelization(params=[0], comps=["comp00"])
+    )
+
+    print(schedule)
+
+    print(schedule.is_legal())
+
     print(schedule.apply_schedule(nb_exec_tiems=10))

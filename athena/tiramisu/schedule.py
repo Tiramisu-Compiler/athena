@@ -148,12 +148,6 @@ class Schedule:
                             + ")"
                         )
 
-                elif transformation.type == TiramisuActionType.UNROLLING:
-                    dim_index = transformation.params[name][0]
-                    unrolling_factor = transformation.params[name][1]
-                    sched_str += (
-                        "U(L" + str(dim_index) + "," + str(unrolling_factor) + ")"
-                    )
                 else:
                     sched_str += transformation.str_representation
 

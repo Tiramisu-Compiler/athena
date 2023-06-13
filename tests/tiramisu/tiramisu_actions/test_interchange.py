@@ -16,7 +16,7 @@ def test_set_string_representations():
     interchange = Interchange(["i0", "i1"], ["comp00"])
     schedule = Schedule(sample)
     schedule.add_optimization(interchange)
-    assert interchange.tiramisu_optim_str == "comp00.interchange(0,1);\n\t"
+    assert interchange.tiramisu_optim_str == "\n\tcomp00.interchange(0,1);"
 
 
 def test_get_candidates():

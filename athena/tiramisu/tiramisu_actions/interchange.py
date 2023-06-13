@@ -24,12 +24,12 @@ class Interchange(TiramisuAction):
             type=TiramisuActionType.INTERCHANGE, params=params, comps=comps
         )
 
-    def set_string_representations(self, tiramisu_tree: TiramisuTree) -> str:
+    def set_string_representations(self, tiramisu_tree: TiramisuTree):
         self.tiramisu_optim_str = ""
         levels = [tiramisu_tree.iterators[param].level for param in self.params]
         for comp in self.comps:
             self.tiramisu_optim_str += (
-                f"{comp}.interchange({levels[0]},{levels[1]});\n\t"
+                f"\n\t{comp}.interchange({levels[0]},{levels[1]});"
             )
         self.str_representation = (
             "I(L"

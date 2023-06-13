@@ -153,3 +153,20 @@ def reversal_sample() -> TiramisuProgram:
     tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
 
     return tiramisu_func
+
+
+def unrolling_sample() -> TiramisuProgram:
+    test_data, test_cpps, test_wrappers = load_test_data()
+
+    tiramisu_func = TiramisuProgram.from_dict(
+        name="function552581",
+        data=test_data["function552581"],
+        original_str=test_cpps["function552581"],
+        wrappers=test_wrappers["function552581"],
+    )
+    if tiramisu_func.annotations is None:
+        raise ValueError("Annotations not found")
+
+    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
+
+    return tiramisu_func
