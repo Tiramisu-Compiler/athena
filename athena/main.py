@@ -214,22 +214,48 @@ if __name__ == "__main__":
 
     # print(schedule.apply_schedule(nb_exec_tiems=10))
 
-    # Tiling example
+    # # Tiling2D example
 
-    tiling_program = test_utils.tiling_2d_sample()
+    # tiling_program = test_utils.tiling_2d_sample()
+
+    # print(tiling_program)
+
+    # print(tiling_program.tree)
+
+    # print(tiramisu_actions.Tiling2D.get_candidates(tiling_program.tree))
+
+    # schedule = Schedule(tiling_program)
+
+    # print(schedule.apply_schedule(nb_exec_tiems=10))
+
+    # schedule.add_optimization(
+    #     tiramisu_actions.Tiling2D(params=["i0", "i1", 32, 32], comps=["comp00"])
+    # )
+
+    # print(schedule)
+
+    # print(schedule.is_legal())
+
+    # print(schedule.apply_schedule(nb_exec_tiems=10))
+
+    # Tiling3D example
+
+    tiling_program = test_utils.tiling_3d_sample()
 
     print(tiling_program)
 
     print(tiling_program.tree)
 
-    print(tiramisu_actions.Tiling2D.get_candidates(tiling_program.tree))
+    print(tiramisu_actions.Tiling3D.get_candidates(tiling_program.tree))
 
     schedule = Schedule(tiling_program)
 
     print(schedule.apply_schedule(nb_exec_tiems=10))
 
     schedule.add_optimization(
-        tiramisu_actions.Tiling2D(params=["i0", "i1", 32, 32], comps=["comp00"])
+        tiramisu_actions.Tiling3D(
+            params=["i0", "i1", "i2", 32, 32, 32], comps=["comp00"]
+        )
     )
 
     print(schedule)

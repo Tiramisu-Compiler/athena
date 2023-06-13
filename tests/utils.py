@@ -187,3 +187,67 @@ def tiling_2d_sample() -> TiramisuProgram:
     tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
 
     return tiramisu_func
+
+
+def tiling_3d_sample() -> TiramisuProgram:
+    test_data, test_cpps, test_wrappers = load_test_data()
+
+    tiramisu_func = TiramisuProgram.from_dict(
+        name="function608722",
+        data=test_data["function608722"],
+        original_str=test_cpps["function608722"],
+        wrappers=test_wrappers["function608722"],
+    )
+    if tiramisu_func.annotations is None:
+        raise ValueError("Annotations not found")
+
+    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
+
+    return tiramisu_func
+
+
+def tiling_3d_tree_sample() -> TiramisuTree:
+    tiramisu_tree = TiramisuTree()
+    tiramisu_tree.add_root("root")
+    tiramisu_tree.iterators = {
+        "root": IteratorNode(
+            name="root",
+            parent_iterator=None,
+            lower_bound=0,
+            upper_bound=10,
+            child_iterators=["j"],
+            computations_list=[],
+            level=0,
+        ),
+        "j": IteratorNode(
+            name="j",
+            parent_iterator="root",
+            lower_bound=0,
+            upper_bound=10,
+            child_iterators=["k"],
+            computations_list=[],
+            level=1,
+        ),
+        "k": IteratorNode(
+            name="k",
+            parent_iterator="j",
+            lower_bound=0,
+            upper_bound=10,
+            child_iterators=["l"],
+            computations_list=[],
+            level=2,
+        ),
+        "l": IteratorNode(
+            name="l",
+            parent_iterator="k",
+            lower_bound=0,
+            upper_bound=10,
+            child_iterators=[],
+            computations_list=["comp03"],
+            level=3,
+        ),
+    }
+    tiramisu_tree.computations = [
+        "comp03",
+    ]
+    return tiramisu_tree
