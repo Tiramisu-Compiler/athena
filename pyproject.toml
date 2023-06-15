@@ -17,3 +17,11 @@ coverage = "^7.2.7"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.coverage.run]
+branch = true
+source = ["athena"]
+
+[tool.coverage.report]
+# omit main.py from coverage report
+omit = ["athena/main.py"]

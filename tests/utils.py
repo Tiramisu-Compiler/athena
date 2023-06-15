@@ -251,3 +251,75 @@ def tiling_3d_tree_sample() -> TiramisuTree:
         "comp03",
     ]
     return tiramisu_tree
+
+
+def fusion_sample():
+    tiramisu_prog = TiramisuProgram()
+
+    tiramisu_tree = TiramisuTree()
+    tiramisu_tree.add_root("root")
+    tiramisu_tree.iterators = {
+        "root": IteratorNode(
+            name="root",
+            parent_iterator=None,
+            lower_bound=0,
+            upper_bound=10,
+            child_iterators=["i", "j"],
+            computations_list=[],
+            level=0,
+        ),
+        "i": IteratorNode(
+            name="i",
+            parent_iterator="root",
+            lower_bound=0,
+            upper_bound=10,
+            child_iterators=[],
+            computations_list=["comp01"],
+            level=1,
+        ),
+        "j": IteratorNode(
+            name="j",
+            parent_iterator="root",
+            lower_bound=0,
+            upper_bound=10,
+            child_iterators=["k"],
+            computations_list=[],
+            level=1,
+        ),
+        "k": IteratorNode(
+            name="k",
+            parent_iterator="j",
+            lower_bound=0,
+            upper_bound=10,
+            child_iterators=["l", "m"],
+            computations_list=[],
+            level=2,
+        ),
+        "l": IteratorNode(
+            name="l",
+            parent_iterator="k",
+            lower_bound=0,
+            upper_bound=10,
+            child_iterators=[],
+            computations_list=["comp03"],
+            level=3,
+        ),
+        "m": IteratorNode(
+            name="m",
+            parent_iterator="k",
+            lower_bound=0,
+            upper_bound=10,
+            child_iterators=[],
+            computations_list=["comp04"],
+            level=3,
+        ),
+    }
+    tiramisu_tree.computations = [
+        "comp01",
+        # "comp02",
+        "comp03",
+        "comp04",
+    ]
+
+    tiramisu_prog.tree = tiramisu_tree
+    return tiramisu_prog

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict
 
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 
@@ -44,7 +44,12 @@ class TiramisuAction:
 
     """
 
-    def __init__(self, type: TiramisuActionType, params: list | dict, comps: list):
+    def __init__(
+        self,
+        type: TiramisuActionType,
+        params: list | dict,
+        comps: List[str],
+    ):
         self.params = params
         # A list of concerned computations of the actions
         self.comps = comps

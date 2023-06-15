@@ -72,3 +72,31 @@ def test_interchange():
     assert t_tree.iterators["root"].child_iterators == ["k"]
 
     assert t_tree.iterators["k"].parent_iterator == "root"
+
+
+def test_get_root_of_node():
+    t_tree = tree_test_sample()
+
+    assert t_tree.get_root_of_node("i") == "root"
+    assert t_tree.get_root_of_node("j") == "root"
+    assert t_tree.get_root_of_node("m") == "root"
+
+
+def test_get_iterator_node():
+    t_tree = tree_test_sample()
+
+    assert t_tree.get_iterator_node("i").name == "i"
+    assert t_tree.get_iterator_node("l").name == "l"
+
+
+def test_get_iterator_levels():
+    t_tree = tree_test_sample()
+
+    assert t_tree.get_iterator_levels(["root", "i", "j", "k", "l", "m"]) == [
+        0,
+        1,
+        1,
+        2,
+        3,
+        3,
+    ]

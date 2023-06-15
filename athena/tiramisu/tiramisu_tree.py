@@ -79,17 +79,6 @@ class TiramisuTree:
 
         return tiramisu_space
 
-    def __str__(self) -> str:
-        # return f"Roots: {self.roots}\nComputations: {self.computations}\nIterators: {self.iterators}"
-        representation = ""
-
-        for root in self.roots:
-            representation += "-> " + repr(self.iterators[root]) + "\n"
-            # representation += "-> " + root + "\n"
-            representation += self._get_subtree_representation(root)
-
-        return representation
-
     def _get_subtree_representation(self, node_name: str) -> str:
         representation = ""
         for node in self.iterators[node_name].child_iterators:
@@ -106,9 +95,6 @@ class TiramisuTree:
                 )
             representation += self._get_subtree_representation(node)
         return representation
-
-    def __repr__(self) -> str:
-        return self.__str__()
 
     def get_candidate_sections(self) -> Dict[str, List[List[str]]]:
         """
@@ -264,3 +250,35 @@ class TiramisuTree:
         This function returns the levels of the iterators in the computation
         """
         return [self.iterators[iterator].level for iterator in iterators_list]
+
+    def get_iterator_node(self, iterator_name: str) -> IteratorNode:
+        """
+        This function returns the iterator node corresponding to the iterator name
+        """
+        return self.iterators[iterator_name]
+
+    def get_root_of_node(self, iterator_name: str) -> str:
+        # Get the root node of the iterator
+        current_node_name = iterator_name
+
+        while self.iterators[current_node_name].parent_iterator:  # type: ignore
+            current_node_name = self.iterators[current_node_name].parent_iterator  # type: ignore
+
+        if current_node_name is None:
+            raise ValueError("The iterator has no root node")
+
+        return current_node_name
+
+    def __str__(self) -> str:
+        # return f"Roots: {self.roots}\nComputations: {self.computations}\nIterators: {self.iterators}"
+        representation = ""
+
+        for root in self.roots:
+            representation += "-> " + repr(self.iterators[root]) + "\n"
+            # representation += "-> " + root + "\n"
+            representation += self._get_subtree_representation(root)
+
+        return representation
+
+    def __repr__(self) -> str:
+        return self.__str__()

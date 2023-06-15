@@ -22,16 +22,25 @@ class Schedule:
         The list of optimizations to be applied to the Tiramisu program.
     """
 
-    def __init__(self, tiramisu_program: TiramisuProgram) -> None:
+    def __init__(self, tiramisu_program: TiramisuProgram | None = None) -> None:
         self.tiramisu_program = tiramisu_program
         self.optims_list: List[TiramisuAction] = []
-        self.tree = deepcopy(tiramisu_program.tree)
+        if tiramisu_program:
+            self.tree = deepcopy(tiramisu_program.tree)
+        else:
+            self.tree = None
         self.legality: bool | None = None
 
+    def set_tiramisu_program(self, tiramisu_program: TiramisuProgram) -> None:
+        self.tiramisu_program = tiramisu_program
+        self.tree = deepcopy(tiramisu_program.tree)
+
     def add_optimization(self, optim_cmd: TiramisuAction) -> None:
-        self.optims_list.append(optim_cmd)
+        if self.tree is None:
+            raise Exception("No Tiramisu program to apply the schedule to")
 
         optim_cmd.set_string_representations(self.tree)
+        self.optims_list.append(optim_cmd)
 
         if optim_cmd.is_interchange():
             self.tree.interchange(optim_cmd.params[0], optim_cmd.params[1])
@@ -51,6 +60,9 @@ class Schedule:
         -------
         The execution time of the Tiramisu program after applying the schedule.
         """
+        if self.tiramisu_program is None:
+            raise Exception("No Tiramisu program to apply the schedule to")
+
         if self.legality is None and self.optims_list:
             self.is_legal()
 
@@ -69,6 +81,10 @@ class Schedule:
         -------
         Boolean indicating if the schedule is legal.
         """
+
+        if self.tiramisu_program is None:
+            raise Exception("No Tiramisu program to apply the schedule to")
+
         self.legality = CompilingService.compile_legality(
             self.tiramisu_program, self.optims_list
         )
