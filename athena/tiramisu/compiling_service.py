@@ -505,9 +505,9 @@ class CompilingService:
                 )
                 raise ScheduleExecutionCrashed("No output from schedule execution")
         except subprocess.CalledProcessError as e:
-            logging.error("Process terminated with error code", e.returncode)
-            logging.error("Error output:", e.stderr)
-            logging.error("Output:", e.stdout)
+            logging.error(f"Process terminated with error code: {e.returncode}")
+            logging.error(f"Error output: {e.stderr}")
+            logging.error(f"Output: {e.stdout}")
             raise ScheduleExecutionCrashed(
                 f"Schedule execution crashed: function: {tiramisu_program.name}, schedule: {optims_list}"
             )

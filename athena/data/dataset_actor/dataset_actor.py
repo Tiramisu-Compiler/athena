@@ -35,7 +35,6 @@ class DatasetActor:
                 config.seed,
                 config.saving_frequency,
                 training_mode,
-                config.wrappers_path,
             )
         elif config.dataset_format == DatasetFormat.HYBRID:
             self.dataset_service = HybridDataService(
@@ -46,7 +45,6 @@ class DatasetActor:
                 config.seed,
                 config.saving_frequency,
                 training_mode,
-                config.wrappers_path,
             )
         else:
             raise ValueError("Unknown dataset format")

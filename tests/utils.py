@@ -8,14 +8,12 @@ from athena.tiramisu.tiramisu_iterator_node import IteratorNode
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 
-def load_test_data() -> Tuple[dict, dict, dict]:
+def load_test_data() -> Tuple[dict, dict]:
     with open("_tmp/enabling_parallelism.pkl", "rb") as f:
         dataset = pickle.load(f)
     with open("_tmp/enabling_parallelism_cpps.pkl", "rb") as f:
         cpps = pickle.load(f)
-    with open("_tmp/enabling_parallelism_wrappers.pkl", "rb") as f:
-        wrappers = pickle.load(f)
-    return dataset, cpps, wrappers
+    return dataset, cpps
 
 
 def tree_test_sample():
@@ -89,8 +87,8 @@ def tree_test_sample():
 def benchmark_program_test_sample():
     tiramisu_func = TiramisuProgram.from_file(
         "_tmp/function_matmul_MEDIUM.cpp",
-        "_tmp/function_matmul_MEDIUM_wrapper.cpp",
-        "_tmp/function_matmul_MEDIUM_wrapper.h",
+        # "_tmp/function_matmul_MEDIUM_wrapper.cpp",
+        # "_tmp/function_matmul_MEDIUM_wrapper.h",
         # "_tmp/function_blur_MINI_generator.cpp",
         # "_tmp/function_blur_MINI_wrapper.cpp",
         # "_tmp/function_blur_MINI_wrapper.h",
@@ -105,13 +103,12 @@ def benchmark_program_test_sample():
 
 
 def interchange_example() -> TiramisuProgram:
-    test_data, test_cpps, test_wrappers = load_test_data()
+    test_data, test_cpps = load_test_data()
 
     tiramisu_func = TiramisuProgram.from_dict(
         name="function837782",
         data=test_data["function837782"],
         original_str=test_cpps["function837782"],
-        wrappers=test_wrappers["function837782"],
     )
     if tiramisu_func.annotations is None:
         raise ValueError("Annotations not found")
@@ -122,13 +119,12 @@ def interchange_example() -> TiramisuProgram:
 
 
 def skewing_example() -> TiramisuProgram:
-    test_data, test_cpps, test_wrappers = load_test_data()
+    test_data, test_cpps = load_test_data()
 
     tiramisu_func = TiramisuProgram.from_dict(
         name="function550013",
         data=test_data["function550013"],
         original_str=test_cpps["function550013"],
-        wrappers=test_wrappers["function550013"],
     )
     if tiramisu_func.annotations is None:
         raise ValueError("Annotations not found")
@@ -139,13 +135,12 @@ def skewing_example() -> TiramisuProgram:
 
 
 def reversal_sample() -> TiramisuProgram:
-    test_data, test_cpps, test_wrappers = load_test_data()
+    test_data, test_cpps = load_test_data()
 
     tiramisu_func = TiramisuProgram.from_dict(
         name="function824914",
         data=test_data["function824914"],
         original_str=test_cpps["function824914"],
-        wrappers=test_wrappers["function824914"],
     )
     if tiramisu_func.annotations is None:
         raise ValueError("Annotations not found")
@@ -156,13 +151,12 @@ def reversal_sample() -> TiramisuProgram:
 
 
 def unrolling_sample() -> TiramisuProgram:
-    test_data, test_cpps, test_wrappers = load_test_data()
+    test_data, test_cpps = load_test_data()
 
     tiramisu_func = TiramisuProgram.from_dict(
         name="function552581",
         data=test_data["function552581"],
         original_str=test_cpps["function552581"],
-        wrappers=test_wrappers["function552581"],
     )
     if tiramisu_func.annotations is None:
         raise ValueError("Annotations not found")
@@ -173,13 +167,12 @@ def unrolling_sample() -> TiramisuProgram:
 
 
 def tiling_2d_sample() -> TiramisuProgram:
-    test_data, test_cpps, test_wrappers = load_test_data()
+    test_data, test_cpps = load_test_data()
 
     tiramisu_func = TiramisuProgram.from_dict(
         name="function554520",
         data=test_data["function554520"],
         original_str=test_cpps["function554520"],
-        wrappers=test_wrappers["function554520"],
     )
     if tiramisu_func.annotations is None:
         raise ValueError("Annotations not found")
@@ -190,13 +183,12 @@ def tiling_2d_sample() -> TiramisuProgram:
 
 
 def tiling_3d_sample() -> TiramisuProgram:
-    test_data, test_cpps, test_wrappers = load_test_data()
+    test_data, test_cpps = load_test_data()
 
     tiramisu_func = TiramisuProgram.from_dict(
         name="function608722",
         data=test_data["function608722"],
         original_str=test_cpps["function608722"],
-        wrappers=test_wrappers["function608722"],
     )
     if tiramisu_func.annotations is None:
         raise ValueError("Annotations not found")
@@ -323,3 +315,32 @@ def fusion_sample():
 
     tiramisu_prog.tree = tiramisu_tree
     return tiramisu_prog
+
+
+def random_program_sample():
+    tiramisu_func = TiramisuProgram.from_file(
+        "_tmp/test.cpp",
+        # "_tmp/function_blur_MINI_generator.cpp",
+        # "_tmp/function_blur_MINI_wrapper.cpp",
+        # "_tmp/function_blur_MINI_wrapper.h",
+        load_annotations=True,
+    )
+
+    if tiramisu_func.annotations is None:
+        raise ValueError("Annotations not found")
+
+    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
+    return tiramisu_func
+
+
+def multiple_roots_sample():
+    tiramisu_func = TiramisuProgram.from_file(
+        "_tmp/function_gemver_MINI_generator.cpp",
+        load_annotations=True,
+    )
+
+    if tiramisu_func.annotations is None:
+        raise ValueError("Annotations not found")
+
+    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
+    return tiramisu_func

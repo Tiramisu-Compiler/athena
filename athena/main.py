@@ -17,7 +17,7 @@ import tests.utils as test_utils
 
 
 if __name__ == "__main__":
-    BaseConfig.init(logging_level=logging.DEBUG)
+    BaseConfig.init(logging_level=logging.ERROR)
 
     # # Candidate sections
     # tiramisu_tree = test_utils.tree_test_sample()
@@ -110,6 +110,7 @@ if __name__ == "__main__":
     # schedule.add_optimization(tiramisu_actions.Skewing(params=params, comps=["comp00"]))
     # print(schedule)
     # print(schedule.is_legal())
+    # print(schedule.apply_schedule(nb_exec_tiems=10))
 
     # # Reversal example
 
@@ -266,8 +267,8 @@ if __name__ == "__main__":
 
     # Fusion example
 
-    t_tree = test_utils.tree_test_sample()
+    t_tree = test_utils.multiple_roots_sample()
 
-    print(t_tree.get_root_of_node("l"))
+    print(t_tree)
 
-    print(tiramisu_actions.Fusion.get_candidates(t_tree))
+    print(t_tree.tree)

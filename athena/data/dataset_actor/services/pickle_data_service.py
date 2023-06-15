@@ -21,7 +21,6 @@ class PickleDataService(BaseDataService):
         seed: int = None,
         saving_frequency: int = 10000,
         training_mode: Literal["model", "cpu"] = "model",
-        wrappers_path: str = None,
     ):
         super().__init__(
             dataset_path=dataset_path,
@@ -30,11 +29,9 @@ class PickleDataService(BaseDataService):
             seed=seed,
             saving_frequency=saving_frequency,
             training_mode=training_mode,
-            wrappers_path=wrappers_path,
         )
         self.cpps_path = cpps_path
         self.cpps = {}
-        self.wrappers = {}
 
         logging.info(
             f"reading dataset in full pkl format: dataset pkl from {self.dataset_path} and cpps pkl from {self.cpps_path}"
@@ -46,10 +43,6 @@ class PickleDataService(BaseDataService):
 
         with open(self.cpps_path, "rb") as f:
             self.cpps = pickle.load(f)
-
-        logging.info(f"reading wrappers pkl from {self.wrappers_path}")
-        with open(self.wrappers_path, "rb") as f:
-            self.wrappers = pickle.load(f)
 
         # Shuffle the dataset (can be used with random sampling turned off to get a random order)
         if self.shuffle:
@@ -79,7 +72,6 @@ class PickleDataService(BaseDataService):
             function_name,
             self.dataset[function_name],
             self.cpps[function_name],
-            self.wrappers[function_name],
         )
 
     # Returns function data and function cpps by name
@@ -88,5 +80,4 @@ class PickleDataService(BaseDataService):
             function_name,
             self.dataset[function_name],
             self.cpps[function_name],
-            self.wrappers[function_name],
         )

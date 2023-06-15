@@ -1,4 +1,5 @@
 import json
+import random
 import re
 from pathlib import Path
 from typing import Dict, List
@@ -29,8 +30,6 @@ class TiramisuProgram:
         The solver results of the schedules of the function
     `original_str`: str
         The original code string of the function
-    `wrappers`: dict
-        The wrappers of the function
     `initial_execution_times`: dict
         The initial execution times of the function
     `current_machine_initial_execution_time`: float
@@ -59,7 +58,6 @@ class TiramisuProgram:
         name: str,
         data: dict,
         original_str: str | None = None,
-        wrappers: dict | None = None,
         load_code_lines: bool = True,
     ) -> "TiramisuProgram":
         # Initiate an instante of the TiramisuProgram class
@@ -80,9 +78,10 @@ class TiramisuProgram:
         if load_code_lines:
             tiramisu_prog.load_code_lines(original_str)
 
-        if wrappers:
-            tiramisu_prog.wrappers = wrappers
+        # construct the wrapper code
+        wrapper_cpp, wrapper_header = tiramisu_prog.construct_wrapper_code()
 
+        tiramisu_prog.wrappers = {"cpp": wrapper_cpp, "h": wrapper_header}
         # If the current_machine_initial_execution_time attribute is not found in the data, compute itcio
         # if not tiramisu_prog.current_machine_initial_execution_time:
         #     tmp_exec_times = CompilingModule.CompilingService.get_cpu_exec_times(
@@ -101,8 +100,6 @@ class TiramisuProgram:
     def from_file(
         cls,
         file_path: str,
-        wrapper_cpp_path: str,
-        wrapper_header_path: str,
         load_annotations=False,
     ) -> "TiramisuProgram":
         """
@@ -112,10 +109,6 @@ class TiramisuProgram:
         ----------
         `file_path`: str
             The path to the cpp file of the tiramisu function
-        `wrapper_cpp_path`: str
-            The path to the wrapper cpp file of the tiramisu function
-        `wrapper_header_path`: str
-            The path to the wrapper header file of the tiramisu function
         `load_annotations`: bool
             A flag to indicate if the annotations should be loaded or not
 
@@ -127,14 +120,12 @@ class TiramisuProgram:
         # Initiate an instante of the TiramisuProgram class
         tiramisu_prog = cls()
         tiramisu_prog.file_path = file_path
+        tiramisu_prog.load_code_lines()
+
         # load the wrapper code
-        with open(wrapper_cpp_path, "r") as f:
-            wrapper_cpp = f.read()
-        with open(wrapper_header_path, "r") as f:
-            wrapper_header = f.read()
+        wrapper_cpp, wrapper_header = tiramisu_prog.construct_wrapper_code()
 
         tiramisu_prog.wrappers = {"cpp": wrapper_cpp, "h": wrapper_header}
-        tiramisu_prog.load_code_lines()
 
         if load_annotations:
             tiramisu_prog.annotations = json.loads(
@@ -188,16 +179,165 @@ class TiramisuProgram:
         self.code_gen_line = re.findall(r"tiramisu::codegen\({.+;", self.original_str)[
             0
         ]
-        # buffers_vect = re.findall(r'{(.+)}', self.code_gen_line)[0]
-        # self.IO_buffer_names = re.findall(r'\w+', buffers_vect)
-        # self.buffer_sizes = []
-        # for buf_name in self.IO_buffer_names:
-        #     sizes_vect = re.findall(r'buffer ' + buf_name + '.*{(.*)}',
-        #                             self.original_str)[0]
-        #     self.buffer_sizes.append(re.findall(r'\d+', sizes_vect))
+        buffers_vect = re.findall(r"{(.+)}", self.code_gen_line)[0]
+        self.IO_buffer_names = re.findall(r"\w+", buffers_vect)
+        self.buffer_sizes = []
+        for buf_name in self.IO_buffer_names:
+            sizes_vect = re.findall(
+                r"buffer " + buf_name + ".*{(.*)}", self.original_str
+            )[0]
+            self.buffer_sizes.append(re.findall(r"\d+", sizes_vect))
+        self.program_annotations = ""
+        self.wrapper_is_compiled = False
+
+    def construct_wrapper_code(
+        self,
+    ):  # construct the wrapper.cpp and wrapper.h from the program
+        buffers_init_lines = ""
+        for i, buffer_name in enumerate(self.IO_buffer_names):
+            buffers_init_lines += f"""
+    double *c_{buffer_name} = (double*)malloc({'*'.join(self.buffer_sizes[i][::-1])}* sizeof(double));
+    parallel_init_buffer(c_{buffer_name}, {'*'.join(self.buffer_sizes[i][::-1])}, (double){str(random.randint(1,10))});
+    Halide::Buffer<double> {buffer_name}(c_{buffer_name}, {','.join(self.buffer_sizes[i][::-1])});
+    """
+        if self.name is None:
+            raise Exception("TiramisuProgram.name is None")
+
+        wrapper_cpp_code = wrapper_cpp_template.replace("$func_name$", self.name)
+        wrapper_cpp_code = wrapper_cpp_code.replace(
+            "$buffers_init$", buffers_init_lines
+        )
+        wrapper_cpp_code = wrapper_cpp_code.replace(
+            "$func_folder_path$", self.func_folder
+        )
+        wrapper_cpp_code = wrapper_cpp_code.replace(
+            "$func_params$",
+            ",".join([name + ".raw_buffer()" for name in self.IO_buffer_names]),
+        )
+
+        wrapper_h_code = wrapper_h_template.replace("$func_name$", self.name)
+        wrapper_h_code = wrapper_h_code.replace(
+            "$func_params$",
+            ",".join(["halide_buffer_t *" + name for name in self.IO_buffer_names]),
+        )
+
+        return wrapper_cpp_code, wrapper_h_code
 
     def __str__(self) -> str:
         return f"TiramisuProgram(name={self.name})"
 
     def __repr__(self) -> str:
         return self.__str__()
+
+
+wrapper_cpp_template = """#include "Halide.h"
+#include "$func_name$_wrapper.h"
+#include "tiramisu/utils.h"
+#include <iostream>
+#include <time.h>
+#include <fstream>
+#include <chrono>
+
+using namespace std::chrono;
+using namespace std;
+
+int main(int, char **argv){
+        
+$buffers_init$
+    
+    //halide_set_num_threads(48);
+    
+    int nb_execs = get_nb_exec();
+
+    double duration;
+    
+    for (int i = 0; i < nb_execs; ++i) {
+        auto begin = std::chrono::high_resolution_clock::now(); 
+        $func_name$($func_params$);
+        auto end = std::chrono::high_resolution_clock::now(); 
+
+        duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end-begin).count() / (double)1000000;
+        std::cout << duration << " "; 
+
+    }
+    std::cout << std::endl;
+    return 0;
+}"""
+wrapper_h_template = """#include <tiramisu/utils.h>
+#include <sys/time.h>
+#include <cstdlib>
+#include <algorithm>
+#include <vector>
+
+#define NB_THREAD_INIT 48
+struct args {
+    double *buf;
+    unsigned long long int part_start;
+    unsigned long long int part_end;
+    double value;
+};
+
+void *init_part(void *params)
+{
+   double *buffer = ((struct args*) params)->buf;
+   unsigned long long int start = ((struct args*) params)->part_start;
+   unsigned long long int end = ((struct args*) params)->part_end;
+   double val = ((struct args*) params)->value;
+   for (unsigned long long int k = start; k < end; k++){
+       buffer[k]=val;
+   }
+   pthread_exit(NULL);
+}
+
+void parallel_init_buffer(double* buf, unsigned long long int size, double value){
+    pthread_t threads[NB_THREAD_INIT]; 
+    struct args params[NB_THREAD_INIT];
+    for (int i = 0; i < NB_THREAD_INIT; i++) {
+        unsigned long long int start = i*size/NB_THREAD_INIT;
+        unsigned long long int end = std::min((i+1)*size/NB_THREAD_INIT, size);
+        params[i] = (struct args){buf, start, end, value};
+        pthread_create(&threads[i], NULL, init_part, (void*)&(params[i])); 
+    }
+    for (int i = 0; i < NB_THREAD_INIT; i++) 
+        pthread_join(threads[i], NULL); 
+    return;
+}
+#ifdef __cplusplus
+extern "C" {
+#endif
+int $func_name$($func_params$);
+#ifdef __cplusplus
+}  // extern "C"
+#endif
+
+
+int get_beam_size(){
+    if (std::getenv("BEAM_SIZE")!=NULL)
+        return std::stoi(std::getenv("BEAM_SIZE"));
+    else{
+        std::cerr<<"error: Environment Variable BEAM_SIZE not declared"<<std::endl;
+        exit(1);
+    }
+}
+
+int get_max_depth(){
+    if (std::getenv("MAX_DEPTH")!=NULL)
+        return std::stoi(std::getenv("MAX_DEPTH"));
+    else{
+        std::cerr<<"error: Environment Variable MAX_DEPTH not declared"<<std::endl;
+        exit(1);
+    }
+}
+
+void declare_memory_usage(){
+    setenv("MEM_SIZE", std::to_string((double)(256*192+320*256+320*192)*8/1024/1024).c_str(), true); // This value was set by the Code Generator
+}
+
+int get_nb_exec(){
+    if (std::getenv("NB_EXEC")!=NULL)
+        return std::stoi(std::getenv("NB_EXEC"));
+    else{
+        return 30;
+    }
+}
+"""
