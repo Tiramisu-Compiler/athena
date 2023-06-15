@@ -13,7 +13,6 @@ class BaseDataService:
         seed: int = None,
         saving_frequency: int = 10000,
         training_mode: Literal["model", "cpu"] = "model",
-        wrappers_path: str = None,
     ) -> None:
         self.dataset_path = dataset_path
         self.path_to_save_dataset = path_to_save_dataset
@@ -21,7 +20,6 @@ class BaseDataService:
         self.seed = seed
         self.saving_frequency = saving_frequency
         self.training_mode = training_mode
-        self.wrappers_path = wrappers_path
 
         self.dataset = {}
         self.function_names = []

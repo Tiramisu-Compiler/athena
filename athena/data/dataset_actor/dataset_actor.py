@@ -44,7 +44,7 @@ class DatasetActor:
                 config.shuffle,
                 config.seed,
                 config.saving_frequency,
-                training_mode,
+                # training_mode,
             )
         else:
             raise ValueError("Unknown dataset format")

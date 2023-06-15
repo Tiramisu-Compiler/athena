@@ -1,7 +1,10 @@
+import logging
 import pickle
 import random
 import os
 import numpy as np
+
+from athena.tiramisu.tiramisu_program import TiramisuProgram
 from .base_data_service import BaseDataService
 
 
@@ -42,6 +45,7 @@ class HybridDataService(BaseDataService):
 
         self.dataset_size = len(self.function_names)
 
+    # TODO UNTESTED!!!
     # Returns next function name, function data, and function cpps
     def get_next_function(self, random=False):
         if random:
@@ -56,8 +60,30 @@ class HybridDataService(BaseDataService):
         # print(
         #     f"Selected function with index: {self.current_function_index}, name: {function_name}"
         # )
-        if function_name in self.dataset:
-            # If the function doesn't exit in the dataset it will be compiled automatically
-            return function_name, self.dataset[function_name], None
-        else:
-            return function_name, None, None
+
+        # read cpp_code of the function
+
+        # print(f"Reading cpp_code for function: {function_name}")
+
+        with open(
+            os.path.join(self.cpps_path, function_name, f"{function_name}.cpp"), "r"
+        ) as f:
+            cpp_code = f.read()
+
+        return TiramisuProgram.from_dict(
+            function_name,
+            self.dataset[function_name],
+            cpp_code,
+        )
+
+    # Returns function data and function cpps by name
+    def get_function_by_name(self, function_name: str) -> TiramisuProgram:
+        # read cpp_code of the function
+        with open(
+            os.path.join(self.cpps_path, function_name, f"{function_name}.cpp"), "r"
+        ) as f:
+            cpp_code = f.read()
+
+        return TiramisuProgram.from_dict(
+            function_name, self.dataset[function_name], cpp_code
+        )
