@@ -275,6 +275,10 @@ class TiramisuTree:
 
         for root in self.roots:
             representation += "-> " + repr(self.iterators[root]) + "\n"
+            for comp in self.iterators[root].computations_list:
+                representation += (
+                    "   " * (self.iterators[root].level + 1) + "- " + comp + "\n"
+                )
             # representation += "-> " + root + "\n"
             representation += self._get_subtree_representation(root)
 
