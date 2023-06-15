@@ -35,15 +35,18 @@ class Schedule:
         self.tiramisu_program = tiramisu_program
         self.tree = deepcopy(tiramisu_program.tree)
 
-    def add_optimization(self, optim_cmd: TiramisuAction) -> None:
+    def add_optimizations(self, list_optim_cmds: List[TiramisuAction]) -> None:
         if self.tree is None:
             raise Exception("No Tiramisu program to apply the schedule to")
+        for optim_cmd in list_optim_cmds:
+            optim_cmd.set_string_representations(self.tree)
+            self.optims_list.append(optim_cmd)
 
-        optim_cmd.set_string_representations(self.tree)
-        self.optims_list.append(optim_cmd)
+            if optim_cmd.is_interchange():
+                self.tree.interchange(optim_cmd.params[0], optim_cmd.params[1])
 
-        if optim_cmd.is_interchange():
-            self.tree.interchange(optim_cmd.params[0], optim_cmd.params[1])
+            if optim_cmd.is_fusion():
+                self.tree.fuse(optim_cmd.params[0], optim_cmd.params[1])
 
     def pop_optimization(self) -> TiramisuAction:
         return self.optims_list.pop()
@@ -106,12 +109,7 @@ class Schedule:
             if optim.type == TiramisuActionType.FUSION
         ]
         for fusion in fusions:
-            sched_str += "F("
-            for name in fusion.comps:
-                sched_str += name + ","
-
-            sched_str = sched_str[:-1]
-            sched_str += ")"
+            sched_str += fusion.str_representation
 
         # Iterate over the comps and add their transformations
         for name in comp_names:
@@ -119,56 +117,12 @@ class Schedule:
 
             for transformation in self.optims_list:
                 # Skip the transformation if it doesn't include the comp
-                if name not in transformation.comps:
-                    continue
-
                 if (
-                    transformation.type == TiramisuActionType.TILING_2D
-                    or transformation.type == TiramisuActionType.TILING_3D
+                    name not in transformation.comps
+                    or transformation.type == TiramisuActionType.FUSION
                 ):
-                    # T2
-                    if len(transformation.params) == 4:
-                        first_dim_index = transformation.params[0]
-                        second_dim_index = transformation.params[1]
-                        first_factor = transformation.params[2]
-                        second_factor = transformation.params[3]
-                        sched_str += (
-                            "T2(L"
-                            + str(first_dim_index)
-                            + ",L"
-                            + str(second_dim_index)
-                            + ","
-                            + str(first_factor)
-                            + ","
-                            + str(second_factor)
-                            + ")"
-                        )
-                    # T3
-                    else:
-                        first_dim_index = transformation.params[0]
-                        second_dim_index = transformation.params[1]
-                        third_dim_index = transformation.params[2]
-                        first_factor = transformation.params[3]
-                        second_factor = transformation.params[4]
-                        third_factor = transformation.params[5]
-                        sched_str += (
-                            "T3(L"
-                            + str(first_dim_index)
-                            + ",L"
-                            + str(second_dim_index)
-                            + ",L"
-                            + str(third_dim_index)
-                            + ","
-                            + str(first_factor)
-                            + ","
-                            + str(second_factor)
-                            + ","
-                            + str(third_factor)
-                            + ")"
-                        )
-
-                else:
-                    sched_str += transformation.str_representation
+                    continue
+                sched_str += transformation.str_representation
 
         return sched_str
 

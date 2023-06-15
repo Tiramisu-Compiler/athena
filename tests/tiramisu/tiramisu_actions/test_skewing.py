@@ -15,7 +15,7 @@ def test_set_string_representations():
     sample = test_utils.skewing_example()
     skewing = Skewing(["i0", "i1", 1, 1], ["comp00"])
     schedule = Schedule(sample)
-    schedule.add_optimization(skewing)
+    schedule.add_optimizations([skewing])
     assert skewing.tiramisu_optim_str == "\n\tcomp00.skew(0, 1, 1, 1);"
 
 

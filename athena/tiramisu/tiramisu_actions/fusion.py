@@ -20,14 +20,25 @@ class Fusion(TiramisuAction):
         # Fusion only takes the two names of the 2 iterators to fuse
         assert len(params) == 2
 
-        # assert that all the iterators have the same level
-
         super().__init__(type=TiramisuActionType.FUSION, params=params, comps=comps)
 
     def set_string_representations(self, tiramisu_tree: TiramisuTree):
         # assert that all the iterators have the same level
         assert (
             len(set([tiramisu_tree.iterators[param].level for param in self.params]))
+            == 1
+        )
+
+        # assert that all the iterators have the same parent
+        assert (
+            len(
+                set(
+                    [
+                        tiramisu_tree.iterators[param].parent_iterator
+                        for param in self.params
+                    ]
+                )
+            )
             == 1
         )
 

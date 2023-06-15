@@ -15,7 +15,7 @@ def test_set_string_representations():
     sample = test_utils.unrolling_sample()
     reversal = Unrolling(["i0", 4], ["comp00"])
     schedule = Schedule(sample)
-    schedule.add_optimization(reversal)
+    schedule.add_optimizations([reversal])
     assert reversal.tiramisu_optim_str == "\n\tcomp00.unroll(0,4);"
 
 

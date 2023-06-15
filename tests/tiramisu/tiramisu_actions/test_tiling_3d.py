@@ -15,7 +15,7 @@ def test_set_string_representations():
     sample = test_utils.tiling_3d_sample()
     tiling_3d = Tiling3D(["i0", "i1", "i2", 32, 32, 32], ["comp00"])
     schedule = Schedule(sample)
-    schedule.add_optimization(tiling_3d)
+    schedule.add_optimizations([tiling_3d])
     assert tiling_3d.tiramisu_optim_str == "\n\tcomp00.tile(0, 1, 2, 32, 32, 32);"
 
 

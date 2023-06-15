@@ -17,7 +17,7 @@ import tests.utils as test_utils
 
 
 if __name__ == "__main__":
-    BaseConfig.init(logging_level=logging.ERROR)
+    BaseConfig.init(logging_level=logging.DEBUG)
 
     # # Candidate sections
     # tiramisu_tree = test_utils.tree_test_sample()
@@ -267,8 +267,32 @@ if __name__ == "__main__":
 
     # Fusion example
 
-    t_tree = test_utils.multiple_roots_sample()
+    t_prog = test_utils.multiple_roots_sample()
 
-    print(t_tree)
+    print(t_prog)
 
-    print(t_tree.tree)
+    print(t_prog.tree)
+
+    if t_prog.annotations:
+        print(t_prog.annotations["iterators"])
+
+    print(tiramisu_actions.Fusion.get_candidates(t_prog.tree))
+
+    schedule = Schedule(t_prog)
+
+    schedule.add_optimizations(
+        [
+            tiramisu_actions.Interchange(params=["i_0", "j_0"], comps=["x_temp"]),
+            tiramisu_actions.Fusion(params=["i", "j_0"], comps=["A_hat", "x_temp"]),
+        ]
+    )
+
+    print(schedule)
+
+    # print(schedule.is_legal())
+
+    # print(schedule.apply_schedule(nb_exec_tiems=10))
+
+    # print(Schedule(t_prog).apply_schedule(nb_exec_tiems=10))
+
+    # print(schedule.tree)

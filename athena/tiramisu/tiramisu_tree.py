@@ -269,6 +269,42 @@ class TiramisuTree:
 
         return current_node_name
 
+    def fuse(self, node1: str, node2: str) -> None:
+        """
+        Fuses two nodes in the program tree. Node 2 will be fused into node 1.
+
+        Parameters:
+        ----------
+        `node1`: `str`
+            The name of the first node.
+
+        `node2`: `str`
+            The name of the second node.
+        """
+
+        node_1 = self.iterators[node1]
+        node_2 = self.iterators[node2]
+
+        # Fuse the computations
+        node_1.computations_list += node_2.computations_list
+        # Fuse the child iterators
+        node_1.child_iterators += node_2.child_iterators
+
+        # Update the parent iterator of the child iterators
+        for child in node_2.child_iterators:
+            self.iterators[child].parent_iterator = node1
+
+        # remove node2 from the parent iterator
+        if node_2.parent_iterator:
+            self.iterators[node_2.parent_iterator].child_iterators.remove(node2)
+
+        # remove node2 from the iterator list
+        del self.iterators[node2]
+
+        # remove node2 from the root list if it is a root
+        if node2 in self.roots:
+            self.roots.remove(node2)
+
     def __str__(self) -> str:
         # return f"Roots: {self.roots}\nComputations: {self.computations}\nIterators: {self.iterators}"
         representation = ""

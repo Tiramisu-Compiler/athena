@@ -15,7 +15,7 @@ def test_set_string_representations():
     sample = test_utils.benchmark_program_test_sample()
     parallelization = Parallelization([0], ["comp00"])
     schedule = Schedule(sample)
-    schedule.add_optimization(parallelization)
+    schedule.add_optimizations([parallelization])
 
     assert parallelization.tiramisu_optim_str == "\n\tcomp00.tag_parallel_level(0);"
 
