@@ -1,13 +1,13 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Dict, List
 
 from athena.tiramisu.tiramisu_tree import TiramisuTree
+import athena.tiramisu.tiramisu_actions as tiramisu_actions
 
 if TYPE_CHECKING:
     from athena.tiramisu.schedule import Schedule
 
 from enum import Enum
-from typing import List
 
 
 from athena.tiramisu.tiramisu_program import TiramisuProgram
@@ -66,6 +66,10 @@ class TiramisuAction:
             str: The tiramisu snippet that represents the optimization command.
         """
         raise NotImplementedError
+
+    def verify_conditions(self, tiramisu_tree: TiramisuTree) -> None:
+        """Verify that the optimization command can be applied to the Tiramisu program."""
+        pass
 
     #     if self.type == ActionType.INTERCHANGE:
     #         interchange_str = (
@@ -132,8 +136,11 @@ class TiramisuAction:
     def is_interchange(self) -> bool:
         return self.type == TiramisuActionType.INTERCHANGE
 
-    def is_tiling(self) -> bool:
-        return self.type == TiramisuActionType.TILING
+    def is_tiling_2d(self) -> bool:
+        return self.type == TiramisuActionType.TILING_2D
+
+    def is_tiling_3d(self) -> bool:
+        return self.type == TiramisuActionType.TILING_3D
 
     def is_parallelization(self) -> bool:
         return self.type == TiramisuActionType.PARALLELIZATION
@@ -150,8 +157,13 @@ class TiramisuAction:
     def is_reversal(self) -> bool:
         return self.type == TiramisuActionType.REVERSAL
 
-    def get_candidates(self, program_tree: TiramisuTree) -> list:
+    @classmethod
+    def get_candidates(cls, program_tree: TiramisuTree) -> list:
         raise NotImplementedError
+
+    @classmethod
+    def get_types(cls) -> List[TiramisuActionType]:
+        return [e for e in TiramisuActionType]
 
     def __str__(self) -> str:
         return f"Action(type={self.type}, params={self.params}, comps={self.comps})"

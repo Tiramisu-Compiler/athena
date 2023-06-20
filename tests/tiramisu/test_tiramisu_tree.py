@@ -35,7 +35,7 @@ def test_get_candidate_computations():
 
 
 def test_interchange():
-    t_tree = tree_test_sample()
+    t_tree = test_utils.tree_test_sample()
 
     t_tree.interchange("i", "j")
 
@@ -48,7 +48,7 @@ def test_interchange():
     assert t_tree.iterators["k"].parent_iterator == "i"
     assert t_tree.iterators["j"].computations_list == ["comp01"]
 
-    t_tree = tree_test_sample()
+    t_tree = test_utils.tree_test_sample()
 
     t_tree.interchange("j", "k")
 
@@ -61,7 +61,7 @@ def test_interchange():
     assert t_tree.iterators["l"].parent_iterator == "j"
     assert t_tree.iterators["m"].parent_iterator == "j"
 
-    t_tree = tree_test_sample()
+    t_tree = test_utils.tree_test_sample()
 
     t_tree.interchange("root", "j")
 
@@ -139,3 +139,38 @@ def test_fuse():
     assert multi_root.iterators["j_0"].parent_iterator == "i"
     assert multi_root.iterators["j"].parent_iterator == "i"
     assert "i0" not in multi_root.iterators.keys()
+
+
+def test_get_computations_order_from_tree():
+    BaseConfig.init()
+
+    t_tree = test_utils.tree_test_sample()
+    assert t_tree.get_computations_order_from_tree() == [
+        "comp01",
+        "comp03",
+        "comp04",
+    ]
+
+    sample = test_utils.multiple_roots_sample()
+    assert sample.tree.get_computations_order_from_tree() == [
+        "A_hat",
+        "x_temp",
+        "x",
+        "w",
+    ]
+
+    sample.tree.fuse("i_0", "i_2")
+    assert sample.tree.get_computations_order_from_tree() == [
+        "A_hat",
+        "x_temp",
+        "w",
+        "x",
+    ]
+
+
+def test_get_iterator_of_computation():
+    t_tree = test_utils.tree_test_sample()
+
+    assert t_tree.get_iterator_of_computation("comp01").name == "i"
+    assert t_tree.get_iterator_of_computation("comp03").name == "l"
+    assert t_tree.get_iterator_of_computation("comp04").name == "m"

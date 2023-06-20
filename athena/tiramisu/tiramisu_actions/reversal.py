@@ -31,7 +31,7 @@ class Reversal(TiramisuAction):
         self.str_representation = "R(L" + str(level) + ")"
 
     @classmethod
-    def get_candidates(cls, program_tree: TiramisuTree) -> Dict:
+    def get_candidates(cls, program_tree: TiramisuTree) -> Dict[str, List[str]]:
         candidates: Dict[str, List[str]] = {}
         for root in program_tree.roots:
             candidates[root] = [root] + program_tree.iterators[root].child_iterators

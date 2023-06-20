@@ -11,4 +11,4 @@ def test_sequential_parallelization():
 
     schedule = parallelize_first_legal_outermost(test_program)
 
-    assert schedule.optims_list[0].params == [0]
+    assert schedule.optims_list[0].params == ["i00"]

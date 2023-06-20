@@ -7,3 +7,5 @@ workspace
 .coverage
 htmlcov
 **/.pytest_cache
+dist
+main.py

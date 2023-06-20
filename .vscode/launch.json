@@ -8,7 +8,7 @@
             "name": "athena",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/athena/main.py",
+            "program": "${workspaceFolder}/main.py",
             "console": "integratedTerminal",
             "justMyCode": true
         },

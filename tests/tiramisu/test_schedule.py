@@ -9,7 +9,7 @@ def test_apply_schedule():
     test_program = benchmark_program_test_sample()
 
     schedule = Schedule(test_program)
-    schedule.add_optimization(Parallelization(params=[0], comps=["comp02"]))
+    schedule.add_optimizations([Parallelization(params=["i00"], comps=["comp02"])])
     results = schedule.apply_schedule(nb_exec_tiems=10)
 
     assert results is not None
@@ -21,7 +21,7 @@ def test_is_legal():
     test_program = benchmark_program_test_sample()
 
     schedule = Schedule(test_program)
-    schedule.add_optimization(Parallelization(params=[0], comps=["comp02"]))
+    schedule.add_optimizations([Parallelization(params=["i00"], comps=["comp02"])])
     legality = schedule.is_legal()
 
     assert legality is True
@@ -30,7 +30,7 @@ def test_is_legal():
 def test_copy():
     BaseConfig.init()
     original = Schedule(benchmark_program_test_sample())
-    original.add_optimization(Parallelization(params=[0], comps=["comp02"]))
+    original.add_optimizations([Parallelization(params=["i00"], comps=["comp02"])])
 
     copy = original.copy()
 
@@ -47,6 +47,6 @@ def test_str_representation():
     test_program = benchmark_program_test_sample()
 
     schedule = Schedule(test_program)
-    schedule.add_optimization(Parallelization(params=[0], comps=["comp02"]))
+    schedule.add_optimizations([Parallelization(params=["i00"], comps=["comp02"])])
 
     assert str(schedule) == "{comp02}:P(L0)"

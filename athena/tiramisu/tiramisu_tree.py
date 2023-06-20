@@ -57,6 +57,16 @@ class TiramisuTree:
 
         iterators = annotations["iterators"]
 
+        # get tuples of (computation, absolute_order)
+        computations = [
+            (comp, annotations["computations"][comp]["absolute_order"])
+            for comp in annotations["computations"]
+        ]
+        # sort the computations by their absolute order
+        tiramisu_space.computations = [
+            comp for comp, _ in sorted(computations, key=lambda item: item[1])
+        ]
+
         for iterator in iterators:
             parent_iterator = iterators[iterator]["parent_iterator"]
             iterator_level = None
@@ -66,16 +76,33 @@ class TiramisuTree:
             else:
                 iterator_level = tiramisu_space.iterators[parent_iterator].level + 1
 
+            # get the computations that are associated with this iterator ordered by their absolute order
+            ordered_node_comps = [
+                comp
+                for comp in tiramisu_space.computations
+                if comp in iterators[iterator]["computations_list"]
+            ]
+
             tiramisu_space.iterators[iterator] = IteratorNode(
                 name=iterator,
                 lower_bound=int(iterators[iterator]["lower_bound"]),
                 upper_bound=int(iterators[iterator]["upper_bound"]),
                 child_iterators=iterators[iterator]["child_iterators"],
-                computations_list=iterators[iterator]["computations_list"],
+                computations_list=ordered_node_comps,
                 parent_iterator=iterators[iterator]["parent_iterator"],
                 level=iterator_level,
             )
-            tiramisu_space.computations.extend(iterators[iterator]["computations_list"])
+
+        # order the roots by their first comp's absolute order
+        root_with_order = []
+        for root in tiramisu_space.roots:
+            first_comp = tiramisu_space.get_candidate_computations(root)[0]
+            first_comp_order = tiramisu_space.computations.index(first_comp)
+            root_with_order.append((root, first_comp_order))
+
+        tiramisu_space.roots = [
+            root for root, _ in sorted(root_with_order, key=lambda item: item[1])
+        ]
 
         return tiramisu_space
 
@@ -304,6 +331,38 @@ class TiramisuTree:
         # remove node2 from the root list if it is a root
         if node2 in self.roots:
             self.roots.remove(node2)
+
+    def get_computations_order_from_tree(self):
+        """
+        This function returns the order of the computations in the program
+        """
+        order: List[str] = []
+        for root in self.roots:
+            order += self._get_subtree_computations_order(root)
+        return order
+
+    def _get_subtree_computations_order(self, node_name: str) -> List[str]:
+        """
+        This function returns the order of the computations in the subtree
+        rooted at the node
+        """
+        order: List[str] = []
+        node = self.iterators[node_name]
+
+        order += node.computations_list
+        for child in node.child_iterators:
+            order += self._get_subtree_computations_order(child)
+        return order
+
+    def get_iterator_of_computation(self, computation_name: str):
+        """
+        This function returns the iterator of the computation
+        """
+        for iterator in self.iterators:
+            if computation_name in self.iterators[iterator].computations_list:
+                return self.iterators[iterator]
+
+        raise ValueError("The computation is not in the tree")
 
     def __str__(self) -> str:
         # return f"Roots: {self.roots}\nComputations: {self.computations}\nIterators: {self.iterators}"

@@ -19,8 +19,9 @@ class Skewing(TiramisuAction):
     """
 
     def __init__(self, params: list, comps: list):
-        # Interchange  takes four parameters of the 2 loops to skew and their factors
+        # Skewing  takes four parameters of the 2 loops to skew and their factors
         assert len(params) == 4
+        assert len(comps) > 0
 
         super().__init__(type=TiramisuActionType.SKEWING, params=params, comps=comps)
 
@@ -38,7 +39,9 @@ class Skewing(TiramisuAction):
         self.str_representation = f"S(L{levels_with_factors[0]},L{levels_with_factors[1]},{levels_with_factors[2]},{levels_with_factors[3]})"
 
     @classmethod
-    def get_candidates(cls, program_tree: TiramisuTree) -> Dict:
+    def get_candidates(
+        cls, program_tree: TiramisuTree
+    ) -> Dict[str, List[Tuple[str, str]]]:
         candidates: Dict[str, List[Tuple[str, str]]] = {}
 
         candidate_sections = program_tree.get_candidate_sections()
@@ -55,14 +58,16 @@ class Skewing(TiramisuAction):
     @classmethod
     def get_factors(
         cls,
-        loops: List[str],
+        loop_levels: List[int],
         current_schedule: List[TiramisuAction],
         tiramisu_program: TiramisuProgram,
+        comps_skewed_loops: List[str],
     ) -> Tuple[int, int]:
         factors = CompilingService.call_skewing_solver(
             tiramisu_program,
             current_schedule,
-            tiramisu_program.tree.get_iterator_levels(loops),
+            loop_levels=loop_levels,
+            comps_skewed_loops=comps_skewed_loops,
         )
         if factors is not None:
             return factors

@@ -23,30 +23,14 @@ class Fusion(TiramisuAction):
         super().__init__(type=TiramisuActionType.FUSION, params=params, comps=comps)
 
     def set_string_representations(self, tiramisu_tree: TiramisuTree):
-        # assert that all the iterators have the same level
-        assert (
-            len(set([tiramisu_tree.iterators[param].level for param in self.params]))
-            == 1
-        )
-
-        # assert that all the iterators have the same parent
-        assert (
-            len(
-                set(
-                    [
-                        tiramisu_tree.iterators[param].parent_iterator
-                        for param in self.params
-                    ]
-                )
-            )
-            == 1
-        )
-
         self.tiramisu_optim_str = ""
-        levels = [tiramisu_tree.iterators[param].level for param in self.params]
+        # get order of computations from the tree
+        ordered_computations = tiramisu_tree.get_computations_order_from_tree()
 
-        first_comp = self.comps[0]
-        self.tiramisu_optim_str += f"\n\t{first_comp}{''.join([f'.then({comp},{levels[0]})' for comp in self.comps[1:]])};"
+        fusion_levels = self.get_fusion_levels(ordered_computations, tiramisu_tree)
+
+        first_comp = ordered_computations[0]
+        self.tiramisu_optim_str += f"\n\t{first_comp}{''.join([f'.then({comp},{fusion_level})' for comp, fusion_level in zip(ordered_computations[1:], fusion_levels)])};"
         self.str_representation = f"F({','.join(self.comps)})"
 
     @classmethod
@@ -83,3 +67,59 @@ class Fusion(TiramisuAction):
                 candidates.extend(itertools.combinations(iterators_dict[root], 2))
 
         return candidates
+
+    def verify_conditions(self, program_tree: TiramisuTree):
+        # assert that all the iterators have the same level
+        assert (
+            len(set([program_tree.iterators[param].level for param in self.params]))
+            == 1
+        )
+
+        # assert that all the iterators have the same parent
+        assert (
+            len(
+                set(
+                    [
+                        program_tree.iterators[param].parent_iterator
+                        for param in self.params
+                    ]
+                )
+            )
+            == 1
+        )
+
+    def get_fusion_levels(self, computations: List[str], tiramisu_tree: TiramisuTree):
+        fusion_levels = []
+        # for every pair of successive computations get the shared iterator level
+        for comp1, comp2 in itertools.pairwise(computations):
+            # get the shared iterator level
+            iter_comp_1 = tiramisu_tree.get_iterator_of_computation(comp1)
+            iter_comp_2 = tiramisu_tree.get_iterator_of_computation(comp2)
+            fusion_level = None
+
+            # get the shared iterator level
+            while iter_comp_1.name != iter_comp_2.name:
+                if iter_comp_1.level > iter_comp_2.level:
+                    # if parent is None then the iterators don't have a common parent
+                    if iter_comp_1.parent_iterator is None:
+                        fusion_level = -1
+                        break
+                    else:
+                        iter_comp_1 = tiramisu_tree.iterators[
+                            iter_comp_1.parent_iterator
+                        ]
+                else:
+                    if iter_comp_2.parent_iterator is None:
+                        fusion_level = -1
+                        break
+                    else:
+                        iter_comp_2 = tiramisu_tree.iterators[
+                            iter_comp_2.parent_iterator
+                        ]
+
+            if fusion_level is None:
+                fusion_level = iter_comp_1.level
+
+            fusion_levels.append(fusion_level)
+
+        return fusion_levels

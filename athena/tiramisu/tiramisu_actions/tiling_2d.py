@@ -39,7 +39,9 @@ class Tiling2D(TiramisuAction):
         self.str_representation = "T2(L{},L{},{},{})".format(*loop_levels_and_factors)
 
     @classmethod
-    def get_candidates(cls, program_tree: TiramisuTree) -> Dict:
+    def get_candidates(
+        cls, program_tree: TiramisuTree
+    ) -> Dict[str, List[Tuple[str, str]]]:
         candidates: Dict[str, List[Tuple[str, str]]] = {}
 
         candidate_sections = program_tree.get_candidate_sections()

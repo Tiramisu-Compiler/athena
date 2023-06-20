@@ -81,13 +81,11 @@ class CompilingService:
         if not tiramisu_program.comps or not tiramisu_program.original_str:
             raise ValueError("No computations in the program")
 
-        comps = tiramisu_program.comps
-        first_comp = tiramisu_program.comps[0]
         # Add code to the original file to get legality result
         legality_check_lines = """\n\tprepare_schedules_for_legality_checks();\n\tperforme_full_dependency_analysis();\n\tbool is_legal=true;\n"""
         for optim in optims_list:
             if optim.is_parallelization():
-                legality_check_lines += f"\n\tis_legal &= loop_parallelization_is_legal({optim.params[0]}, {{&{first_comp}}});"
+                legality_check_lines += f"\n\tis_legal &= loop_parallelization_is_legal({tiramisu_program.tree.iterators[optim.params[0]].level}, {{&{optim.comps[0]}}});"
             # elif optim.is_unrolling():
             #     for branch in schedule_object.branches:
             #         comps = branch["comps"]
@@ -229,7 +227,8 @@ class CompilingService:
         cls,
         tiramisu_prog: TiramisuProgram,
         optim_list: List[TiramisuAction],
-        params: List[int],
+        loop_levels: List[int],
+        comps_skewed_loops: List[str],
     ):
         """
         Calls the skewing solver to generate the skewing code
@@ -261,9 +260,9 @@ class CompilingService:
         solver_lines = (
             header
             + "\n\tauto auto_skewing_result = fct->skewing_local_solver({"
-            + ", ".join([f"&{comp}" for comp in tiramisu_prog.comps])
+            + ", ".join([f"&{comp}" for comp in comps_skewed_loops])
             + "}"
-            + ",{},{},1);\n".format(*params)
+            + ",{},{},1);\n".format(*loop_levels)
         )
 
         solver_lines += """    
@@ -296,6 +295,7 @@ class CompilingService:
             """
 
         solver_code = legality_cpp_code.replace(to_replace, solver_lines)
+        logging.debug("Skewing Solver Code:\n" + solver_code)
         output_path = os.path.join(
             BaseConfig.base_config.workspace, f"{tiramisu_prog.name}_skewing_solver"
         )

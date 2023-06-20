@@ -32,7 +32,11 @@ def test_get_candidates():
 def test_get_factors():
     BaseConfig.init()
     sample = test_utils.skewing_example()
+    loop_levels = sample.tree.get_iterator_levels(["i0", "i1"])
     factors = Skewing.get_factors(
-        loops=["i0", "i1"], current_schedule=[], tiramisu_program=sample
+        loop_levels=loop_levels,
+        current_schedule=[],
+        tiramisu_program=sample,
+        comps_skewed_loops=sample.tree.get_candidate_computations("i0"),
     )
     assert factors == (1, 1)

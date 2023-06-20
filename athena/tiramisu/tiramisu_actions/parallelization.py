@@ -16,19 +16,19 @@ class Parallelization(TiramisuAction):
     """
 
     def __init__(self, params: list, comps: list):
-        # Prallelization only takes one parameter the loop level
+        # Prallelization only takes one parameter the loop to parallelize
         assert len(params) == 1
+        assert len(comps) > 0
 
         super().__init__(
             type=TiramisuActionType.PARALLELIZATION, params=params, comps=comps
         )
 
     def set_string_representations(self, tiramisu_tree: TiramisuTree):
-        self.tiramisu_optim_str = (
-            f"\n\t{self.comps[0]}.tag_parallel_level({self.params[0]});"
-        )
+        level = tiramisu_tree.iterators[self.params[0]].level
+        self.tiramisu_optim_str = f"\n\t{self.comps[0]}.tag_parallel_level({level});"
 
-        self.str_representation = "P(L" + str(self.params[0]) + ")"
+        self.str_representation = "P(L" + str(level) + ")"
 
     @classmethod
     def _get_candidates_of_node(
@@ -46,7 +46,7 @@ class Parallelization(TiramisuAction):
         return candidates
 
     @classmethod
-    def get_candidates(cls, program_tree: TiramisuTree) -> Dict:
+    def get_candidates(cls, program_tree: TiramisuTree) -> Dict[str, List[str]]:
         """Get the list of candidates for parallelization.
 
         Parameters:

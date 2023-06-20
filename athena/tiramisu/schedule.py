@@ -39,14 +39,21 @@ class Schedule:
         if self.tree is None:
             raise Exception("No Tiramisu program to apply the schedule to")
         for optim_cmd in list_optim_cmds:
-            optim_cmd.set_string_representations(self.tree)
-            self.optims_list.append(optim_cmd)
+            # additional checks to see if optimiaztion can be applied
+            optim_cmd.verify_conditions(self.tree)
 
             if optim_cmd.is_interchange():
+                optim_cmd.set_string_representations(self.tree)
                 self.tree.interchange(optim_cmd.params[0], optim_cmd.params[1])
 
-            if optim_cmd.is_fusion():
+            elif optim_cmd.is_fusion():
                 self.tree.fuse(optim_cmd.params[0], optim_cmd.params[1])
+                optim_cmd.set_string_representations(self.tree)
+
+            else:
+                optim_cmd.set_string_representations(self.tree)
+
+            self.optims_list.append(optim_cmd)
 
     def pop_optimization(self) -> TiramisuAction:
         return self.optims_list.pop()
@@ -134,5 +141,5 @@ class Schedule:
         Returns a copy of the schedule.
         """
         new_schedule = Schedule(self.tiramisu_program)
-        new_schedule.optims_list = self.optims_list.copy()
+        new_schedule.add_optimizations(self.optims_list)
         return new_schedule
