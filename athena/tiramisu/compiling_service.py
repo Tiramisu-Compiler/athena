@@ -82,7 +82,11 @@ class CompilingService:
             raise ValueError("No computations in the program")
 
         # Add code to the original file to get legality result
-        legality_check_lines = """\n\tprepare_schedules_for_legality_checks();\n\tperforme_full_dependency_analysis();\n\tbool is_legal=true;\n"""
+        legality_check_lines = """
+    prepare_schedules_for_legality_checks();
+    performe_full_dependency_analysis();
+    bool is_legal=true;
+    """
         for optim in optims_list:
             if optim.is_parallelization():
                 legality_check_lines += f"\n\tis_legal &= loop_parallelization_is_legal({tiramisu_program.tree.iterators[optim.params[0]].level}, {{&{optim.comps[0]}}});"
@@ -95,9 +99,9 @@ class CompilingService:
             legality_check_lines += optim.tiramisu_optim_str + "\n"
 
         legality_check_lines += """
-        prepare_schedules_for_legality_checks();
-        is_legal &= check_legality_of_function();   
-        std::cout << is_legal;
+    prepare_schedules_for_legality_checks();
+    is_legal &= check_legality_of_function();   
+    std::cout << is_legal;
             """
         # Paste the lines responsable of checking legality of schedule in the cpp file
         cpp_code = tiramisu_program.original_str.replace(
