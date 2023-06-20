@@ -35,7 +35,7 @@ class Reversal(TiramisuAction):
         candidates: Dict[str, List[str]] = {}
         for root in program_tree.roots:
             candidates[root] = [root] + program_tree.iterators[root].child_iterators
-            nodes_to_visit = program_tree.iterators[root].child_iterators
+            nodes_to_visit = program_tree.iterators[root].child_iterators.copy()
 
             while nodes_to_visit:
                 node = nodes_to_visit.pop(0)

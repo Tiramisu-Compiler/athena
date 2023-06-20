@@ -19,8 +19,6 @@ class Unrolling(TiramisuAction):
     def __init__(self, params: list, comps: list):
         # Unrolling only takes two parameters, the loop level and the factor
         assert len(params) == 2
-        # You only unroll the iterator for one computation and it does it for the other computations in Tiramisu. Otherwise you get undefined behavior.
-        assert len(comps) == 1
 
         super().__init__(type=TiramisuActionType.UNROLLING, params=params, comps=comps)
 
