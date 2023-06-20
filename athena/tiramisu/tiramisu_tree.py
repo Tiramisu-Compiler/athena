@@ -32,6 +32,7 @@ class TiramisuTree:
         self.roots: List[str] = []
         self.iterators: Dict[str, IteratorNode] = {}
         self.computations: List[str] = []
+        self.computations_absolute_order: Dict[str, int] = {}
 
     def add_root(self, root: str) -> None:
         self.roots.append(root)
@@ -57,14 +58,18 @@ class TiramisuTree:
 
         iterators = annotations["iterators"]
 
-        # get tuples of (computation, absolute_order)
-        computations = [
-            (comp, annotations["computations"][comp]["absolute_order"])
+        tiramisu_space.computations_absolute_order = {
+            comp: annotations["computations"][comp]["absolute_order"]
             for comp in annotations["computations"]
-        ]
-        # sort the computations by their absolute order
+        }
+
+        # order keys of computations_absolute_order by their values
         tiramisu_space.computations = [
-            comp for comp, _ in sorted(computations, key=lambda item: item[1])
+            comp
+            for comp, _ in sorted(
+                tiramisu_space.computations_absolute_order.items(),
+                key=lambda item: item[1],
+            )
         ]
 
         for iterator in iterators:
@@ -97,7 +102,7 @@ class TiramisuTree:
         root_with_order = []
         for root in tiramisu_space.roots:
             first_comp = tiramisu_space.get_candidate_computations(root)[0]
-            first_comp_order = tiramisu_space.computations.index(first_comp)
+            first_comp_order = tiramisu_space.computations_absolute_order[first_comp]
             root_with_order.append((root, first_comp_order))
 
         tiramisu_space.roots = [
@@ -312,8 +317,33 @@ class TiramisuTree:
         node_1 = self.iterators[node1]
         node_2 = self.iterators[node2]
 
+        # update absolute order of the computations
+        max_node_1_order = max(
+            [
+                self.computations_absolute_order[comp]
+                for comp in self.get_candidate_computations(node1)
+            ]
+        )
+
+        node_2_comp_family = self.get_candidate_computations(node2)
+
+        # order them by absolute order
+        node_2_comp_family.sort(key=lambda comp: self.computations_absolute_order[comp])
+
+        for comp in self.computations_absolute_order:
+            if comp in node_2_comp_family:
+                self.computations_absolute_order[comp] = (
+                    max_node_1_order + node_2_comp_family.index(comp) + 1
+                )
+            elif (self.computations_absolute_order[comp] > max_node_1_order) and (
+                self.computations_absolute_order[comp]
+                <= max_node_1_order + len(node_2_comp_family)
+            ):
+                self.computations_absolute_order[comp] += len(node_2.computations_list)
+
         # Fuse the computations
         node_1.computations_list += node_2.computations_list
+
         # Fuse the child iterators
         node_1.child_iterators += node_2.child_iterators
 

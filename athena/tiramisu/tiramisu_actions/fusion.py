@@ -25,7 +25,10 @@ class Fusion(TiramisuAction):
     def set_string_representations(self, tiramisu_tree: TiramisuTree):
         self.tiramisu_optim_str = ""
         # get order of computations from the tree
-        ordered_computations = tiramisu_tree.get_computations_order_from_tree()
+        ordered_computations = tiramisu_tree.computations
+        ordered_computations.sort(
+            key=lambda x: tiramisu_tree.computations_absolute_order[x]
+        )
 
         fusion_levels = self.get_fusion_levels(ordered_computations, tiramisu_tree)
 

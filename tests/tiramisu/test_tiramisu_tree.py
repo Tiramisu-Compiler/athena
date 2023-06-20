@@ -11,6 +11,20 @@ def test_from_annotations():
     tiramisu_tree = TiramisuTree.from_annotations(program["program_annotation"])
     assert len(tiramisu_tree.roots) == 1
 
+    BaseConfig.init()
+    multi_roots = test_utils.multiple_roots_sample().tree
+
+    assert len(multi_roots.roots) == 4
+    assert len(multi_roots.iterators) == 7
+    assert len(multi_roots.computations) == 4
+
+    assert multi_roots.computations_absolute_order == {
+        "A_hat": 1,
+        "x_temp": 2,
+        "x": 3,
+        "w": 4,
+    }
+
 
 def test_get_candidate_sections():
     t_tree = test_utils.tree_test_sample()
