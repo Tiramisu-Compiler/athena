@@ -71,6 +71,15 @@ class TiramisuAction:
         """Verify that the optimization command can be applied to the Tiramisu program."""
         pass
 
+    def legality_check_string(self, tiramisu_tree: TiramisuTree) -> str:
+        """Return the tiramisu code that checks the legality of the optimization command."""
+        if self.tiramisu_optim_str == "":
+            raise ValueError(
+                "The legality check should be called after the optimization string is set."
+            )
+
+        return self.tiramisu_optim_str
+
     #     if self.type == ActionType.INTERCHANGE:
     #         interchange_str = (
     #             ".interchange(" + ",".join([str(p) for p in self.params_list]) + ");"

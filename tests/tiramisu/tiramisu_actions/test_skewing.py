@@ -16,7 +16,7 @@ def test_set_string_representations():
     skewing = Skewing(["i0", "i1", 1, 1], ["comp00"])
     schedule = Schedule(sample)
     schedule.add_optimizations([skewing])
-    assert skewing.tiramisu_optim_str == "\n\tcomp00.skew(0, 1, 1, 1);"
+    assert skewing.tiramisu_optim_str == "comp00.skew(0, 1, 1, 1);\n"
 
 
 def test_get_candidates():
@@ -33,10 +33,10 @@ def test_get_factors():
     BaseConfig.init()
     sample = test_utils.skewing_example()
     loop_levels = sample.tree.get_iterator_levels(["i0", "i1"])
+    schedule = Schedule(sample)
     factors = Skewing.get_factors(
+        schedule=schedule,
         loop_levels=loop_levels,
-        current_schedule=[],
-        tiramisu_program=sample,
         comps_skewed_loops=sample.tree.get_candidate_computations("i0"),
     )
     assert factors == (1, 1)

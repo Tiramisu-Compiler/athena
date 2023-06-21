@@ -26,7 +26,7 @@ class Parallelization(TiramisuAction):
 
     def set_string_representations(self, tiramisu_tree: TiramisuTree):
         level = tiramisu_tree.iterators[self.params[0]].level
-        self.tiramisu_optim_str = f"\n\t{self.comps[0]}.tag_parallel_level({level});"
+        self.tiramisu_optim_str = f"{self.comps[0]}.tag_parallel_level({level});\n"
 
         self.str_representation = "P(L" + str(level) + ")"
 
@@ -68,3 +68,12 @@ class Parallelization(TiramisuAction):
             )
 
         return candidates
+
+    def legality_check_string(self, program_tree: TiramisuTree) -> str:
+        """Return the tiramisu code that checks the legality of the optimization command."""
+        if self.tiramisu_optim_str == "":
+            raise ValueError(
+                "The legality check should be called after the optimization string is set."
+            )
+
+        return f"is_legal &= loop_parallelization_is_legal({ program_tree.iterators[self.params[0]].level}, {{{', '.join([f'&{comp}' for comp in self.comps]) }}});\n    {self.tiramisu_optim_str}"

@@ -95,9 +95,7 @@ class Schedule:
         if self.tiramisu_program is None:
             raise Exception("No Tiramisu program to apply the schedule to")
 
-        self.legality = CompilingService.compile_legality(
-            self.tiramisu_program, self.optims_list
-        )
+        self.legality = CompilingService.compile_legality(self)
         return self.legality
 
     def __str__(self) -> str:

@@ -313,10 +313,15 @@ def fusion_sample():
     }
     tiramisu_tree.computations = [
         "comp01",
-        # "comp02",
         "comp03",
         "comp04",
     ]
+
+    tiramisu_tree.computations_absolute_order = {
+        "comp01": 1,
+        "comp03": 2,
+        "comp04": 3,
+    }
 
     tiramisu_prog.tree = tiramisu_tree
     return tiramisu_prog

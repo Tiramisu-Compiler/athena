@@ -17,7 +17,10 @@ def test_set_string_representations():
     fusion = Fusion(["l", "m"], ["comp03", "comp04"])
     schedule = Schedule(sample)
     schedule.add_optimizations([fusion])
-    assert fusion.tiramisu_optim_str == "\n\tcomp01.then(comp03,0).then(comp04,3);"
+    assert (
+        fusion.tiramisu_optim_str
+        == "clear_implicit_function_sched_graph();\n    comp01.then(comp03,0).then(comp04,3);\n"
+    )
 
 
 def test_get_candidates():
@@ -72,7 +75,8 @@ def test_fusion_application():
     schedule.add_optimizations([fusion])
 
     assert (
-        fusion.tiramisu_optim_str == "\n\tA_hat.then(x_temp,0).then(x,-1).then(w,-1);"
+        fusion.tiramisu_optim_str
+        == "clear_implicit_function_sched_graph();\n    A_hat.then(x_temp,0).then(x,-1).then(w,-1);\n"
     )
     assert not schedule.is_legal()
 
@@ -86,7 +90,8 @@ def test_fusion_application():
     )
 
     assert (
-        fusion.tiramisu_optim_str == "\n\tA_hat.then(x_temp,0).then(x,-1).then(w,-1);"
+        fusion.tiramisu_optim_str
+        == "clear_implicit_function_sched_graph();\n    A_hat.then(x_temp,0).then(x,-1).then(w,-1);\n"
     )
 
     assert schedule.is_legal()

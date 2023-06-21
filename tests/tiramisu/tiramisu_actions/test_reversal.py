@@ -16,7 +16,7 @@ def test_set_string_representations():
     reversal = Reversal(["i0"], ["comp00"])
     schedule = Schedule(sample)
     schedule.add_optimizations([reversal])
-    assert reversal.tiramisu_optim_str == "\n\tcomp00.loop_reversal(0);"
+    assert reversal.tiramisu_optim_str == "comp00.loop_reversal(0);\n"
 
 
 def test_get_candidates():

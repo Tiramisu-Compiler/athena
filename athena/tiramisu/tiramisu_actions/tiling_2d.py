@@ -34,7 +34,7 @@ class Tiling2D(TiramisuAction):
         ]
         for comp in self.comps:
             self.tiramisu_optim_str += (
-                f"\n\t{comp}.tile({', '.join(loop_levels_and_factors)});"
+                f"{comp}.tile({', '.join(loop_levels_and_factors)});\n"
             )
         self.str_representation = "T2(L{},L{},{},{})".format(*loop_levels_and_factors)
 

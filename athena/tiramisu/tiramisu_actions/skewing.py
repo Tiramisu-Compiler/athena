@@ -7,6 +7,7 @@ from athena.tiramisu.tiramisu_program import TiramisuProgram
 
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
+    from athena.tiramisu.schedule import Schedule
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
     TiramisuActionType,
     TiramisuAction,
@@ -33,7 +34,7 @@ class Skewing(TiramisuAction):
         ]
         for comp in self.comps:
             self.tiramisu_optim_str += (
-                f"\n\t{comp}.skew({', '.join(levels_with_factors)});"
+                f"{comp}.skew({', '.join(levels_with_factors)});\n"
             )
 
         self.str_representation = f"S(L{levels_with_factors[0]},L{levels_with_factors[1]},{levels_with_factors[2]},{levels_with_factors[3]})"
@@ -58,16 +59,12 @@ class Skewing(TiramisuAction):
     @classmethod
     def get_factors(
         cls,
+        schedule: Schedule,
         loop_levels: List[int],
-        current_schedule: List[TiramisuAction],
-        tiramisu_program: TiramisuProgram,
         comps_skewed_loops: List[str],
     ) -> Tuple[int, int]:
         factors = CompilingService.call_skewing_solver(
-            tiramisu_program,
-            current_schedule,
-            loop_levels=loop_levels,
-            comps_skewed_loops=comps_skewed_loops,
+            schedule, loop_levels, comps_skewed_loops
         )
         if factors is not None:
             return factors

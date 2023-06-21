@@ -16,7 +16,7 @@ def test_set_string_representations():
     reversal = Unrolling(["i0", 4], ["comp00"])
     schedule = Schedule(sample)
     schedule.add_optimizations([reversal])
-    assert reversal.tiramisu_optim_str == "\n\tcomp00.unroll(0,4);"
+    assert reversal.tiramisu_optim_str == "comp00.unroll(0,4);\n"
 
 
 def test_get_candidates():
@@ -27,3 +27,17 @@ def test_get_candidates():
 
     candidates = Unrolling.get_candidates(test_utils.tree_test_sample())
     assert candidates == ["i", "l", "m"]
+
+
+def test_legality_check_string():
+    BaseConfig.init()
+    sample = test_utils.unrolling_sample()
+    unrolling = Unrolling(["i0", 4], ["comp00"])
+    schedule = Schedule(sample)
+    schedule.add_optimizations([unrolling])
+
+    assert schedule.tree
+    assert (
+        unrolling.legality_check_string(schedule.tree)
+        == "is_legal &= loop_unrolling_is_legal(0, {&comp00});\n    comp00.unroll(0,4);\n"
+    )

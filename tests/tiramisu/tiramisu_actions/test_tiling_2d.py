@@ -16,7 +16,7 @@ def test_set_string_representations():
     tiling_2d = Tiling2D(["i0", "i1", 32, 32], ["comp00"])
     schedule = Schedule(sample)
     schedule.add_optimizations([tiling_2d])
-    assert tiling_2d.tiramisu_optim_str == "\n\tcomp00.tile(0, 1, 32, 32);"
+    assert tiling_2d.tiramisu_optim_str == "comp00.tile(0, 1, 32, 32);\n"
 
 
 def test_get_candidates():

@@ -28,9 +28,7 @@ class Interchange(TiramisuAction):
         self.tiramisu_optim_str = ""
         levels = [tiramisu_tree.iterators[param].level for param in self.params]
         for comp in self.comps:
-            self.tiramisu_optim_str += (
-                f"\n\t{comp}.interchange({levels[0]},{levels[1]});"
-            )
+            self.tiramisu_optim_str += f"{comp}.interchange({levels[0]},{levels[1]});\n"
         self.str_representation = (
             "I(L"
             + str(tiramisu_tree.iterators[self.params[0]].level)

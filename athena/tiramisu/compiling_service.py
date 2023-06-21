@@ -22,34 +22,29 @@ class CompilingService:
     """
 
     @classmethod
-    def compile_legality(
-        cls, tiramisu_program: TiramisuProgram, optims_list: List[TiramisuAction]
-    ):
+    def compile_legality(cls, schedule: Schedule):
         """
         Compile the generated code with the added code to check legality of the schedule
 
         Parameters
         ----------
-        `tiramisu_program` : `TiramisuProgram`
-            The tiramisu program to compile
-        `optims_list` : `List[TiramisuAction]`
-            The list of optimizations to apply to the schedule
+        `schedule` : `Schedule`
+            The schedule to check legality of
 
         Returns
         -------
         `bool`
             True if the schedule is legal, False otherwise
         """
-        if not BaseConfig.base_config:
-            raise ValueError("BaseConfig not initialized")
+        assert BaseConfig.base_config
+        assert schedule.tiramisu_program
 
         output_path = os.path.join(
-            BaseConfig.base_config.workspace, f"{tiramisu_program.name}_legality"
+            BaseConfig.base_config.workspace,
+            f"{schedule.tiramisu_program.name}_legality",
         )
 
-        cpp_code = cls.get_legality_code(
-            tiramisu_program=tiramisu_program, optims_list=optims_list
-        )
+        cpp_code = cls.get_legality_code(schedule=schedule)
 
         logging.debug("Legality Code: \n" + cpp_code)
 
@@ -60,9 +55,7 @@ class CompilingService:
         return result == "1"
 
     @classmethod
-    def get_legality_code(
-        cls, tiramisu_program: TiramisuProgram, optims_list: List[TiramisuAction]
-    ):
+    def get_legality_code(cls, schedule: Schedule):
         """
         Constructs the code to check legality of the schedule
 
@@ -78,34 +71,36 @@ class CompilingService:
         `str`
             The code to check legality of the schedule
         """
-        if not tiramisu_program.comps or not tiramisu_program.original_str:
-            raise ValueError("No computations in the program")
+        assert schedule.tiramisu_program
+        assert schedule.tiramisu_program.original_str
+        assert schedule.tree
 
         # Add code to the original file to get legality result
         legality_check_lines = """
     prepare_schedules_for_legality_checks();
     performe_full_dependency_analysis();
     bool is_legal=true;
-    """
-        for optim in optims_list:
-            if optim.is_parallelization():
-                legality_check_lines += f"\n\tis_legal &= loop_parallelization_is_legal({tiramisu_program.tree.iterators[optim.params[0]].level}, {{&{optim.comps[0]}}});"
+
+"""
+        for optim in schedule.optims_list:
+            # if optim.is_parallelization():
+            legality_check_lines += "    " + optim.legality_check_string(schedule.tree)
             # elif optim.is_unrolling():
             #     for branch in schedule_object.branches:
             #         comps = branch["comps"]
             #         level = len(branch["iterators"]) - 1
             #         legality_check_lines += print(
             #             f"\n\tis_legal &= loop_unrolling_is_legal({level}, {{{', '.join([f'&{comp}' for comp in comps])}}});")
-            legality_check_lines += optim.tiramisu_optim_str + "\n"
+            # legality_check_lines += optim.tiramisu_optim_str + "\n"
 
         legality_check_lines += """
     prepare_schedules_for_legality_checks();
     is_legal &= check_legality_of_function();   
     std::cout << is_legal;
-            """
+"""
         # Paste the lines responsable of checking legality of schedule in the cpp file
-        cpp_code = tiramisu_program.original_str.replace(
-            tiramisu_program.code_gen_line, legality_check_lines
+        cpp_code = schedule.tiramisu_program.original_str.replace(
+            schedule.tiramisu_program.code_gen_line, legality_check_lines
         )
         return cpp_code
 
@@ -229,8 +224,7 @@ class CompilingService:
     @classmethod
     def call_skewing_solver(
         cls,
-        tiramisu_prog: TiramisuProgram,
-        optim_list: List[TiramisuAction],
+        schedule: Schedule,
         loop_levels: List[int],
         comps_skewed_loops: List[str],
     ):
@@ -239,14 +233,19 @@ class CompilingService:
 
         Parameters
         ----------
-        TODO FINISH THE PARAMETERS
+        `schedule` : `Schedule`
+            The schedule to generate the skewing code for
+        `loop_levels` : `List[int]`
+            The loop levels to skew
+        `comps_skewed_loops` : `List[str]`
+            The computations that have skewed loops
         """
-        if tiramisu_prog.comps is None:
-            raise Exception("The program is not loaded yet")
+        assert schedule.tiramisu_program
+        assert schedule.tiramisu_program.comps
 
         if BaseConfig.base_config is None:
             raise Exception("The base config is not loaded yet")
-        legality_cpp_code = cls.get_legality_code(tiramisu_prog, optim_list)
+        legality_cpp_code = cls.get_legality_code(schedule)
         to_replace = re.findall(r"std::cout << is_legal;", legality_cpp_code)[0]
         header = """
         function * fct = tiramisu::global::get_implicit_function();\n"""
@@ -301,7 +300,8 @@ class CompilingService:
         solver_code = legality_cpp_code.replace(to_replace, solver_lines)
         logging.debug("Skewing Solver Code:\n" + solver_code)
         output_path = os.path.join(
-            BaseConfig.base_config.workspace, f"{tiramisu_prog.name}_skewing_solver"
+            BaseConfig.base_config.workspace,
+            f"{schedule.tiramisu_program.name}_skewing_solver",
         )
 
         result_str = cls.run_cpp_code(cpp_code=solver_code, output_path=output_path)
@@ -353,7 +353,7 @@ class CompilingService:
             schedule_code += optim.tiramisu_optim_str + "\n"
 
         # Add code gen line to the schedule code
-        schedule_code += "\n\t" + tiramisu_program.code_gen_line + "\n"
+        schedule_code += "\n    " + tiramisu_program.code_gen_line + "\n"
         # Paste the lines responsable of checking legality of schedule in the cpp file
         cpp_code = tiramisu_program.original_str.replace(
             tiramisu_program.code_gen_line, schedule_code
