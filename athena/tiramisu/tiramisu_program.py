@@ -142,28 +142,15 @@ class TiramisuProgram:
         if BaseConfig.base_config is None:
             raise Exception("BaseConfig.base_config is None")
 
-        if self.name:
-            # if self.name is None the program doesn't exist in the offline dataset but built from compiling
-            # if self.name has a value than it is fetched from the dataset, we need the full path to read
-            # the lines of the real function to execute legality code
-            func_name = self.name
-            file_name = func_name + "_generator.cpp"
-            file_path = (
-                BaseConfig.base_config.dataset.cpps_path + func_name + "/" + file_name
-            )
-            self.file_path = file_path
-        else:
-            file_path = self.file_path
-
         if original_str:
             self.original_str = original_str
         else:
-            with open(file_path, "r") as f:
+            with open(self.file_path, "r") as f:
                 self.original_str = f.read()
 
         self.func_folder = (
-            "/".join(Path(file_path).parts[:-1])
-            if len(Path(file_path).parts) > 1
+            "/".join(Path(self.file_path).parts[:-1])
+            if len(Path(self.file_path).parts) > 1
             else "."
         ) + "/"
         self.body = re.findall(
