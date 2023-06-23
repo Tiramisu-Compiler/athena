@@ -126,3 +126,72 @@ class Fusion(TiramisuAction):
             fusion_levels.append(fusion_level)
 
         return fusion_levels
+
+    def transform_tree(self, program_tree: TiramisuTree):
+        """
+        Transform the tree by fusing the two iterators of the fusion command.
+
+        Parameters
+        ----------
+        `program_tree` : `TiramisuTree`
+            The tree to transform.
+        """
+        # get the iterators to fuse
+        node_1_name = self.params[0]
+        node_2_name = self.params[1]
+
+        node_1 = program_tree.iterators[node_1_name]
+        node_2 = program_tree.iterators[node_2_name]
+
+        # update absolute order of the computations
+        max_node_1_order = max(
+            [
+                program_tree.computations_absolute_order[comp]
+                for comp in program_tree.get_candidate_computations(node_1_name)
+            ]
+        )
+
+        node_2_comp_family = program_tree.get_candidate_computations(node_2_name)
+
+        # order them by absolute order
+        node_2_comp_family.sort(
+            key=lambda comp: program_tree.computations_absolute_order[comp]
+        )
+
+        for comp in program_tree.computations_absolute_order:
+            if comp in node_2_comp_family:
+                program_tree.computations_absolute_order[comp] = (
+                    max_node_1_order + node_2_comp_family.index(comp) + 1
+                )
+            elif (
+                program_tree.computations_absolute_order[comp] > max_node_1_order
+            ) and (
+                program_tree.computations_absolute_order[comp]
+                <= max_node_1_order + len(node_2_comp_family)
+            ):
+                program_tree.computations_absolute_order[comp] += len(
+                    node_2.computations_list
+                )
+
+        # Fuse the computations
+        node_1.computations_list += node_2.computations_list
+
+        # Fuse the child iterators
+        node_1.child_iterators += node_2.child_iterators
+
+        # Update the parent iterator of the child iterators
+        for child in node_2.child_iterators:
+            program_tree.iterators[child].parent_iterator = node_1_name
+
+        # remove node2 from the parent iterator
+        if node_2.parent_iterator:
+            program_tree.iterators[node_2.parent_iterator].child_iterators.remove(
+                node_2_name
+            )
+
+        # remove node2 from the iterator list
+        del program_tree.iterators[node_2_name]
+
+        # remove node2 from the root list if it is a root
+        if node_2_name in program_tree.roots:
+            program_tree.roots.remove(node_2_name)

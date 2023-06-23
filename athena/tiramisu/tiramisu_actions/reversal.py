@@ -44,3 +44,9 @@ class Reversal(TiramisuAction):
                 candidates[root].extend(node_children)
 
         return candidates
+
+    def transform_tree(self, program_tree: TiramisuTree):
+        node = program_tree.iterators[self.params[0]]
+
+        # Reverse the loop bounds
+        node.lower_bound, node.upper_bound = node.upper_bound, node.lower_bound

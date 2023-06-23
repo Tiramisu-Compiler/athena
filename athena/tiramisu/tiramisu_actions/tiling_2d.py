@@ -1,7 +1,11 @@
 from __future__ import annotations
 import itertools
+import math
 
 from typing import Dict, TYPE_CHECKING, List, Tuple
+from athena.tiramisu.tiramisu_iterator_node import IteratorNode
+
+from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
@@ -55,3 +59,104 @@ class Tiling2D(TiramisuAction):
                     candidates[root].extend(list(itertools.pairwise(section)))
 
         return candidates
+
+    def transform_tree(self, program_tree: TiramisuTree):
+        node_1_outer = program_tree.iterators[self.params[0]]
+        node_2_outer = program_tree.iterators[self.params[1]]
+
+        assert (
+            type(node_1_outer.lower_bound) is int
+            and type(node_1_outer.upper_bound) is int
+        )
+        assert (
+            type(node_2_outer.lower_bound) is int
+            and type(node_2_outer.upper_bound) is int
+        )
+
+        extent_1 = node_1_outer.upper_bound - node_1_outer.lower_bound
+        extent_2 = node_2_outer.upper_bound - node_2_outer.lower_bound
+
+        node_1_tiling_factor = self.params[2]
+        node_2_tiling_factor = self.params[3]
+
+        # Create the first tiled node
+        if extent_1 % node_1_tiling_factor == 0:
+            tiled_1_upper_bound = node_1_tiling_factor
+        else:
+            tiled_1_upper_bound = f"({extent_1} - max({node_1_outer.name}*{node_1_tiling_factor}, {extent_1 - node_1_tiling_factor}))"
+
+        node_1_inner = IteratorNode(
+            name=f"{node_1_outer.name}_tiled",
+            parent_iterator=node_2_outer.name,
+            lower_bound=0,
+            upper_bound=tiled_1_upper_bound,
+            level=node_2_outer.level + 1,
+            child_iterators=[f"{node_2_outer.name}_tiled"],
+            computations_list=[],
+        )
+
+        # Create the second tiled node
+        if extent_2 % node_2_tiling_factor == 0:
+            tiled_2_upper_bound = node_2_tiling_factor
+        else:
+            tiled_2_upper_bound = f"({extent_2} - max({node_2_outer.name}*{node_2_tiling_factor}, {extent_2 - node_2_tiling_factor}))"
+
+        node_2_inner = IteratorNode(
+            name=f"{node_2_outer.name}_tiled",
+            parent_iterator=node_1_inner.name,
+            lower_bound=0,
+            upper_bound=tiled_2_upper_bound,
+            level=node_1_inner.level + 1,
+            child_iterators=node_2_outer.child_iterators.copy(),
+            computations_list=node_2_outer.computations_list.copy(),
+        )
+
+        # Update the children of the outer node 2
+        for child in node_2_outer.child_iterators:
+            program_tree.iterators[child].parent_iterator = node_2_inner.name
+
+        # update node_1
+        node_1_outer.upper_bound = math.ceil(extent_1 / node_1_tiling_factor)
+        node_1_outer.lower_bound = 0
+
+        # update node_2
+        node_2_outer.upper_bound = math.ceil(extent_2 / node_2_tiling_factor)
+        node_2_outer.lower_bound = 0
+        node_2_outer.child_iterators = [node_1_inner.name]
+        node_2_outer.computations_list = []
+
+        # Update the level of the other iterators
+        for iterator in program_tree.iterators.values():
+            if iterator.level > node_2_outer.level:
+                iterator.level += 2
+
+        # Add the new nodes to the tree
+        program_tree.iterators[node_1_inner.name] = node_1_inner
+        program_tree.iterators[node_2_inner.name] = node_2_inner
+
+    def verify_conditions(self, tiramisu_tree: TiramisuTree) -> None:
+        node_1 = tiramisu_tree.iterators[self.params[0]]
+        node_2 = tiramisu_tree.iterators[self.params[1]]
+        node_1_tiling_factor = self.params[2]
+        node_2_tiling_factor = self.params[3]
+
+        # Check that the two nodes are successive
+        assert node_2.parent_iterator == node_1.name
+
+        # assert that the bounds are integers
+        assert type(node_1.lower_bound) is int and type(node_1.upper_bound) is int
+        assert type(node_2.lower_bound) is int and type(node_2.upper_bound) is int
+
+        # check that the tiling factors are positive and smaller than the extent of the node
+        assert node_1_tiling_factor > 0
+        assert node_2_tiling_factor > 0
+
+        assert node_1_tiling_factor < node_1.upper_bound - node_1.lower_bound
+        assert node_2_tiling_factor < node_2.upper_bound - node_2.lower_bound
+
+        # check that the first node does not have any computations
+        assert len(node_1.computations_list) == 0
+
+        # check that the first node has no child iterators besides the second node
+        assert len(node_1.child_iterators) == 1
+        assert node_1.child_iterators[0] == node_2.name

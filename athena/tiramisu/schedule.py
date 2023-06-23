@@ -36,26 +36,34 @@ class Schedule:
         self.tree = deepcopy(tiramisu_program.tree)
 
     def add_optimizations(self, list_optim_cmds: List[TiramisuAction]) -> None:
+        """
+        Adds a list of optimizations to the schedule while maintaining the schedule tree. The order of the optimizations in the list is important.
+
+        Parameters
+        ----------
+        `list_optim_cmds` : `List[TiramisuAction]`
+            The list of optimizations to be added to the schedule.
+        """
         if self.tree is None:
             raise Exception("No Tiramisu program to apply the schedule to")
         for optim_cmd in list_optim_cmds:
             # additional checks to see if optimiaztion can be applied
             optim_cmd.verify_conditions(self.tree)
 
-            if optim_cmd.is_interchange():
+            if optim_cmd.is_fusion():
+                # Fusion is a special case, we need to transform the tree before setting the string representations to get the right order of computations
+                optim_cmd.transform_tree(self.tree)
                 optim_cmd.set_string_representations(self.tree)
-                self.tree.interchange(optim_cmd.params[0], optim_cmd.params[1])
-
-            elif optim_cmd.is_fusion():
-                self.tree.fuse(optim_cmd.params[0], optim_cmd.params[1])
-                optim_cmd.set_string_representations(self.tree)
-
             else:
                 optim_cmd.set_string_representations(self.tree)
+                optim_cmd.transform_tree(self.tree)
 
             self.optims_list.append(optim_cmd)
 
     def pop_optimization(self) -> TiramisuAction:
+        """
+        Removes the last optimization from the schedule and returns it.
+        """
         return self.optims_list.pop()
 
     def apply_schedule(self, nb_exec_tiems=1) -> List[float]:
@@ -99,6 +107,9 @@ class Schedule:
         return self.legality
 
     def __str__(self) -> str:
+        """
+        Generates a string representation of the schedule.
+        """
         comp_names = list(
             set([comp for optim in self.optims_list for comp in optim.comps])
         )

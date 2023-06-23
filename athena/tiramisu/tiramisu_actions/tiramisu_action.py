@@ -80,6 +80,10 @@ class TiramisuAction:
 
         return self.tiramisu_optim_str
 
+    def transform_tree(self, program_tree: TiramisuTree):
+        """Apply the optimization command to the Tiramisu program."""
+        raise NotImplementedError
+
     #     if self.type == ActionType.INTERCHANGE:
     #         interchange_str = (
     #             ".interchange(" + ",".join([str(p) for p in self.params_list]) + ");"

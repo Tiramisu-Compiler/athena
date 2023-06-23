@@ -3,6 +3,8 @@ import itertools
 
 from typing import Dict, TYPE_CHECKING, List, Tuple
 
+from athena.tiramisu.tiramisu_iterator_node import IteratorNode
+
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
@@ -54,3 +56,86 @@ class Interchange(TiramisuAction):
                     candidates[root].extend(list(itertools.combinations(section, 2)))
 
         return candidates
+
+    def transform_tree(self, program_tree: TiramisuTree):
+        # Get the iterators to interchange
+        node1, node2 = self.params[0], self.params[1]
+
+        # Get the iterators' parents
+        node1_parent = program_tree.iterators[node1].parent_iterator
+        node2_parent = program_tree.iterators[node2].parent_iterator
+
+        # treat case where one iterator is the parent of the other
+        if node2_parent == node1:
+            new_node1_parent = node2
+        else:
+            new_node1_parent = node2_parent
+
+        # Create the new iterators
+        new_node1 = IteratorNode(
+            name=node1,
+            parent_iterator=new_node1_parent,
+            lower_bound=program_tree.iterators[node1].lower_bound,
+            upper_bound=program_tree.iterators[node1].upper_bound,
+            child_iterators=program_tree.iterators[node2].child_iterators,
+            computations_list=program_tree.iterators[node2].computations_list,
+            level=program_tree.iterators[node2].level,
+        )
+
+        # treat case where one iterator is the parent of the other
+        if node1_parent == node2:
+            new_node2_parent = node1
+        else:
+            new_node2_parent = node1_parent
+
+        # Create the new iterators
+        new_node2 = IteratorNode(
+            name=node2,
+            parent_iterator=new_node2_parent,
+            lower_bound=program_tree.iterators[node2].lower_bound,
+            upper_bound=program_tree.iterators[node2].upper_bound,
+            child_iterators=program_tree.iterators[node1].child_iterators,
+            computations_list=program_tree.iterators[node1].computations_list,
+            level=program_tree.iterators[node1].level,
+        )
+
+        # Update the iterators' parents
+        if node1_parent:
+            if node1_parent == node2:
+                new_node1.child_iterators = [
+                    node2 if x == node1 else x for x in new_node1.child_iterators
+                ]
+            else:
+                parent_node = program_tree.iterators[node1_parent]  # type: ignore
+
+                parent_node.child_iterators[
+                    parent_node.child_iterators.index(node1)
+                ] = node2
+        else:
+            program_tree.roots[program_tree.roots.index(node1)] = node2
+
+        if node2_parent:
+            if node2_parent == node1:
+                new_node2.child_iterators = [
+                    node1 if x == node2 else x for x in new_node2.child_iterators
+                ]
+
+            else:
+                parent_node = program_tree.iterators[node2_parent]  # type: ignore
+
+                parent_node.child_iterators[
+                    parent_node.child_iterators.index(node2)
+                ] = node1
+        else:
+            program_tree.roots[program_tree.roots.index(node2)] = node1
+
+        # Update the iterators' children
+        for child in program_tree.iterators[node1].child_iterators:
+            program_tree.iterators[child].parent_iterator = node2
+
+        for child in program_tree.iterators[node2].child_iterators:
+            program_tree.iterators[child].parent_iterator = node1
+
+        # swap the iterators
+        program_tree.iterators[node1] = new_node1
+        program_tree.iterators[node2] = new_node2
