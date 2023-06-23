@@ -2,6 +2,7 @@ from athena.tiramisu.schedule import Schedule
 from athena.tiramisu.tiramisu_actions.interchange import Interchange
 from athena.utils.config import BaseConfig
 from tests.utils import interchange_example
+import tests.utils as test_utils
 
 
 def test_interchange_init():
@@ -24,3 +25,45 @@ def test_get_candidates():
     sample = interchange_example()
     candidates = Interchange.get_candidates(sample.tree)
     assert candidates == {"i0": [("i0", "i1"), ("i0", "i2"), ("i1", "i2")]}
+
+
+def test_transform_tree():
+    t_tree = test_utils.tree_test_sample()
+    interchange = Interchange(["i", "j"], ["comp01"])
+
+    interchange.transform_tree(t_tree)
+
+    assert t_tree.iterators["i"].parent_iterator == "root"
+    assert t_tree.iterators["j"].parent_iterator == "root"
+
+    assert t_tree.iterators["i"].child_iterators == ["k"]
+    assert not t_tree.iterators["j"].child_iterators
+
+    assert t_tree.iterators["k"].parent_iterator == "i"
+    assert t_tree.iterators["j"].computations_list == ["comp01"]
+
+    t_tree = test_utils.tree_test_sample()
+
+    Interchange(["j", "k"], ["comp03", "comp04"]).transform_tree(t_tree)
+
+    assert t_tree.iterators["k"].parent_iterator == "root"
+    assert t_tree.iterators["k"].child_iterators == ["j"]
+
+    assert t_tree.iterators["j"].parent_iterator == "k"
+    assert t_tree.iterators["j"].child_iterators == ["l", "m"]
+
+    assert t_tree.iterators["l"].parent_iterator == "j"
+    assert t_tree.iterators["m"].parent_iterator == "j"
+
+    t_tree = test_utils.tree_test_sample()
+
+    Interchange(["root", "j"], ["comp03", "comp04"]).transform_tree(t_tree)
+
+    assert t_tree.roots == ["j"]
+    assert t_tree.iterators["j"].parent_iterator == None
+    assert t_tree.iterators["j"].child_iterators == ["i", "root"]
+
+    assert t_tree.iterators["root"].parent_iterator == "j"
+    assert t_tree.iterators["root"].child_iterators == ["k"]
+
+    assert t_tree.iterators["k"].parent_iterator == "root"

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Dict, TYPE_CHECKING, List
 
+from athena.tiramisu.tiramisu_tree import TiramisuTree
+
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
@@ -77,3 +79,6 @@ class Parallelization(TiramisuAction):
             )
 
         return f"is_legal &= loop_parallelization_is_legal({ program_tree.iterators[self.params[0]].level}, {{{', '.join([f'&{comp}' for comp in self.comps]) }}});\n    {self.tiramisu_optim_str}"
+
+    def transform_tree(self, program_tree: TiramisuTree):
+        pass

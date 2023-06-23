@@ -24,3 +24,13 @@ def test_get_candidates():
     sample = test_utils.reversal_sample()
     candidates = Reversal.get_candidates(sample.tree)
     assert candidates == {"i0": ["i0", "i1"]}
+
+
+def test_transform_tree():
+    BaseConfig.init()
+    sample = test_utils.reversal_sample()
+    iterator = sample.tree.get_iterator_node("i0")
+    lower, upper = iterator.lower_bound, iterator.upper_bound
+    reversal = Reversal(["i0"], ["comp00"])
+    reversal.transform_tree(sample.tree)
+    assert iterator.lower_bound == upper and iterator.upper_bound == lower

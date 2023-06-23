@@ -1,3 +1,4 @@
+from athena.tiramisu.tiramisu_actions.fusion import Fusion
 from athena.utils.config import BaseConfig
 import tests.utils as test_utils
 from athena.tiramisu.tiramisu_iterator_node import IteratorNode
@@ -48,47 +49,6 @@ def test_get_candidate_computations():
     assert t_tree.get_candidate_computations("j") == ["comp03", "comp04"]
 
 
-def test_interchange():
-    t_tree = test_utils.tree_test_sample()
-
-    t_tree.interchange("i", "j")
-
-    assert t_tree.iterators["i"].parent_iterator == "root"
-    assert t_tree.iterators["j"].parent_iterator == "root"
-
-    assert t_tree.iterators["i"].child_iterators == ["k"]
-    assert not t_tree.iterators["j"].child_iterators
-
-    assert t_tree.iterators["k"].parent_iterator == "i"
-    assert t_tree.iterators["j"].computations_list == ["comp01"]
-
-    t_tree = test_utils.tree_test_sample()
-
-    t_tree.interchange("j", "k")
-
-    assert t_tree.iterators["k"].parent_iterator == "root"
-    assert t_tree.iterators["k"].child_iterators == ["j"]
-
-    assert t_tree.iterators["j"].parent_iterator == "k"
-    assert t_tree.iterators["j"].child_iterators == ["l", "m"]
-
-    assert t_tree.iterators["l"].parent_iterator == "j"
-    assert t_tree.iterators["m"].parent_iterator == "j"
-
-    t_tree = test_utils.tree_test_sample()
-
-    t_tree.interchange("root", "j")
-
-    assert t_tree.roots == ["j"]
-    assert t_tree.iterators["j"].parent_iterator == None
-    assert t_tree.iterators["j"].child_iterators == ["i", "root"]
-
-    assert t_tree.iterators["root"].parent_iterator == "j"
-    assert t_tree.iterators["root"].child_iterators == ["k"]
-
-    assert t_tree.iterators["k"].parent_iterator == "root"
-
-
 def test_get_root_of_node():
     t_tree = test_utils.tree_test_sample()
 
@@ -117,44 +77,6 @@ def test_get_iterator_levels():
     ]
 
 
-def test_fuse():
-    BaseConfig.init()
-
-    t_tree = test_utils.tree_test_sample()
-
-    t_tree.fuse("i", "j")
-
-    assert t_tree.iterators["i"].parent_iterator == "root"
-    assert t_tree.iterators["i"].child_iterators == ["k"]
-    assert t_tree.iterators["i"].computations_list == ["comp01"]
-    assert t_tree.iterators["i"].level == 1
-    assert t_tree.iterators["k"].parent_iterator == "i"
-    assert "j" not in t_tree.iterators.keys()
-
-    t_tree = test_utils.tree_test_sample()
-
-    t_tree.fuse("j", "i")
-
-    assert t_tree.iterators["j"].parent_iterator == "root"
-    assert t_tree.iterators["j"].child_iterators == ["k"]
-    assert t_tree.iterators["j"].computations_list == ["comp01"]
-    assert t_tree.iterators["j"].level == 1
-    assert t_tree.iterators["k"].parent_iterator == "j"
-    assert "i" not in t_tree.iterators.keys()
-
-    multi_root = test_utils.multiple_roots_sample().tree
-
-    multi_root.fuse("i", "i_0")
-
-    assert multi_root.iterators["i"].parent_iterator == None
-    assert multi_root.iterators["i"].child_iterators == ["j", "j_0"]
-    assert multi_root.iterators["i"].computations_list == []
-    assert multi_root.iterators["i"].level == 0
-    assert multi_root.iterators["j_0"].parent_iterator == "i"
-    assert multi_root.iterators["j"].parent_iterator == "i"
-    assert "i0" not in multi_root.iterators.keys()
-
-
 def test_get_computations_order_from_tree():
     BaseConfig.init()
 
@@ -173,7 +95,8 @@ def test_get_computations_order_from_tree():
         "w",
     ]
 
-    sample.tree.fuse("i_0", "i_2")
+    Fusion(["i_0", "i_2"], ["x_temp", "w"]).transform_tree(sample.tree)
+
     assert sample.tree.get_computations_order_from_tree() == [
         "A_hat",
         "x_temp",
