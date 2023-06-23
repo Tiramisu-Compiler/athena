@@ -1,3 +1,4 @@
+import pytest
 from athena.tiramisu.schedule import Schedule
 from athena.tiramisu.tiramisu_actions.tiling_2d import Tiling2D
 from athena.utils.config import BaseConfig
@@ -103,3 +104,41 @@ def test_transform_tree():
     assert sample.tree.get_iterator_node("i02").computations_list == ["comp02"]
     assert sample.tree.get_iterator_node("i02").parent_iterator == "i01_tiled"
     assert sample.tree.get_iterator_node("i02").level == 4
+
+
+def test_verify_conditions():
+    BaseConfig.init()
+
+    t_tree = test_utils.tree_test_sample()
+
+    with pytest.raises(AssertionError) as excinfo:
+        Tiling2D(["root", "k", 32, 32], ["comp03", "comp04"]).verify_conditions(t_tree)
+    assert "are not successive" in str(excinfo.value)
+
+    t_tree.iterators["j"].lower_bound = ""
+    with pytest.raises(AssertionError) as excinfo:
+        Tiling2D(["j", "k", 32, 5], ["comp03", "comp04"]).verify_conditions(t_tree)
+    assert "has non-integer bounds" in str(excinfo.value)
+    t_tree.iterators["j"].lower_bound = 0
+
+    with pytest.raises(AssertionError) as excinfo:
+        Tiling2D(["j", "k", -4, 5], ["comp03", "comp04"]).verify_conditions(t_tree)
+    assert "Tiling factor must be positive" in str(excinfo.value)
+
+    with pytest.raises(AssertionError) as excinfo:
+        Tiling2D(["j", "k", 32, 32], ["comp03", "comp04"]).verify_conditions(t_tree)
+    assert "Tiling factor must be smaller" in str(excinfo.value)
+
+    t_tree.iterators["j"].computations_list = ["comp00"]
+    with pytest.raises(AssertionError) as excinfo:
+        Tiling2D(["j", "k", 32, 5], ["comp03", "comp04"]).verify_conditions(t_tree)
+    assert "The first node must not have any computations" in str(excinfo.value)
+    t_tree.iterators["j"].computations_list = []
+
+    with pytest.raises(AssertionError) as excinfo:
+        Tiling2D(["root", "j", 32, 32], ["comp03", "comp04"]).verify_conditions(t_tree)
+    assert "The first node must have one child which is the second node" in str(
+        excinfo.value
+    )
+
+    Tiling2D(["j", "k", 32, 5], ["comp03", "comp04"]).verify_conditions(t_tree)
