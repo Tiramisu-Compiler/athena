@@ -4,6 +4,7 @@ import itertools
 from typing import Dict, TYPE_CHECKING, List, Tuple
 from athena.tiramisu.compiling_service import CompilingService
 from athena.tiramisu.tiramisu_program import TiramisuProgram
+from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
@@ -70,3 +71,13 @@ class Skewing(TiramisuAction):
             return factors
         else:
             raise ValueError("Skewing did not return any factors")
+
+    def transform_tree(self, program_tree: TiramisuTree):
+        node_1 = program_tree.iterators[self.params[0]]
+        node_2 = program_tree.iterators[self.params[1]]
+        # We set the lower and upper bounds to UNK because we do not know how the bounds will change. Halide will calculate the new bounds based on the transformed space of the iterations.
+        node_1.lower_bound = "UNK"
+        node_1.upper_bound = "UNK"
+
+        node_2.lower_bound = "UNK"
+        node_2.upper_bound = "UNK"

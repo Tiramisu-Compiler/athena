@@ -40,3 +40,16 @@ def test_get_factors():
         comps_skewed_loops=sample.tree.get_candidate_computations("i0"),
     )
     assert factors == (1, 1)
+
+
+def test_transform_tree():
+    BaseConfig.init()
+
+    sample = test_utils.multiple_roots_sample()
+
+    Skewing(["i_0", "j_0", 1, 1], ["x_temp"]).transform_tree(sample.tree)
+
+    assert sample.tree.get_iterator_node("i_0").lower_bound == "UNK"
+    assert sample.tree.get_iterator_node("i_0").upper_bound == "UNK"
+    assert sample.tree.get_iterator_node("j_0").lower_bound == "UNK"
+    assert sample.tree.get_iterator_node("j_0").upper_bound == "UNK"
