@@ -90,12 +90,12 @@ class Tiling2D(TiramisuAction):
             node_1_outer_upper_bound = "UNK"
 
         node_1_inner = IteratorNode(
-            name=f"{node_1_outer.name}_tiled",
+            name=f"{node_1_outer.name}_tile",
             parent_iterator=node_2_outer.name,
             lower_bound=0,
             upper_bound=tiled_1_upper_bound,
             level=node_2_outer.level + 1,
-            child_iterators=[f"{node_2_outer.name}_tiled"],
+            child_iterators=[f"{node_2_outer.name}_tile"],
             computations_list=[],
         )
 
@@ -116,7 +116,7 @@ class Tiling2D(TiramisuAction):
             node_2_outer_upper_bound = "UNK"
 
         node_2_inner = IteratorNode(
-            name=f"{node_2_outer.name}_tiled",
+            name=f"{node_2_outer.name}_tile",
             parent_iterator=node_1_inner.name,
             lower_bound=0,
             upper_bound=tiled_2_upper_bound,
@@ -133,11 +133,49 @@ class Tiling2D(TiramisuAction):
         node_1_outer.upper_bound = node_1_outer_upper_bound
         node_1_outer.lower_bound = 0
 
+        # update name
+        node_1_outer_old_name = node_1_outer.name
+        node_1_outer_new_name = f"{node_1_outer.name}_tiled"
+
+        if node_1_outer.name in program_tree.roots:
+            program_tree.roots = [
+                root if root != node_1_outer_old_name else node_1_outer_new_name
+                for root in program_tree.roots
+            ]
+
+        node_1_outer.name = node_1_outer_new_name
+
+        if node_1_outer.parent_iterator is not None:
+            parent = program_tree.iterators[node_1_outer.parent_iterator]
+            parent.child_iterators = [
+                child if child != node_1_outer_old_name else node_1_outer_new_name
+                for child in parent.child_iterators
+            ]
+
         # update node_2
         node_2_outer.upper_bound = node_2_outer_upper_bound
         node_2_outer.lower_bound = 0
         node_2_outer.child_iterators = [node_1_inner.name]
         node_2_outer.computations_list = []
+
+        # update name
+        node_2_outer_old_name = node_2_outer.name
+        node_2_outer_new_name = f"{node_2_outer.name}_tiled"
+
+        if node_2_outer.name in program_tree.roots:
+            program_tree.roots = [
+                root if root != node_2_outer_old_name else node_2_outer_new_name
+                for root in program_tree.roots
+            ]
+
+        node_2_outer.name = node_2_outer_new_name
+
+        if node_2_outer.parent_iterator is not None:
+            parent = program_tree.iterators[node_2_outer.parent_iterator]
+            parent.child_iterators = [
+                child if child != node_2_outer_old_name else node_2_outer_new_name
+                for child in parent.child_iterators
+            ]
 
         # Update the level of the other iterators
         for iterator in program_tree.iterators.values():
@@ -147,6 +185,20 @@ class Tiling2D(TiramisuAction):
         # Add the new nodes to the tree
         program_tree.iterators[node_1_inner.name] = node_1_inner
         program_tree.iterators[node_2_inner.name] = node_2_inner
+
+        del program_tree.iterators[node_1_outer_old_name]
+        program_tree.iterators[node_1_outer_new_name] = node_1_outer
+
+        del program_tree.iterators[node_2_outer_old_name]
+        program_tree.iterators[node_2_outer_new_name] = node_2_outer
+
+        # update the children of node_1_outer to the new name
+        for child in node_1_outer.child_iterators:
+            program_tree.iterators[child].parent_iterator = node_1_outer_new_name
+
+        # update the children of node_2_outer to the new name
+        for child in node_2_outer.child_iterators:
+            program_tree.iterators[child].parent_iterator = node_2_outer_new_name
 
     def verify_conditions(self, tiramisu_tree: TiramisuTree) -> None:
         node_1 = tiramisu_tree.iterators[self.params[0]]
