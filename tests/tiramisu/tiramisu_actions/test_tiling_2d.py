@@ -39,31 +39,31 @@ def test_transform_tree():
     tiling_2d = Tiling2D(["i0", "i1", 32, 32], sample.tree)
     tiling_2d.transform_tree(sample.tree)
 
-    assert sample.tree.get_iterator_node("i0").lower_bound == 0
-    assert sample.tree.get_iterator_node("i0").upper_bound == 2
-    assert sample.tree.get_iterator_node("i0").child_iterators == ["i1"]
-    assert not sample.tree.get_iterator_node("i0").computations_list
-    assert sample.tree.get_iterator_node("i0").level == 0
-
-    assert sample.tree.get_iterator_node("i1").lower_bound == 0
-    assert sample.tree.get_iterator_node("i1").upper_bound == 6
-    assert sample.tree.get_iterator_node("i1").child_iterators == ["i0_tiled"]
-    assert not sample.tree.get_iterator_node("i1").computations_list
-    assert sample.tree.get_iterator_node("i1").level == 1
-
     assert sample.tree.get_iterator_node("i0_tiled").lower_bound == 0
-    assert sample.tree.get_iterator_node("i0_tiled").upper_bound == 32
+    assert sample.tree.get_iterator_node("i0_tiled").upper_bound == 2
     assert sample.tree.get_iterator_node("i0_tiled").child_iterators == ["i1_tiled"]
     assert not sample.tree.get_iterator_node("i0_tiled").computations_list
-    assert sample.tree.get_iterator_node("i0_tiled").parent_iterator == "i1"
-    assert sample.tree.get_iterator_node("i0_tiled").level == 2
+    assert sample.tree.get_iterator_node("i0_tiled").level == 0
 
     assert sample.tree.get_iterator_node("i1_tiled").lower_bound == 0
-    assert sample.tree.get_iterator_node("i1_tiled").upper_bound == 32
-    assert not sample.tree.get_iterator_node("i1_tiled").child_iterators
-    assert sample.tree.get_iterator_node("i1_tiled").computations_list == ["comp00"]
-    assert sample.tree.get_iterator_node("i1_tiled").parent_iterator == "i0_tiled"
-    assert sample.tree.get_iterator_node("i1_tiled").level == 3
+    assert sample.tree.get_iterator_node("i1_tiled").upper_bound == 6
+    assert sample.tree.get_iterator_node("i1_tiled").child_iterators == ["i0_tile"]
+    assert not sample.tree.get_iterator_node("i1_tiled").computations_list
+    assert sample.tree.get_iterator_node("i1_tiled").level == 1
+
+    assert sample.tree.get_iterator_node("i0_tile").lower_bound == 0
+    assert sample.tree.get_iterator_node("i0_tile").upper_bound == 32
+    assert sample.tree.get_iterator_node("i0_tile").child_iterators == ["i1_tile"]
+    assert not sample.tree.get_iterator_node("i0_tile").computations_list
+    assert sample.tree.get_iterator_node("i0_tile").parent_iterator == "i1_tiled"
+    assert sample.tree.get_iterator_node("i0_tile").level == 2
+
+    assert sample.tree.get_iterator_node("i1_tile").lower_bound == 0
+    assert sample.tree.get_iterator_node("i1_tile").upper_bound == 32
+    assert not sample.tree.get_iterator_node("i1_tile").child_iterators
+    assert sample.tree.get_iterator_node("i1_tile").computations_list == ["comp00"]
+    assert sample.tree.get_iterator_node("i1_tile").parent_iterator == "i0_tile"
+    assert sample.tree.get_iterator_node("i1_tile").level == 3
 
     sample = test_utils.benchmark_program_test_sample()
 
@@ -71,40 +71,40 @@ def test_transform_tree():
 
     tiling_2d.transform_tree(sample.tree)
 
-    assert sample.tree.get_iterator_node("i00").lower_bound == 0
-    assert sample.tree.get_iterator_node("i00").upper_bound == 6
-    assert sample.tree.get_iterator_node("i00").child_iterators == ["i01"]
-    assert not sample.tree.get_iterator_node("i00").computations_list
-    assert sample.tree.get_iterator_node("i00").level == 0
-
-    assert sample.tree.get_iterator_node("i01").lower_bound == 0
-    assert sample.tree.get_iterator_node("i01").upper_bound == 24
-    assert sample.tree.get_iterator_node("i01").child_iterators == ["i00_tiled"]
-    assert not sample.tree.get_iterator_node("i01").computations_list
-    assert sample.tree.get_iterator_node("i01").level == 1
-
     assert sample.tree.get_iterator_node("i00_tiled").lower_bound == 0
-    assert sample.tree.get_iterator_node("i00_tiled").upper_bound == 32
+    assert sample.tree.get_iterator_node("i00_tiled").upper_bound == 6
     assert sample.tree.get_iterator_node("i00_tiled").child_iterators == ["i01_tiled"]
     assert not sample.tree.get_iterator_node("i00_tiled").computations_list
-    assert sample.tree.get_iterator_node("i00_tiled").parent_iterator == "i01"
-    assert sample.tree.get_iterator_node("i00_tiled").level == 2
+    assert sample.tree.get_iterator_node("i00_tiled").level == 0
 
     assert sample.tree.get_iterator_node("i01_tiled").lower_bound == 0
+    assert sample.tree.get_iterator_node("i01_tiled").upper_bound == 24
+    assert sample.tree.get_iterator_node("i01_tiled").child_iterators == ["i00_tile"]
+    assert not sample.tree.get_iterator_node("i01_tiled").computations_list
+    assert sample.tree.get_iterator_node("i01_tiled").level == 1
+
+    assert sample.tree.get_iterator_node("i00_tile").lower_bound == 0
+    assert sample.tree.get_iterator_node("i00_tile").upper_bound == 32
+    assert sample.tree.get_iterator_node("i00_tile").child_iterators == ["i01_tile"]
+    assert not sample.tree.get_iterator_node("i00_tile").computations_list
+    assert sample.tree.get_iterator_node("i00_tile").parent_iterator == "i01_tiled"
+    assert sample.tree.get_iterator_node("i00_tile").level == 2
+
+    assert sample.tree.get_iterator_node("i01_tile").lower_bound == 0
     assert (
-        sample.tree.get_iterator_node("i01_tiled").upper_bound
+        sample.tree.get_iterator_node("i01_tile").upper_bound
         == "(256 - max(i01*11, 245))"
     )
-    assert sample.tree.get_iterator_node("i01_tiled").child_iterators == ["i02"]
-    assert not sample.tree.get_iterator_node("i01_tiled").computations_list
-    assert sample.tree.get_iterator_node("i01_tiled").parent_iterator == "i00_tiled"
-    assert sample.tree.get_iterator_node("i01_tiled").level == 3
+    assert sample.tree.get_iterator_node("i01_tile").child_iterators == ["i02"]
+    assert not sample.tree.get_iterator_node("i01_tile").computations_list
+    assert sample.tree.get_iterator_node("i01_tile").parent_iterator == "i00_tile"
+    assert sample.tree.get_iterator_node("i01_tile").level == 3
 
     assert sample.tree.get_iterator_node("i02").lower_bound == 0
     assert sample.tree.get_iterator_node("i02").upper_bound == 320
     assert not sample.tree.get_iterator_node("i02").child_iterators
     assert sample.tree.get_iterator_node("i02").computations_list == ["comp02"]
-    assert sample.tree.get_iterator_node("i02").parent_iterator == "i01_tiled"
+    assert sample.tree.get_iterator_node("i02").parent_iterator == "i01_tile"
     assert sample.tree.get_iterator_node("i02").level == 4
 
 

@@ -38,45 +38,45 @@ def test_transform_tree():
 
     Tiling3D(["i00", "i01", "i02", 32, 32, 32], sample.tree).transform_tree(sample.tree)
 
-    assert sample.tree.iterators["i00"].parent_iterator == None
-    assert sample.tree.iterators["i00"].child_iterators == ["i01"]
-    assert sample.tree.iterators["i00"].lower_bound == 0
-    assert sample.tree.iterators["i00"].upper_bound == 6
-    assert sample.tree.iterators["i00"].level == 0
-
-    assert sample.tree.iterators["i01"].parent_iterator == "i00"
-    assert sample.tree.iterators["i01"].child_iterators == ["i02"]
-    assert sample.tree.iterators["i01"].lower_bound == 0
-    assert sample.tree.iterators["i01"].upper_bound == 8
-    assert sample.tree.iterators["i01"].level == 1
-
-    assert sample.tree.iterators["i02"].parent_iterator == "i01"
-    assert sample.tree.iterators["i02"].child_iterators == ["i00_tiled"]
-    assert sample.tree.iterators["i02"].lower_bound == 0
-    assert sample.tree.iterators["i02"].upper_bound == 10
-    assert not sample.tree.iterators["i02"].computations_list
-    assert sample.tree.iterators["i02"].level == 2
-
-    assert sample.tree.iterators["i00_tiled"].parent_iterator == "i02"
+    assert sample.tree.iterators["i00_tiled"].parent_iterator == None
     assert sample.tree.iterators["i00_tiled"].child_iterators == ["i01_tiled"]
     assert sample.tree.iterators["i00_tiled"].lower_bound == 0
-    assert sample.tree.iterators["i00_tiled"].upper_bound == 32
-    assert not sample.tree.iterators["i00_tiled"].computations_list
-    assert sample.tree.iterators["i00_tiled"].level == 3
+    assert sample.tree.iterators["i00_tiled"].upper_bound == 6
+    assert sample.tree.iterators["i00_tiled"].level == 0
 
     assert sample.tree.iterators["i01_tiled"].parent_iterator == "i00_tiled"
     assert sample.tree.iterators["i01_tiled"].child_iterators == ["i02_tiled"]
     assert sample.tree.iterators["i01_tiled"].lower_bound == 0
-    assert sample.tree.iterators["i01_tiled"].upper_bound == 32
-    assert not sample.tree.iterators["i01_tiled"].computations_list
-    assert sample.tree.iterators["i01_tiled"].level == 4
+    assert sample.tree.iterators["i01_tiled"].upper_bound == 8
+    assert sample.tree.iterators["i01_tiled"].level == 1
 
     assert sample.tree.iterators["i02_tiled"].parent_iterator == "i01_tiled"
-    assert sample.tree.iterators["i02_tiled"].child_iterators == []
+    assert sample.tree.iterators["i02_tiled"].child_iterators == ["i00_tile"]
     assert sample.tree.iterators["i02_tiled"].lower_bound == 0
-    assert sample.tree.iterators["i02_tiled"].upper_bound == 32
-    assert sample.tree.iterators["i02_tiled"].computations_list == ["comp02"]
-    assert sample.tree.iterators["i02_tiled"].level == 5
+    assert sample.tree.iterators["i02_tiled"].upper_bound == 10
+    assert not sample.tree.iterators["i02_tiled"].computations_list
+    assert sample.tree.iterators["i02_tiled"].level == 2
+
+    assert sample.tree.iterators["i00_tile"].parent_iterator == "i02_tiled"
+    assert sample.tree.iterators["i00_tile"].child_iterators == ["i01_tile"]
+    assert sample.tree.iterators["i00_tile"].lower_bound == 0
+    assert sample.tree.iterators["i00_tile"].upper_bound == 32
+    assert not sample.tree.iterators["i00_tile"].computations_list
+    assert sample.tree.iterators["i00_tile"].level == 3
+
+    assert sample.tree.iterators["i01_tile"].parent_iterator == "i00_tile"
+    assert sample.tree.iterators["i01_tile"].child_iterators == ["i02_tile"]
+    assert sample.tree.iterators["i01_tile"].lower_bound == 0
+    assert sample.tree.iterators["i01_tile"].upper_bound == 32
+    assert not sample.tree.iterators["i01_tile"].computations_list
+    assert sample.tree.iterators["i01_tile"].level == 4
+
+    assert sample.tree.iterators["i02_tile"].parent_iterator == "i01_tile"
+    assert sample.tree.iterators["i02_tile"].child_iterators == []
+    assert sample.tree.iterators["i02_tile"].lower_bound == 0
+    assert sample.tree.iterators["i02_tile"].upper_bound == 32
+    assert sample.tree.iterators["i02_tile"].computations_list == ["comp02"]
+    assert sample.tree.iterators["i02_tile"].level == 5
 
 
 def test_verify_conditions():

@@ -97,12 +97,12 @@ class Tiling3D(TiramisuAction):
             node_1_outer_upper_bound = "UNK"
 
         node_1_inner = IteratorNode(
-            name=f"{node_1_outer.name}_tiled",
+            name=f"{node_1_outer.name}_tile",
             parent_iterator=node_3_outer.name,
             lower_bound=0,
             upper_bound=tiled_1_upper_bound,
             level=node_3_outer.level + 1,
-            child_iterators=[f"{node_2_outer.name}_tiled"],
+            child_iterators=[f"{node_2_outer.name}_tile"],
             computations_list=[],
         )
 
@@ -123,12 +123,12 @@ class Tiling3D(TiramisuAction):
             node_2_outer_upper_bound = "UNK"
 
         node_2_inner = IteratorNode(
-            name=f"{node_2_outer.name}_tiled",
+            name=f"{node_2_outer.name}_tile",
             parent_iterator=node_1_inner.name,
             lower_bound=0,
             upper_bound=tiled_2_upper_bound,
             level=node_1_inner.level + 1,
-            child_iterators=[f"{node_3_outer.name}_tiled"],
+            child_iterators=[f"{node_3_outer.name}_tile"],
             computations_list=[],
         )
 
@@ -149,7 +149,7 @@ class Tiling3D(TiramisuAction):
             node_3_outer_upper_bound = "UNK"
 
         node_3_inner = IteratorNode(
-            name=f"{node_3_outer.name}_tiled",
+            name=f"{node_3_outer.name}_tile",
             parent_iterator=node_2_inner.name,
             lower_bound=0,
             upper_bound=tiled_3_upper_bound,
@@ -166,15 +166,63 @@ class Tiling3D(TiramisuAction):
         node_1_outer.upper_bound = node_1_outer_upper_bound
         node_1_outer.lower_bound = 0
 
+        node_1_outer_old_name = node_1_outer.name
+        node_1_outer.name = f"{node_1_outer.name}_tiled"
+
+        if node_1_outer_old_name in program_tree.roots:
+            program_tree.roots = [
+                node_1_outer.name if x == node_1_outer_old_name else x
+                for x in program_tree.roots
+            ]
+
+        if node_1_outer.parent_iterator is not None:
+            parent = program_tree.iterators[node_1_outer.parent_iterator]
+            parent.child_iterators = [
+                child if child != node_1_outer_old_name else node_1_outer.name
+                for child in parent.child_iterators
+            ]
+
         # update node_2
         node_2_outer.upper_bound = node_2_outer_upper_bound
         node_2_outer.lower_bound = 0
+
+        node_2_outer_old_name = node_2_outer.name
+        node_2_outer.name = f"{node_2_outer.name}_tiled"
+
+        if node_2_outer_old_name in program_tree.roots:
+            program_tree.roots = [
+                node_2_outer.name if x == node_2_outer_old_name else x
+                for x in program_tree.roots
+            ]
+
+        if node_2_outer.parent_iterator is not None:
+            parent = program_tree.iterators[node_2_outer.parent_iterator]
+            parent.child_iterators = [
+                child if child != node_2_outer_old_name else node_2_outer.name
+                for child in parent.child_iterators
+            ]
 
         # update node_3
         node_3_outer.upper_bound = node_3_outer_upper_bound
         node_3_outer.lower_bound = 0
         node_3_outer.child_iterators = [node_1_inner.name]
         node_3_outer.computations_list = []
+
+        node_3_outer_old_name = node_3_outer.name
+        node_3_outer.name = f"{node_3_outer.name}_tiled"
+
+        if node_3_outer_old_name in program_tree.roots:
+            program_tree.roots = [
+                node_3_outer.name if x == node_3_outer_old_name else x
+                for x in program_tree.roots
+            ]
+
+        if node_3_outer.parent_iterator is not None:
+            parent = program_tree.iterators[node_3_outer.parent_iterator]
+            parent.child_iterators = [
+                child if child != node_3_outer_old_name else node_3_outer.name
+                for child in parent.child_iterators
+            ]
 
         # Update the level of the other iterators
         for iterator in program_tree.iterators.values():
@@ -185,6 +233,23 @@ class Tiling3D(TiramisuAction):
         program_tree.iterators[node_1_inner.name] = node_1_inner
         program_tree.iterators[node_2_inner.name] = node_2_inner
         program_tree.iterators[node_3_inner.name] = node_3_inner
+
+        del program_tree.iterators[node_1_outer_old_name]
+        del program_tree.iterators[node_2_outer_old_name]
+        del program_tree.iterators[node_3_outer_old_name]
+
+        program_tree.iterators[node_1_outer.name] = node_1_outer
+        program_tree.iterators[node_2_outer.name] = node_2_outer
+        program_tree.iterators[node_3_outer.name] = node_3_outer
+
+        for child in node_1_outer.child_iterators:
+            program_tree.iterators[child].parent_iterator = node_1_outer.name
+
+        for child in node_2_outer.child_iterators:
+            program_tree.iterators[child].parent_iterator = node_2_outer.name
+
+        for child in node_3_outer.child_iterators:
+            program_tree.iterators[child].parent_iterator = node_3_outer.name
 
     def verify_conditions(self, tiramisu_tree: TiramisuTree) -> None:
         node_1 = tiramisu_tree.iterators[self.params[0]]
