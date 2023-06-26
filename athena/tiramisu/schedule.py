@@ -110,35 +110,8 @@ class Schedule:
         """
         Generates a string representation of the schedule.
         """
-        comp_names = list(
-            set([comp for optim in self.optims_list for comp in optim.comps])
-        )
 
-        comp_names.sort()
-
-        sched_str = ""
-
-        # Add fusions first
-        fusions = [
-            optim
-            for optim in self.optims_list
-            if optim.type == TiramisuActionType.FUSION
-        ]
-        for fusion in fusions:
-            sched_str += fusion.str_representation
-
-        # Iterate over the comps and add their transformations
-        for name in comp_names:
-            sched_str += "{" + name + "}:"
-
-            for transformation in self.optims_list:
-                # Skip the transformation if it doesn't include the comp
-                if (
-                    name not in transformation.comps
-                    or transformation.type == TiramisuActionType.FUSION
-                ):
-                    continue
-                sched_str += transformation.str_representation
+        sched_str = "|".join([str(optim) for optim in self.optims_list])
 
         return sched_str
 

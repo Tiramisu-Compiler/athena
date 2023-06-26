@@ -46,7 +46,9 @@ class Tiling2D(TiramisuAction):
             self.tiramisu_optim_str += (
                 f"{comp}.tile({', '.join(loop_levels_and_factors)});\n"
             )
-        self.str_representation = "T2(L{},L{},{},{})".format(*loop_levels_and_factors)
+        self.str_representation = "T2(L{},L{},{},{},comps={})".format(
+            *loop_levels_and_factors, self.comps
+        )
 
     @classmethod
     def get_candidates(

@@ -179,7 +179,7 @@ class TiramisuAction:
         return [e for e in TiramisuActionType]
 
     def __str__(self) -> str:
-        return f"Action(type={self.type}, params={self.params}, comps={self.comps})"
+        return self.str_representation
 
     def __repr__(self) -> str:
-        return self.__str__()
+        return f"Action(type={self.type}, params={self.params}, comps={self.comps})"

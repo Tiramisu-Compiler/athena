@@ -40,7 +40,9 @@ class Fusion(TiramisuAction):
 
         first_comp = ordered_computations[0]
         self.tiramisu_optim_str += f"clear_implicit_function_sched_graph();\n    {first_comp}{''.join([f'.then({comp},{fusion_level})' for comp, fusion_level in zip(ordered_computations[1:], fusion_levels)])};\n"
-        self.str_representation = f"F({','.join(self.comps)}, L{tiramisu_tree.iterators[self.params[0]].level})"
+        self.str_representation = (
+            f"F(L{tiramisu_tree.iterators[self.params[0]].level},comps={self.comps})"
+        )
 
     @classmethod
     def get_candidates(cls, program_tree: TiramisuTree) -> List[Tuple[str, str]]:

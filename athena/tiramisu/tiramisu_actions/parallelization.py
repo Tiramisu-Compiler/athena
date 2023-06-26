@@ -33,7 +33,7 @@ class Parallelization(TiramisuAction):
         first_comp = list(self.comps)[0]
         self.tiramisu_optim_str = f"{first_comp}.tag_parallel_level({level});\n"
 
-        self.str_representation = "P(L" + str(level) + ")"
+        self.str_representation = f"P(L{level},comps={self.comps})"
 
     @classmethod
     def _get_candidates_of_node(

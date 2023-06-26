@@ -48,8 +48,8 @@ class Tiling3D(TiramisuAction):
             self.tiramisu_optim_str += (
                 f"{comp}.tile({', '.join(loop_levels_and_factors)});\n"
             )
-        self.str_representation = "T3(L{},L{},L{},{},{},{})".format(
-            *loop_levels_and_factors
+        self.str_representation = "T3(L{},L{},L{},{},{},{},comps={})".format(
+            *self.params, self.comps
         )
 
     @classmethod

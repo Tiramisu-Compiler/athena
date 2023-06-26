@@ -33,7 +33,7 @@ class Reversal(TiramisuAction):
         for comp in self.comps:
             self.tiramisu_optim_str += f"{comp}.loop_reversal({level});\n"
 
-        self.str_representation = "R(L" + str(level) + ")"
+        self.str_representation = f"R(L{level},comps={self.comps})"
 
     @classmethod
     def get_candidates(cls, program_tree: TiramisuTree) -> Dict[str, List[str]]:
