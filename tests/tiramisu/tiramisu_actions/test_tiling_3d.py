@@ -92,11 +92,11 @@ def test_verify_conditions():
         Tiling3D(["root", "j", "l", 32, 32, 32], t_tree).verify_conditions(t_tree)
     assert "are not successive" in str(e.value)
 
-    t_tree.iterators["j"].lower_bound = ""
-    with pytest.raises(AssertionError) as e:
-        Tiling3D(["root", "j", "k", 32, 32, 32], t_tree).verify_conditions(t_tree)
-    assert "has non-integer bounds" in str(e.value)
-    t_tree.iterators["j"].lower_bound = 0
+    # t_tree.iterators["j"].lower_bound = ""
+    # with pytest.raises(AssertionError) as e:
+    #     Tiling3D(["root", "j", "k", 32, 32, 32], t_tree).verify_conditions(t_tree)
+    # assert "has non-integer bounds" in str(e.value)
+    # t_tree.iterators["j"].lower_bound = 0
 
     with pytest.raises(AssertionError) as e:
         Tiling3D(["root", "j", "k", 32, -2, 32], t_tree).verify_conditions(t_tree)

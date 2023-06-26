@@ -77,33 +77,24 @@ class Tiling3D(TiramisuAction):
         node_1_outer = program_tree.iterators[self.params[0]]
         node_2_outer = program_tree.iterators[self.params[1]]
         node_3_outer = program_tree.iterators[self.params[2]]
-
-        assert (
-            type(node_1_outer.lower_bound) is int
-            and type(node_1_outer.upper_bound) is int
-        )
-        assert (
-            type(node_2_outer.lower_bound) is int
-            and type(node_2_outer.upper_bound) is int
-        )
-        assert (
-            type(node_3_outer.lower_bound) is int
-            and type(node_3_outer.upper_bound) is int
-        )
-
-        extent_1 = node_1_outer.upper_bound - node_1_outer.lower_bound
-        extent_2 = node_2_outer.upper_bound - node_2_outer.lower_bound
-        extent_3 = node_3_outer.upper_bound - node_3_outer.lower_bound
-
         node_1_tiling_factor = self.params[3]
         node_2_tiling_factor = self.params[4]
         node_3_tiling_factor = self.params[5]
 
-        # Create the first tiled node
-        if extent_1 % node_1_tiling_factor == 0:
-            tiled_1_upper_bound = node_1_tiling_factor
+        if (
+            type(node_1_outer.lower_bound) is int
+            and type(node_1_outer.upper_bound) is int
+        ):
+            extent_1 = node_1_outer.upper_bound - node_1_outer.lower_bound
+            # Create the first tiled node
+            if extent_1 % node_1_tiling_factor == 0:
+                tiled_1_upper_bound = node_1_tiling_factor
+            else:
+                tiled_1_upper_bound = f"({extent_1} - max({node_1_outer.name}*{node_1_tiling_factor}, {extent_1 - node_1_tiling_factor}))"
+            node_1_outer_upper_bound = math.ceil(extent_1 / node_1_tiling_factor)
         else:
-            tiled_1_upper_bound = f"({extent_1} - max({node_1_outer.name}*{node_1_tiling_factor}, {extent_1 - node_1_tiling_factor}))"
+            tiled_1_upper_bound = "UNK"
+            node_1_outer_upper_bound = "UNK"
 
         node_1_inner = IteratorNode(
             name=f"{node_1_outer.name}_tiled",
@@ -115,11 +106,21 @@ class Tiling3D(TiramisuAction):
             computations_list=[],
         )
 
-        # Create the second tiled node
-        if extent_2 % node_2_tiling_factor == 0:
-            tiled_2_upper_bound = node_2_tiling_factor
+        if (
+            type(node_2_outer.lower_bound) is int
+            and type(node_2_outer.upper_bound) is int
+        ):
+            extent_2 = node_2_outer.upper_bound - node_2_outer.lower_bound
+
+            # Create the second tiled node
+            if extent_2 % node_2_tiling_factor == 0:
+                tiled_2_upper_bound = node_2_tiling_factor
+            else:
+                tiled_2_upper_bound = f"({extent_2} - max({node_2_outer.name}*{node_2_tiling_factor}, {extent_2 - node_2_tiling_factor}))"
+            node_2_outer_upper_bound = math.ceil(extent_2 / node_2_tiling_factor)
         else:
-            tiled_2_upper_bound = f"({extent_2} - max({node_2_outer.name}*{node_2_tiling_factor}, {extent_2 - node_2_tiling_factor}))"
+            tiled_2_upper_bound = "UNK"
+            node_2_outer_upper_bound = "UNK"
 
         node_2_inner = IteratorNode(
             name=f"{node_2_outer.name}_tiled",
@@ -131,11 +132,21 @@ class Tiling3D(TiramisuAction):
             computations_list=[],
         )
 
-        # Create the third tiled node
-        if extent_3 % node_3_tiling_factor == 0:
-            tiled_3_upper_bound = node_3_tiling_factor
+        if (
+            type(node_3_outer.lower_bound) is int
+            and type(node_3_outer.upper_bound) is int
+        ):
+            extent_3 = node_3_outer.upper_bound - node_3_outer.lower_bound
+
+            # Create the third tiled node
+            if extent_3 % node_3_tiling_factor == 0:
+                tiled_3_upper_bound = node_3_tiling_factor
+            else:
+                tiled_3_upper_bound = f"({extent_3} - max({node_3_outer.name}*{node_3_tiling_factor}, {extent_3 - node_3_tiling_factor}))"
+            node_3_outer_upper_bound = math.ceil(extent_3 / node_3_tiling_factor)
         else:
-            tiled_3_upper_bound = f"({extent_3} - max({node_3_outer.name}*{node_3_tiling_factor}, {extent_3 - node_3_tiling_factor}))"
+            tiled_3_upper_bound = "UNK"
+            node_3_outer_upper_bound = "UNK"
 
         node_3_inner = IteratorNode(
             name=f"{node_3_outer.name}_tiled",
@@ -152,15 +163,15 @@ class Tiling3D(TiramisuAction):
             program_tree.iterators[child].parent_iterator = node_3_inner.name
 
         # update node_1
-        node_1_outer.upper_bound = math.ceil(extent_1 / node_1_tiling_factor)
+        node_1_outer.upper_bound = node_1_outer_upper_bound
         node_1_outer.lower_bound = 0
 
         # update node_2
-        node_2_outer.upper_bound = math.ceil(extent_2 / node_2_tiling_factor)
+        node_2_outer.upper_bound = node_2_outer_upper_bound
         node_2_outer.lower_bound = 0
 
         # update node_3
-        node_3_outer.upper_bound = math.ceil(extent_3 / node_3_tiling_factor)
+        node_3_outer.upper_bound = node_3_outer_upper_bound
         node_3_outer.lower_bound = 0
         node_3_outer.child_iterators = [node_1_inner.name]
         node_3_outer.computations_list = []
@@ -191,16 +202,16 @@ class Tiling3D(TiramisuAction):
             node_3.parent_iterator == node_2.name
         ), f"Nodes {node_2.name} and {node_3.name} are not successive, parent of {node_3.name} is {node_3.parent_iterator} instead of {node_2.name}"
 
-        # assert that the bounds are integers
-        assert (
-            type(node_1.lower_bound) is int and type(node_1.upper_bound) is int
-        ), f"Node {node_1.name} has non-integer bounds, lower bound: {node_1.lower_bound}, upper bound: {node_1.upper_bound}"
-        assert (
-            type(node_2.lower_bound) is int and type(node_2.upper_bound) is int
-        ), f"Node {node_2.name} has non-integer bounds, lower bound: {node_2.lower_bound}, upper bound: {node_2.upper_bound}"
-        assert (
-            type(node_3.lower_bound) is int and type(node_3.upper_bound) is int
-        ), f"Node {node_3.name} has non-integer bounds, lower bound: {node_3.lower_bound}, upper bound: {node_3.upper_bound}"
+        # # assert that the bounds are integers
+        # assert (
+        #     type(node_1.lower_bound) is int and type(node_1.upper_bound) is int
+        # ), f"Node {node_1.name} has non-integer bounds, lower bound: {node_1.lower_bound}, upper bound: {node_1.upper_bound}"
+        # assert (
+        #     type(node_2.lower_bound) is int and type(node_2.upper_bound) is int
+        # ), f"Node {node_2.name} has non-integer bounds, lower bound: {node_2.lower_bound}, upper bound: {node_2.upper_bound}"
+        # assert (
+        #     type(node_3.lower_bound) is int and type(node_3.upper_bound) is int
+        # ), f"Node {node_3.name} has non-integer bounds, lower bound: {node_3.lower_bound}, upper bound: {node_3.upper_bound}"
 
         # check that the tiling factors are positive and smaller than the extent of the node
         assert (
@@ -213,15 +224,18 @@ class Tiling3D(TiramisuAction):
             node_3_tiling_factor > 0
         ), f"Tiling factor must be positive, got {node_3_tiling_factor}"
 
-        assert (
-            node_1_tiling_factor < node_1.upper_bound - node_1.lower_bound
-        ), f"Tiling factor must be smaller than the extent of the node: {node_1_tiling_factor} < {node_1.upper_bound - node_1.lower_bound}"
-        assert (
-            node_2_tiling_factor < node_2.upper_bound - node_2.lower_bound
-        ), f"Tiling factor must be smaller than the extent of the node: {node_2_tiling_factor} < {node_2.upper_bound - node_2.lower_bound}"
-        assert (
-            node_3_tiling_factor < node_3.upper_bound - node_3.lower_bound
-        ), f"Tiling factor must be smaller than the extent of the node: {node_3_tiling_factor} < {node_3.upper_bound - node_3.lower_bound}"
+        if type(node_1.lower_bound) is int and type(node_1.upper_bound) is int:
+            assert (
+                node_1_tiling_factor < node_1.upper_bound - node_1.lower_bound
+            ), f"Tiling factor must be smaller than the extent of the node: {node_1_tiling_factor} < {node_1.upper_bound - node_1.lower_bound}"
+        if type(node_2.lower_bound) is int and type(node_2.upper_bound) is int:
+            assert (
+                node_2_tiling_factor < node_2.upper_bound - node_2.lower_bound
+            ), f"Tiling factor must be smaller than the extent of the node: {node_2_tiling_factor} < {node_2.upper_bound - node_2.lower_bound}"
+        if type(node_3.lower_bound) is int and type(node_3.upper_bound) is int:
+            assert (
+                node_3_tiling_factor < node_3.upper_bound - node_3.lower_bound
+            ), f"Tiling factor must be smaller than the extent of the node: {node_3_tiling_factor} < {node_3.upper_bound - node_3.lower_bound}"
 
         # check that the first 2 nodes do not have any computations
         assert (
