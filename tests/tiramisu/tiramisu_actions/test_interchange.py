@@ -1,5 +1,7 @@
+import pytest
 from athena.tiramisu.schedule import Schedule
 from athena.tiramisu.tiramisu_actions.interchange import Interchange
+from athena.tiramisu.tiramisu_actions.tiling_2d import Tiling2D
 from athena.utils.config import BaseConfig
 from tests.utils import interchange_example
 import tests.utils as test_utils
@@ -69,3 +71,25 @@ def test_transform_tree():
     assert t_tree.iterators["root"].child_iterators == ["k"]
 
     assert t_tree.iterators["k"].parent_iterator == "root"
+
+
+def test_verify_conditions():
+    BaseConfig.init()
+
+    sample = test_utils.multiple_roots_sample()
+
+    interchange = Interchange(["i", "j"], sample.tree)
+
+    interchange.verify_conditions(sample.tree)
+
+    schedule = Schedule(sample)
+    schedule.add_optimizations([Tiling2D(["i", "j", 7, 10], schedule.tree)])
+
+    assert schedule.tree
+
+    interchange = Interchange(["i", "j_tiled"], schedule.tree)
+
+    with pytest.raises(Exception) as e_info:
+        interchange.verify_conditions(schedule.tree)
+
+    assert "Cannot interchange i and j_tiled" in str(e_info.value)

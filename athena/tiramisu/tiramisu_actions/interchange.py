@@ -1,9 +1,11 @@
 from __future__ import annotations
 import itertools
+import re
 
 from typing import Dict, TYPE_CHECKING, List, Tuple
 
 from athena.tiramisu.tiramisu_iterator_node import IteratorNode
+from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
@@ -142,3 +144,35 @@ class Interchange(TiramisuAction):
         # swap the iterators
         program_tree.iterators[node1] = new_node1
         program_tree.iterators[node2] = new_node2
+
+    def verify_conditions(self, tiramisu_tree: TiramisuTree) -> None:
+        node_1 = tiramisu_tree.iterators[self.params[0]]
+        node_2 = tiramisu_tree.iterators[self.params[1]]
+
+        # order the nodes by level
+        if node_1.level > node_2.level:
+            node_1, node_2 = node_2, node_1
+
+        if node_1.has_unkown_bounds() or node_2.has_unkown_bounds():
+            raise Exception(
+                "Interchange optimization cannot be applied to iterators with unknown bounds"
+            )
+
+        node_to_test = node_2
+        while node_to_test.name != node_1.name:
+            # check that node1.name is not node2 bounds using regex ending with \W
+            if type(node_to_test.lower_bound) is str and re.search(
+                rf"{node_1.name}\W", node_to_test.lower_bound
+            ):
+                raise Exception(
+                    f"Cannot interchange {node_1.name} and {node_2.name} because {node_to_test.name} depends on {node_1.name}"
+                )
+            if type(node_to_test.upper_bound) is str and re.search(
+                rf"{node_1.name}\W", node_to_test.upper_bound
+            ):
+                raise Exception(
+                    f"Cannot interchange {node_1.name} and {node_2.name} because {node_to_test.name} depends on {node_1.name}"
+                )
+            if node_to_test.parent_iterator == None:
+                break
+            node_to_test = tiramisu_tree.iterators[node_to_test.parent_iterator]
