@@ -6,7 +6,9 @@ import pytest
 
 
 def test_tiling_3d_init():
-    tiling_2d = Tiling3D(["i0", "i1", "i2", 32, 32, 32], ["comp00"])
+    BaseConfig.init()
+    sample = test_utils.tiling_3d_sample()
+    tiling_2d = Tiling3D(["i0", "i1", "i2", 32, 32, 32], sample.tree)
     assert tiling_2d.params == ["i0", "i1", "i2", 32, 32, 32]
     assert tiling_2d.comps == ["comp00"]
 
@@ -14,7 +16,7 @@ def test_tiling_3d_init():
 def test_set_string_representations():
     BaseConfig.init()
     sample = test_utils.tiling_3d_sample()
-    tiling_3d = Tiling3D(["i0", "i1", "i2", 32, 32, 32], ["comp00"])
+    tiling_3d = Tiling3D(["i0", "i1", "i2", 32, 32, 32], sample.tree)
     schedule = Schedule(sample)
     schedule.add_optimizations([tiling_3d])
     assert tiling_3d.tiramisu_optim_str == "comp00.tile(0, 1, 2, 32, 32, 32);\n"
@@ -34,7 +36,7 @@ def test_transform_tree():
     BaseConfig.init()
     sample = test_utils.benchmark_program_test_sample()
 
-    Tiling3D(["i00", "i01", "i02", 32, 32, 32], ["comp02"]).transform_tree(sample.tree)
+    Tiling3D(["i00", "i01", "i02", 32, 32, 32], sample.tree).transform_tree(sample.tree)
 
     assert sample.tree.iterators["i00"].parent_iterator == None
     assert sample.tree.iterators["i00"].child_iterators == ["i01"]
@@ -83,46 +85,59 @@ def test_verify_conditions():
     t_tree = test_utils.tree_test_sample()
 
     with pytest.raises(AssertionError) as e:
-        Tiling3D(["root", "k", "l", 256, 32, 32], ["comp00"]).verify_conditions(t_tree)
+        Tiling3D(["root", "k", "l", 256, 32, 32], t_tree).verify_conditions(t_tree)
     assert "are not successive" in str(e.value)
 
     with pytest.raises(AssertionError) as e:
-        Tiling3D(["root", "j", "l", 32, 32, 32], ["comp00"]).verify_conditions(t_tree)
+        Tiling3D(["root", "j", "l", 32, 32, 32], t_tree).verify_conditions(t_tree)
     assert "are not successive" in str(e.value)
 
     t_tree.iterators["j"].lower_bound = ""
     with pytest.raises(AssertionError) as e:
-        Tiling3D(["root", "j", "k", 32, 32, 32], ["comp00"]).verify_conditions(t_tree)
+        Tiling3D(["root", "j", "k", 32, 32, 32], t_tree).verify_conditions(t_tree)
     assert "has non-integer bounds" in str(e.value)
     t_tree.iterators["j"].lower_bound = 0
 
     with pytest.raises(AssertionError) as e:
-        Tiling3D(["root", "j", "k", 32, -2, 32], ["comp00"]).verify_conditions(t_tree)
+        Tiling3D(["root", "j", "k", 32, -2, 32], t_tree).verify_conditions(t_tree)
     assert "must be positive" in str(e.value)
 
     with pytest.raises(AssertionError) as e:
-        Tiling3D(["root", "j", "k", 32, 32, 512], ["comp00"]).verify_conditions(t_tree)
+        Tiling3D(["root", "j", "k", 32, 32, 512], t_tree).verify_conditions(t_tree)
     assert "must be smaller" in str(e.value)
 
-    t_tree.iterators["root"].computations_list = ["comp01"]
+    t_tree.iterators["root"].computations_list = ["comp00"]
+    t_tree.computations_absolute_order = {
+        "comp00": 1,
+        "comp01": 2,
+        "comp03": 3,
+        "comp04": 4,
+    }
     with pytest.raises(AssertionError) as e:
-        Tiling3D(["root", "j", "k", 32, 32, 5], ["comp00"]).verify_conditions(t_tree)
+        Tiling3D(["root", "j", "k", 32, 32, 5], t_tree).verify_conditions(t_tree)
     assert "The first node must not have any computations" in str(e.value)
-    t_tree.iterators["root"].computations_list = []
+    t_tree = test_utils.tree_test_sample()
 
-    t_tree.iterators["j"].computations_list = ["comp01"]
+    t_tree.iterators["j"].computations_list = ["comp00"]
+    t_tree.computations_absolute_order = {
+        "comp01": 1,
+        "comp00": 2,
+        "comp03": 3,
+        "comp04": 4,
+    }
     with pytest.raises(AssertionError) as e:
-        Tiling3D(["root", "j", "k", 32, 32, 5], ["comp00"]).verify_conditions(t_tree)
+        Tiling3D(["root", "j", "k", 32, 32, 5], t_tree).verify_conditions(t_tree)
     assert "The second node must not have any computations" in str(e.value)
-    t_tree.iterators["j"].computations_list = []
+
+    t_tree = test_utils.tree_test_sample()
 
     with pytest.raises(AssertionError) as e:
-        Tiling3D(["root", "j", "k", 32, 32, 5], ["comp00"]).verify_conditions(t_tree)
+        Tiling3D(["root", "j", "k", 32, 32, 5], t_tree).verify_conditions(t_tree)
     assert "The first node must have one child" in str(e.value)
 
     with pytest.raises(AssertionError) as e:
-        Tiling3D(["j", "k", "l", 32, 5, 5], ["comp00"]).verify_conditions(t_tree)
+        Tiling3D(["j", "k", "l", 32, 5, 5], t_tree).verify_conditions(t_tree)
     assert "The second node must have one child" in str(e.value)
 
     t_tree.iterators["k"].child_iterators = ["l"]
-    Tiling3D(["j", "k", "l", 32, 5, 8], ["comp03"]).verify_conditions(t_tree)
+    Tiling3D(["j", "k", "l", 32, 5, 8], t_tree).verify_conditions(t_tree)

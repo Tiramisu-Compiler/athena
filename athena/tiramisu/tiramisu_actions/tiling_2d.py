@@ -20,13 +20,19 @@ class Tiling2D(TiramisuAction):
     2D Tiling optimization command.
     """
 
-    def __init__(self, params: list, comps: list):
+    def __init__(self, params: list, tiramisu_tree: TiramisuTree):
         # 2D Tiling takes four parameters:
         # 1. The first loop to tile
         # 2. The second loop to tile
         # 3. The tile size for the first loop
         # 4. The tile size for the second loop
         assert len(params) == 4
+
+        comps = set()
+        for node in params[:2]:
+            comps.update(tiramisu_tree.get_iterator_subtree_computations(node))
+        comps = list(comps)
+        comps.sort(key=lambda x: tiramisu_tree.computations_absolute_order[x])
 
         super().__init__(type=TiramisuActionType.TILING_2D, params=params, comps=comps)
 

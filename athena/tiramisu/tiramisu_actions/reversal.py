@@ -16,11 +16,16 @@ class Reversal(TiramisuAction):
     Reversal optimization command.
     """
 
-    def __init__(self, params: list, comps: list):
+    def __init__(self, params: list, tiramisu_tree: TiramisuTree):
         # Reversal only takes one parameters of the loop to reverse
         assert len(params) == 1
 
-        super().__init__(type=TiramisuActionType.REVERSAL, params=params, comps=comps)
+        comps = tiramisu_tree.get_iterator_subtree_computations(params[0])
+        comps.sort(key=lambda x: tiramisu_tree.computations_absolute_order[x])
+
+        super().__init__(
+            type=TiramisuActionType.REVERSAL, params=params, comps=list(comps)
+        )
 
     def set_string_representations(self, tiramisu_tree: TiramisuTree):
         self.tiramisu_optim_str = ""

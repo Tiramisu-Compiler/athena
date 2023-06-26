@@ -6,7 +6,9 @@ import tests.utils as test_utils
 
 
 def test_interchange_init():
-    interchange = Interchange(["i0", "i1"], ["comp00"])
+    BaseConfig.init()
+    sample = interchange_example()
+    interchange = Interchange(["i0", "i1"], sample.tree)
     assert interchange.params == ["i0", "i1"]
     assert interchange.comps == ["comp00"]
 
@@ -14,7 +16,7 @@ def test_interchange_init():
 def test_set_string_representations():
     BaseConfig.init()
     sample = interchange_example()
-    interchange = Interchange(["i0", "i1"], ["comp00"])
+    interchange = Interchange(["i0", "i1"], sample.tree)
     schedule = Schedule(sample)
     schedule.add_optimizations([interchange])
     assert interchange.tiramisu_optim_str == "comp00.interchange(0,1);\n"
@@ -29,7 +31,7 @@ def test_get_candidates():
 
 def test_transform_tree():
     t_tree = test_utils.tree_test_sample()
-    interchange = Interchange(["i", "j"], ["comp01"])
+    interchange = Interchange(["i", "j"], t_tree)
 
     interchange.transform_tree(t_tree)
 
@@ -44,7 +46,7 @@ def test_transform_tree():
 
     t_tree = test_utils.tree_test_sample()
 
-    Interchange(["j", "k"], ["comp03", "comp04"]).transform_tree(t_tree)
+    Interchange(["j", "k"], t_tree).transform_tree(t_tree)
 
     assert t_tree.iterators["k"].parent_iterator == "root"
     assert t_tree.iterators["k"].child_iterators == ["j"]
@@ -57,7 +59,7 @@ def test_transform_tree():
 
     t_tree = test_utils.tree_test_sample()
 
-    Interchange(["root", "j"], ["comp03", "comp04"]).transform_tree(t_tree)
+    Interchange(["root", "j"], t_tree).transform_tree(t_tree)
 
     assert t_tree.roots == ["j"]
     assert t_tree.iterators["j"].parent_iterator == None

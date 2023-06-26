@@ -6,7 +6,9 @@ import tests.utils as test_utils
 
 
 def test_tiling_2d_init():
-    tiling_2d = Tiling2D(["i0", "i1", 32, 32], ["comp00"])
+    BaseConfig.init()
+    sample = test_utils.tiling_2d_sample()
+    tiling_2d = Tiling2D(["i0", "i1", 32, 32], sample.tree)
     assert tiling_2d.params == ["i0", "i1", 32, 32]
     assert tiling_2d.comps == ["comp00"]
 
@@ -14,7 +16,7 @@ def test_tiling_2d_init():
 def test_set_string_representations():
     BaseConfig.init()
     sample = test_utils.tiling_2d_sample()
-    tiling_2d = Tiling2D(["i0", "i1", 32, 32], ["comp00"])
+    tiling_2d = Tiling2D(["i0", "i1", 32, 32], sample.tree)
     schedule = Schedule(sample)
     schedule.add_optimizations([tiling_2d])
     assert tiling_2d.tiramisu_optim_str == "comp00.tile(0, 1, 32, 32);\n"
@@ -34,7 +36,7 @@ def test_transform_tree():
     BaseConfig.init()
     sample = test_utils.tiling_2d_sample()
 
-    tiling_2d = Tiling2D(["i0", "i1", 32, 32], ["comp00"])
+    tiling_2d = Tiling2D(["i0", "i1", 32, 32], sample.tree)
     tiling_2d.transform_tree(sample.tree)
 
     assert sample.tree.get_iterator_node("i0").lower_bound == 0
@@ -65,7 +67,7 @@ def test_transform_tree():
 
     sample = test_utils.benchmark_program_test_sample()
 
-    tiling_2d = Tiling2D(["i00", "i01", 32, 11], ["comp02"])
+    tiling_2d = Tiling2D(["i00", "i01", 32, 11], sample.tree)
 
     tiling_2d.transform_tree(sample.tree)
 
@@ -112,33 +114,39 @@ def test_verify_conditions():
     t_tree = test_utils.tree_test_sample()
 
     with pytest.raises(AssertionError) as excinfo:
-        Tiling2D(["root", "k", 32, 32], ["comp03", "comp04"]).verify_conditions(t_tree)
+        Tiling2D(["root", "k", 32, 32], t_tree).verify_conditions(t_tree)
     assert "are not successive" in str(excinfo.value)
 
     t_tree.iterators["j"].lower_bound = ""
     with pytest.raises(AssertionError) as excinfo:
-        Tiling2D(["j", "k", 32, 5], ["comp03", "comp04"]).verify_conditions(t_tree)
+        Tiling2D(["j", "k", 32, 5], t_tree).verify_conditions(t_tree)
     assert "has non-integer bounds" in str(excinfo.value)
     t_tree.iterators["j"].lower_bound = 0
 
     with pytest.raises(AssertionError) as excinfo:
-        Tiling2D(["j", "k", -4, 5], ["comp03", "comp04"]).verify_conditions(t_tree)
+        Tiling2D(["j", "k", -4, 5], t_tree).verify_conditions(t_tree)
     assert "Tiling factor must be positive" in str(excinfo.value)
 
     with pytest.raises(AssertionError) as excinfo:
-        Tiling2D(["j", "k", 32, 32], ["comp03", "comp04"]).verify_conditions(t_tree)
+        Tiling2D(["j", "k", 32, 32], t_tree).verify_conditions(t_tree)
     assert "Tiling factor must be smaller" in str(excinfo.value)
 
     t_tree.iterators["j"].computations_list = ["comp00"]
+    t_tree.computations_absolute_order = {
+        "comp01": 1,
+        "comp00": 2,
+        "comp03": 3,
+        "comp04": 4,
+    }
     with pytest.raises(AssertionError) as excinfo:
-        Tiling2D(["j", "k", 32, 5], ["comp03", "comp04"]).verify_conditions(t_tree)
+        Tiling2D(["j", "k", 32, 5], t_tree).verify_conditions(t_tree)
     assert "The first node must not have any computations" in str(excinfo.value)
-    t_tree.iterators["j"].computations_list = []
+    t_tree = test_utils.tree_test_sample()
 
     with pytest.raises(AssertionError) as excinfo:
-        Tiling2D(["root", "j", 32, 32], ["comp03", "comp04"]).verify_conditions(t_tree)
+        Tiling2D(["root", "j", 32, 32], t_tree).verify_conditions(t_tree)
     assert "The first node must have one child which is the second node" in str(
         excinfo.value
     )
 
-    Tiling2D(["j", "k", 32, 5], ["comp03", "comp04"]).verify_conditions(t_tree)
+    Tiling2D(["j", "k", 32, 5], t_tree).verify_conditions(t_tree)

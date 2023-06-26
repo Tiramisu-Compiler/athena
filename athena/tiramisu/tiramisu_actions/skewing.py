@@ -20,10 +20,15 @@ class Skewing(TiramisuAction):
     Skewing optimization command.
     """
 
-    def __init__(self, params: list, comps: list):
+    def __init__(self, params: list, tiramisu_tree: TiramisuTree):
         # Skewing  takes four parameters of the 2 loops to skew and their factors
         assert len(params) == 4
-        assert len(comps) > 0
+
+        comps = set()
+        for node in params[:2]:
+            comps.update(tiramisu_tree.get_iterator_subtree_computations(node))
+        comps = list(comps)
+        comps.sort(key=lambda x: tiramisu_tree.computations_absolute_order[x])
 
         super().__init__(type=TiramisuActionType.SKEWING, params=params, comps=comps)
 

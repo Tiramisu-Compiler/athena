@@ -16,9 +16,15 @@ class Fusion(TiramisuAction):
     Fusion optimization command.
     """
 
-    def __init__(self, params: List[str], comps: List[str]):
+    def __init__(self, params: List[str], tiramisu_tree: TiramisuTree):
         # Fusion only takes the two names of the 2 iterators to fuse
         assert len(params) == 2
+
+        comps = set()
+        for node in params:
+            comps.update(tiramisu_tree.get_iterator_subtree_computations(node))
+        comps = list(comps)
+        comps.sort(key=lambda x: tiramisu_tree.computations_absolute_order[x])
 
         super().__init__(type=TiramisuActionType.FUSION, params=params, comps=comps)
 
@@ -147,11 +153,11 @@ class Fusion(TiramisuAction):
         max_node_1_order = max(
             [
                 program_tree.computations_absolute_order[comp]
-                for comp in program_tree.get_candidate_computations(node_1_name)
+                for comp in program_tree.get_iterator_subtree_computations(node_1_name)
             ]
         )
 
-        node_2_comp_family = program_tree.get_candidate_computations(node_2_name)
+        node_2_comp_family = program_tree.get_iterator_subtree_computations(node_2_name)
 
         # order them by absolute order
         node_2_comp_family.sort(
@@ -170,7 +176,7 @@ class Fusion(TiramisuAction):
                 <= max_node_1_order + len(node_2_comp_family)
             ):
                 program_tree.computations_absolute_order[comp] += len(
-                    node_2.computations_list
+                    node_2_comp_family
                 )
 
         # Fuse the computations
@@ -195,3 +201,7 @@ class Fusion(TiramisuAction):
         # remove node2 from the root list if it is a root
         if node_2_name in program_tree.roots:
             program_tree.roots.remove(node_2_name)
+
+        program_tree.computations.sort(
+            key=lambda comp: program_tree.computations_absolute_order[comp]
+        )

@@ -20,7 +20,7 @@ class Tiling3D(TiramisuAction):
     3D Tiling optimization command.
     """
 
-    def __init__(self, params: list, comps: list):
+    def __init__(self, params: list, tiramisu_tree: TiramisuTree):
         # 3D Tiling takes six parameters:
         # 1. The first loop to tile
         # 2. The second loop to tile
@@ -29,6 +29,12 @@ class Tiling3D(TiramisuAction):
         # 5. The tile size for the second loop
         # 6. The tile size for the third loop
         assert len(params) == 6
+
+        comps = set()
+        for node in params[:3]:
+            comps.update(tiramisu_tree.get_iterator_subtree_computations(node))
+        comps = list(comps)
+        comps.sort(key=lambda x: tiramisu_tree.computations_absolute_order[x])
 
         super().__init__(type=TiramisuActionType.TILING_2D, params=params, comps=comps)
 

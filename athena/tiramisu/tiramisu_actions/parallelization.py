@@ -17,10 +17,12 @@ class Parallelization(TiramisuAction):
     Parallelization optimization command.
     """
 
-    def __init__(self, params: list, comps: list):
+    def __init__(self, params: list, tiramisu_tree: TiramisuTree):
         # Prallelization only takes one parameter the loop to parallelize
         assert len(params) == 1
-        assert len(comps) > 0
+
+        comps = tiramisu_tree.get_iterator_subtree_computations(params[0])
+        comps.sort(key=lambda comp: tiramisu_tree.computations_absolute_order[comp])
 
         super().__init__(
             type=TiramisuActionType.PARALLELIZATION, params=params, comps=comps
@@ -28,7 +30,8 @@ class Parallelization(TiramisuAction):
 
     def set_string_representations(self, tiramisu_tree: TiramisuTree):
         level = tiramisu_tree.iterators[self.params[0]].level
-        self.tiramisu_optim_str = f"{self.comps[0]}.tag_parallel_level({level});\n"
+        first_comp = list(self.comps)[0]
+        self.tiramisu_optim_str = f"{first_comp}.tag_parallel_level({level});\n"
 
         self.str_representation = "P(L" + str(level) + ")"
 

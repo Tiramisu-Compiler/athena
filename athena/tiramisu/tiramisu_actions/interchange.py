@@ -18,9 +18,12 @@ class Interchange(TiramisuAction):
     Interchange optimization command.
     """
 
-    def __init__(self, params: list, comps: list):
+    def __init__(self, params: list, tiramisu_tree: TiramisuTree):
         # Interchange only takes two parameters of the 2 loops to interchange
         assert len(params) == 2
+
+        comps = tiramisu_tree.get_iterator_subtree_computations(params[0])
+        comps.sort(key=lambda x: tiramisu_tree.computations_absolute_order[x])
 
         super().__init__(
             type=TiramisuActionType.INTERCHANGE, params=params, comps=comps

@@ -14,14 +14,7 @@ def parallelize_first_legal_outermost(
         for candidate in candidates_per_root[root]:
             for node in candidate:
                 tmp_schedule.add_optimizations(
-                    [
-                        Parallelization(
-                            params=[node],
-                            comps=tiramisu_program.tree.get_candidate_computations(
-                                node
-                            ),
-                        )
-                    ]
+                    [Parallelization(params=[node], tiramisu_tree=tmp_schedule.tree)]
                 )
             if tmp_schedule.is_legal():
                 schedule = tmp_schedule

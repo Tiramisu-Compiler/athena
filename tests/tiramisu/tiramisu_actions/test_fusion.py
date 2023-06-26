@@ -6,15 +6,20 @@ import tests.utils as test_utils
 
 
 def test_fusion_init():
-    fusion = Fusion(["i0", "i1"], ["comp00", "comp01"])
-    assert fusion.params == ["i0", "i1"]
-    assert fusion.comps == ["comp00", "comp01"]
+    BaseConfig.init()
+    sample = test_utils.fusion_sample()
+
+    fusion = Fusion(["l", "m"], sample.tree)
+
+    assert fusion.params == ["l", "m"]
+    for comp in fusion.comps:
+        assert comp in ["comp03", "comp04"]
 
 
 def test_set_string_representations():
     BaseConfig.init()
     sample = test_utils.fusion_sample()
-    fusion = Fusion(["l", "m"], ["comp03", "comp04"])
+    fusion = Fusion(["l", "m"], sample.tree)
     schedule = Schedule(sample)
     schedule.add_optimizations([fusion])
     assert (
@@ -33,46 +38,56 @@ def test_get_candidates():
 def test_get_fusion_levels():
     BaseConfig.init()
     sample = test_utils.fusion_sample()
-    fusion = Fusion(["l", "m"], ["comp03", "comp04"])
+    fusion = Fusion(["l", "m"], sample.tree)
     fusion.transform_tree(sample.tree)
-    assert fusion.get_fusion_levels(
-        sample.tree.get_computations_order_from_tree(), sample.tree
-    ) == [0, 3]
+    assert fusion.get_fusion_levels(sample.tree.computations, sample.tree) == [0, 3]
 
     sample = test_utils.multiple_roots_sample()
-    fusion = Fusion(["i", "i_0"], ["A_hat", "x_temp"])
+    fusion = Fusion(["i", "i_0"], sample.tree)
     fusion.transform_tree(sample.tree)
-    assert fusion.get_fusion_levels(
-        sample.tree.get_computations_order_from_tree(), sample.tree
-    ) == [0, -1, -1]
+    assert fusion.get_fusion_levels(sample.tree.computations, sample.tree) == [
+        0,
+        -1,
+        -1,
+    ]
 
     sample = test_utils.multiple_roots_sample()
-    fusion = Fusion(["i_1", "i_2"], ["x", "w"])
+    fusion = Fusion(["i_1", "i_2"], sample.tree)
     fusion.transform_tree(sample.tree)
-    assert fusion.get_fusion_levels(
-        sample.tree.get_computations_order_from_tree(), sample.tree
-    ) == [-1, -1, 0]
+    assert fusion.get_fusion_levels(sample.tree.computations, sample.tree) == [
+        -1,
+        -1,
+        0,
+    ]
 
     sample = test_utils.multiple_roots_sample()
-    fusion = Fusion(["i_0", "i_2"], ["x_temp", "w"])
+    fusion = Fusion(["i_0", "i_2"], sample.tree)
     fusion.transform_tree(sample.tree)
+
     assert fusion.get_fusion_levels(
-        sample.tree.get_computations_order_from_tree(), sample.tree
-    ) == [-1, 0, -1]
+        sample.tree.computations,
+        sample.tree,
+    ) == [
+        -1,
+        0,
+        -1,
+    ]
 
     # sample = test_utils.multiple_roots_sample()
-    fusion = Fusion(["j_0", "j_1"], ["x_temp", "w"])
+    fusion = Fusion(["j_0", "j_1"], sample.tree)
     fusion.transform_tree(sample.tree)
-    assert fusion.get_fusion_levels(
-        sample.tree.get_computations_order_from_tree(), sample.tree
-    ) == [-1, 1, -1]
+    assert fusion.get_fusion_levels(sample.tree.computations, sample.tree) == [
+        -1,
+        1,
+        -1,
+    ]
 
 
 def test_fusion_application():
     BaseConfig.init()
 
     sample = test_utils.multiple_roots_sample()
-    fusion = Fusion(["i", "i_0"], ["A_hat", "x_temp"])
+    fusion = Fusion(["i", "i_0"], sample.tree)
     schedule = Schedule(sample)
 
     schedule.add_optimizations([fusion])
@@ -84,10 +99,10 @@ def test_fusion_application():
     assert not schedule.is_legal()
 
     schedule = Schedule(sample)
-    fusion = Fusion(params=["i", "j_0"], comps=["A_hat", "x_temp"])
+    fusion = Fusion(params=["i", "j_0"], tiramisu_tree=sample.tree)
     schedule.add_optimizations(
         [
-            Interchange(params=["i_0", "j_0"], comps=["x_temp"]),
+            Interchange(params=["i_0", "j_0"], tiramisu_tree=sample.tree),
             fusion,
         ]
     )
@@ -105,9 +120,9 @@ def test_fusion_application():
 def test_transform_tree():
     BaseConfig.init()
 
-    fusion = Fusion(["i", "j"], ["comp01", "comp03", "comp04"])
-
     t_tree = test_utils.tree_test_sample()
+
+    fusion = Fusion(["i", "j"], t_tree)
 
     fusion.transform_tree(t_tree)
 
@@ -120,7 +135,7 @@ def test_transform_tree():
 
     t_tree = test_utils.tree_test_sample()
 
-    fusion = Fusion(["j", "i"], ["comp01", "comp03", "comp04"])
+    fusion = Fusion(["j", "i"], t_tree)
 
     fusion.transform_tree(t_tree)
 
@@ -133,7 +148,7 @@ def test_transform_tree():
 
     multi_root = test_utils.multiple_roots_sample().tree
 
-    fusion = Fusion(["i", "i_0"], ["A_hat", "x_temp"])
+    fusion = Fusion(["i", "i_0"], multi_root)
     fusion.transform_tree(multi_root)
 
     assert multi_root.iterators["i"].parent_iterator == None

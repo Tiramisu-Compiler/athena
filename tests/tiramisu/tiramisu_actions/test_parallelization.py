@@ -6,19 +6,21 @@ import tests.utils as test_utils
 
 
 def test_parallelization_init():
-    parallelization = Parallelization([0], ["comp00"])
-    assert parallelization.params == [0]
-    assert parallelization.comps == ["comp00"]
+    BaseConfig.init()
+    sample = test_utils.benchmark_program_test_sample()
+    parallelization = Parallelization(["i00"], sample.tree)
+    assert parallelization.params == ["i00"]
+    assert parallelization.comps == ["comp02"]
 
 
 def test_set_string_representations():
     BaseConfig.init()
     sample = test_utils.benchmark_program_test_sample()
-    parallelization = Parallelization(["i00"], ["comp00"])
+    parallelization = Parallelization(["i00"], sample.tree)
     schedule = Schedule(sample)
     schedule.add_optimizations([parallelization])
 
-    assert parallelization.tiramisu_optim_str == "comp00.tag_parallel_level(0);\n"
+    assert parallelization.tiramisu_optim_str == "comp02.tag_parallel_level(0);\n"
 
 
 def test_get_candidates():
@@ -31,9 +33,7 @@ def test_get_candidates():
 def test_legality_check():
     BaseConfig.init()
     sample = test_utils.benchmark_program_test_sample()
-    parallelization = Parallelization(
-        ["i00"], sample.tree.get_candidate_computations("i00")
-    )
+    parallelization = Parallelization(["i00"], sample.tree)
     schedule = Schedule(sample)
     schedule.add_optimizations([parallelization])
     legality_string = parallelization.legality_check_string(sample.tree)
@@ -44,14 +44,18 @@ def test_legality_check():
 
     sample = test_utils.multiple_roots_sample()
     schedule = Schedule(sample)
-    parallelization = Parallelization(["i"], ["A_hat", "x_temp"])
+    assert schedule.tree
+
     schedule.add_optimizations(
         [
-            tiramisu_actions.Interchange(["i_0", "j_0"], ["x_temp"]),
-            tiramisu_actions.Fusion(["i", "j_0"], ["A_hat", "x_temp"]),
-            parallelization,
+            tiramisu_actions.Interchange(["i_0", "j_0"], schedule.tree),
+            tiramisu_actions.Fusion(["i", "j_0"], schedule.tree),
         ]
     )
+
+    parallelization = Parallelization(["i"], schedule.tree)
+
+    schedule.add_optimizations([parallelization])
 
     assert schedule.tree
 
