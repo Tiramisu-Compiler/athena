@@ -10,6 +10,7 @@ from athena.tiramisu.tiramisu_tree import TiramisuTree
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
+    CannotApplyException,
     TiramisuActionType,
     TiramisuAction,
 )
@@ -21,7 +22,7 @@ class Unrolling(TiramisuAction):
     """
 
     def __init__(self, params: list, tiramisu_tree: TiramisuTree):
-        # Unrolling only takes two parameters, the loop level and the factor
+        # Unrolling takes 2 parameters: the iterator to unroll and the unrolling factor
         assert len(params) == 2
 
         comps = tiramisu_tree.get_iterator_subtree_computations(params[0])
@@ -58,7 +59,7 @@ class Unrolling(TiramisuAction):
     def legality_check_string(self, tiramisu_tree: TiramisuTree) -> str:
         """Return the tiramisu code that checks the legality of the optimization command."""
         if self.tiramisu_optim_str == "":
-            raise ValueError(
+            raise CannotApplyException(
                 "The legality check should be called after the optimization string is set."
             )
 
@@ -82,7 +83,7 @@ class Unrolling(TiramisuAction):
             if unroll_factor == extent:
                 return
             elif unroll_factor > extent:
-                raise ValueError(
+                raise CannotApplyException(
                     "Unrolling factor cannot be greater than the extent of the loop."
                 )
             elif extent % unroll_factor == 0:
@@ -233,3 +234,12 @@ class Unrolling(TiramisuAction):
 
         #         node.lower_bound = 0
         #         node.upper_bound = extent // unroll_factor
+
+    def verify_conditions(self, tiramisu_tree: TiramisuTree, params=None) -> None:
+        if params is None:
+            params = self.params
+        # Unrolling only takes two parameters, the loop level and the factor
+        if len(params) != 2:
+            raise CannotApplyException(
+                "Unrolling only takes two parameters, the loop level and the factor"
+            )

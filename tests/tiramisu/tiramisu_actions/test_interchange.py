@@ -2,6 +2,7 @@ import pytest
 from athena.tiramisu.schedule import Schedule
 from athena.tiramisu.tiramisu_actions.interchange import Interchange
 from athena.tiramisu.tiramisu_actions.tiling_2d import Tiling2D
+from athena.tiramisu.tiramisu_actions.tiramisu_action import CannotApplyException
 from athena.utils.config import BaseConfig
 from tests.utils import interchange_example
 import tests.utils as test_utils
@@ -87,9 +88,9 @@ def test_verify_conditions():
 
     assert schedule.tree
 
-    interchange = Interchange(["i", "j_tiled"], schedule.tree)
+    with pytest.raises(CannotApplyException) as e_info:
+        Interchange(["i_tiled", "j_tile"], schedule.tree).verify_conditions(
+            schedule.tree
+        )
 
-    with pytest.raises(Exception) as e_info:
-        interchange.verify_conditions(schedule.tree)
-
-    assert "Cannot interchange i and j_tiled" in str(e_info.value)
+    assert "Cannot interchange i_tiled and j_tile because" in str(e_info.value)

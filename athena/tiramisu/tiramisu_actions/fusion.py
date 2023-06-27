@@ -6,6 +6,7 @@ from typing import Dict, TYPE_CHECKING, List, Tuple
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
+    CannotApplyException,
     TiramisuActionType,
     TiramisuAction,
 )
@@ -17,7 +18,7 @@ class Fusion(TiramisuAction):
     """
 
     def __init__(self, params: List[str], tiramisu_tree: TiramisuTree):
-        # Fusion only takes the two names of the 2 iterators to fuse
+        # Fusion takes 2 parameters the iterators to be fused
         assert len(params) == 2
 
         comps = set()
@@ -79,25 +80,30 @@ class Fusion(TiramisuAction):
 
         return candidates
 
-    def verify_conditions(self, program_tree: TiramisuTree):
-        # assert that all the iterators have the same level
-        assert (
-            len(set([program_tree.iterators[param].level for param in self.params]))
-            == 1
-        )
-
-        # assert that all the iterators have the same parent
-        assert (
-            len(
-                set(
-                    [
-                        program_tree.iterators[param].parent_iterator
-                        for param in self.params
-                    ]
-                )
+    def verify_conditions(self, program_tree: TiramisuTree, params=None):
+        if params is None:
+            params = self.params
+        try:
+            assert len(params) == 2
+            # assert that all the iterators have the same level
+            assert (
+                len(set([program_tree.iterators[param].level for param in params])) == 1
             )
-            == 1
-        )
+
+            # assert that all the iterators have the same parent
+            assert (
+                len(
+                    set(
+                        [
+                            program_tree.iterators[param].parent_iterator
+                            for param in params
+                        ]
+                    )
+                )
+                == 1
+            )
+        except AssertionError as e:
+            raise CannotApplyException(e.args)
 
     def get_fusion_levels(self, computations: List[str], tiramisu_tree: TiramisuTree):
         fusion_levels = []

@@ -52,3 +52,13 @@ class BaseConfig:
             level=logging_level,
             format="|%(asctime)s|%(levelname)s| %(message)s",
         )
+
+    @classmethod
+    def from_athena_config(
+        cls, athena_config: AthenaConfig, logging_level=logging.DEBUG
+    ):
+        BaseConfig.base_config = athena_config
+        logging.basicConfig(
+            level=logging_level,
+            format="|%(asctime)s|%(levelname)s| %(message)s",
+        )

@@ -3,9 +3,12 @@ import itertools
 
 from typing import Dict, TYPE_CHECKING, List, Tuple
 
+from athena.tiramisu.tiramisu_tree import TiramisuTree
+
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
+    CannotApplyException,
     TiramisuActionType,
     TiramisuAction,
 )
@@ -17,7 +20,7 @@ class Reversal(TiramisuAction):
     """
 
     def __init__(self, params: list, tiramisu_tree: TiramisuTree):
-        # Reversal only takes one parameters of the loop to reverse
+        # Reversal takes one parameter of the loop to reverse
         assert len(params) == 1
 
         comps = tiramisu_tree.get_iterator_subtree_computations(params[0])
@@ -55,3 +58,12 @@ class Reversal(TiramisuAction):
 
         # Reverse the loop bounds
         node.lower_bound, node.upper_bound = node.upper_bound, node.lower_bound
+
+    def verify_conditions(self, tiramisu_tree: TiramisuTree, params=None) -> None:
+        if params is None:
+            params = self.params
+        # Reversal only takes one parameters of the loop to reverse
+        if len(params) != 1:
+            raise CannotApplyException(
+                f"Reversal optimization command takes one parameter, {len(params)} were given"
+            )

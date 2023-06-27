@@ -1,6 +1,7 @@
 import pytest
 from athena.tiramisu.schedule import Schedule
 from athena.tiramisu.tiramisu_actions.tiling_2d import Tiling2D
+from athena.tiramisu.tiramisu_actions.tiramisu_action import CannotApplyException
 from athena.utils.config import BaseConfig
 import tests.utils as test_utils
 
@@ -93,7 +94,7 @@ def test_transform_tree():
     assert sample.tree.get_iterator_node("i01_tile").lower_bound == 0
     assert (
         sample.tree.get_iterator_node("i01_tile").upper_bound
-        == "(256 - max(i01*11, 245))"
+        == "(256 - max(i01_tiled*11, 245))"
     )
     assert sample.tree.get_iterator_node("i01_tile").child_iterators == ["i02"]
     assert not sample.tree.get_iterator_node("i01_tile").computations_list
@@ -113,21 +114,21 @@ def test_verify_conditions():
 
     t_tree = test_utils.tree_test_sample()
 
-    with pytest.raises(AssertionError) as excinfo:
+    with pytest.raises(CannotApplyException) as excinfo:
         Tiling2D(["root", "k", 32, 32], t_tree).verify_conditions(t_tree)
     assert "are not successive" in str(excinfo.value)
 
     # t_tree.iterators["j"].lower_bound = ""
-    # with pytest.raises(AssertionError) as excinfo:
+    # with pytest.raises(CannotApplyException) as excinfo:
     #     Tiling2D(["j", "k", 32, 5], t_tree).verify_conditions(t_tree)
     # assert "has non-integer bounds" in str(excinfo.value)
     # t_tree.iterators["j"].lower_bound = 0
 
-    with pytest.raises(AssertionError) as excinfo:
+    with pytest.raises(CannotApplyException) as excinfo:
         Tiling2D(["j", "k", -4, 5], t_tree).verify_conditions(t_tree)
     assert "Tiling factor must be positive" in str(excinfo.value)
 
-    with pytest.raises(AssertionError) as excinfo:
+    with pytest.raises(CannotApplyException) as excinfo:
         Tiling2D(["j", "k", 32, 32], t_tree).verify_conditions(t_tree)
     assert "Tiling factor must be smaller" in str(excinfo.value)
 
@@ -138,12 +139,12 @@ def test_verify_conditions():
         "comp03": 3,
         "comp04": 4,
     }
-    with pytest.raises(AssertionError) as excinfo:
+    with pytest.raises(CannotApplyException) as excinfo:
         Tiling2D(["j", "k", 32, 5], t_tree).verify_conditions(t_tree)
     assert "The first node must not have any computations" in str(excinfo.value)
     t_tree = test_utils.tree_test_sample()
 
-    with pytest.raises(AssertionError) as excinfo:
+    with pytest.raises(CannotApplyException) as excinfo:
         Tiling2D(["root", "j", 32, 32], t_tree).verify_conditions(t_tree)
     assert "The first node must have one child which is the second node" in str(
         excinfo.value

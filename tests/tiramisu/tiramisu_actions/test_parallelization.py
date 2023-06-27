@@ -33,8 +33,10 @@ def test_get_candidates():
 def test_legality_check():
     BaseConfig.init()
     sample = test_utils.benchmark_program_test_sample()
-    parallelization = Parallelization(["i00"], sample.tree)
     schedule = Schedule(sample)
+    assert schedule.tree
+    parallelization = Parallelization(["i00"], schedule.tree)
+
     schedule.add_optimizations([parallelization])
     legality_string = parallelization.legality_check_string(sample.tree)
     assert (

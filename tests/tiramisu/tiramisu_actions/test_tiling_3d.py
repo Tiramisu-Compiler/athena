@@ -1,5 +1,6 @@
 from athena.tiramisu.schedule import Schedule
 from athena.tiramisu.tiramisu_actions.tiling_3d import Tiling3D
+from athena.tiramisu.tiramisu_actions.tiramisu_action import CannotApplyException
 from athena.utils.config import BaseConfig
 import tests.utils as test_utils
 import pytest
@@ -84,25 +85,25 @@ def test_verify_conditions():
 
     t_tree = test_utils.tree_test_sample()
 
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(CannotApplyException) as e:
         Tiling3D(["root", "k", "l", 256, 32, 32], t_tree).verify_conditions(t_tree)
     assert "are not successive" in str(e.value)
 
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(CannotApplyException) as e:
         Tiling3D(["root", "j", "l", 32, 32, 32], t_tree).verify_conditions(t_tree)
     assert "are not successive" in str(e.value)
 
     # t_tree.iterators["j"].lower_bound = ""
-    # with pytest.raises(AssertionError) as e:
+    # with pytest.raises(CannotApplyException) as e:
     #     Tiling3D(["root", "j", "k", 32, 32, 32], t_tree).verify_conditions(t_tree)
     # assert "has non-integer bounds" in str(e.value)
     # t_tree.iterators["j"].lower_bound = 0
 
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(CannotApplyException) as e:
         Tiling3D(["root", "j", "k", 32, -2, 32], t_tree).verify_conditions(t_tree)
     assert "must be positive" in str(e.value)
 
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(CannotApplyException) as e:
         Tiling3D(["root", "j", "k", 32, 32, 512], t_tree).verify_conditions(t_tree)
     assert "must be smaller" in str(e.value)
 
@@ -113,7 +114,7 @@ def test_verify_conditions():
         "comp03": 3,
         "comp04": 4,
     }
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(CannotApplyException) as e:
         Tiling3D(["root", "j", "k", 32, 32, 5], t_tree).verify_conditions(t_tree)
     assert "The first node must not have any computations" in str(e.value)
     t_tree = test_utils.tree_test_sample()
@@ -125,17 +126,17 @@ def test_verify_conditions():
         "comp03": 3,
         "comp04": 4,
     }
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(CannotApplyException) as e:
         Tiling3D(["root", "j", "k", 32, 32, 5], t_tree).verify_conditions(t_tree)
     assert "The second node must not have any computations" in str(e.value)
 
     t_tree = test_utils.tree_test_sample()
 
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(CannotApplyException) as e:
         Tiling3D(["root", "j", "k", 32, 32, 5], t_tree).verify_conditions(t_tree)
     assert "The first node must have one child" in str(e.value)
 
-    with pytest.raises(AssertionError) as e:
+    with pytest.raises(CannotApplyException) as e:
         Tiling3D(["j", "k", "l", 32, 5, 5], t_tree).verify_conditions(t_tree)
     assert "The second node must have one child" in str(e.value)
 

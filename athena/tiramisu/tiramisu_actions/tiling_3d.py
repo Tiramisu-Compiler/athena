@@ -10,6 +10,7 @@ from athena.tiramisu.tiramisu_tree import TiramisuTree
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
+    CannotApplyException,
     TiramisuActionType,
     TiramisuAction,
 )
@@ -251,73 +252,80 @@ class Tiling3D(TiramisuAction):
         for child in node_3_outer.child_iterators:
             program_tree.iterators[child].parent_iterator = node_3_outer.name
 
-    def verify_conditions(self, tiramisu_tree: TiramisuTree) -> None:
-        node_1 = tiramisu_tree.iterators[self.params[0]]
-        node_2 = tiramisu_tree.iterators[self.params[1]]
-        node_3 = tiramisu_tree.iterators[self.params[2]]
-        node_1_tiling_factor = self.params[3]
-        node_2_tiling_factor = self.params[4]
-        node_3_tiling_factor = self.params[5]
+    def verify_conditions(self, tiramisu_tree: TiramisuTree, params=None) -> None:
+        if params is None:
+            params = self.params
+        try:
+            assert len(params) == 6, f"Expected 6 parameters, got {len(params)}"
 
-        # Check that the two nodes are successive
-        assert (
-            node_2.parent_iterator == node_1.name
-        ), f"Nodes {node_1.name} and {node_2.name} are not successive, parent of {node_2.name} is {node_2.parent_iterator} instead of {node_1.name}"
-        assert (
-            node_3.parent_iterator == node_2.name
-        ), f"Nodes {node_2.name} and {node_3.name} are not successive, parent of {node_3.name} is {node_3.parent_iterator} instead of {node_2.name}"
+            node_1 = tiramisu_tree.iterators[params[0]]
+            node_2 = tiramisu_tree.iterators[params[1]]
+            node_3 = tiramisu_tree.iterators[params[2]]
+            node_1_tiling_factor = params[3]
+            node_2_tiling_factor = params[4]
+            node_3_tiling_factor = params[5]
 
-        # # assert that the bounds are integers
-        # assert (
-        #     type(node_1.lower_bound) is int and type(node_1.upper_bound) is int
-        # ), f"Node {node_1.name} has non-integer bounds, lower bound: {node_1.lower_bound}, upper bound: {node_1.upper_bound}"
-        # assert (
-        #     type(node_2.lower_bound) is int and type(node_2.upper_bound) is int
-        # ), f"Node {node_2.name} has non-integer bounds, lower bound: {node_2.lower_bound}, upper bound: {node_2.upper_bound}"
-        # assert (
-        #     type(node_3.lower_bound) is int and type(node_3.upper_bound) is int
-        # ), f"Node {node_3.name} has non-integer bounds, lower bound: {node_3.lower_bound}, upper bound: {node_3.upper_bound}"
-
-        # check that the tiling factors are positive and smaller than the extent of the node
-        assert (
-            node_1_tiling_factor > 0
-        ), f"Tiling factor must be positive, got {node_1_tiling_factor}"
-        assert (
-            node_2_tiling_factor > 0
-        ), f"Tiling factor must be positive, got {node_2_tiling_factor}"
-        assert (
-            node_3_tiling_factor > 0
-        ), f"Tiling factor must be positive, got {node_3_tiling_factor}"
-
-        if type(node_1.lower_bound) is int and type(node_1.upper_bound) is int:
+            # Check that the two nodes are successive
             assert (
-                node_1_tiling_factor < node_1.upper_bound - node_1.lower_bound
-            ), f"Tiling factor must be smaller than the extent of the node: {node_1_tiling_factor} < {node_1.upper_bound - node_1.lower_bound}"
-        if type(node_2.lower_bound) is int and type(node_2.upper_bound) is int:
+                node_2.parent_iterator == node_1.name
+            ), f"Nodes {node_1.name} and {node_2.name} are not successive, parent of {node_2.name} is {node_2.parent_iterator} instead of {node_1.name}"
             assert (
-                node_2_tiling_factor < node_2.upper_bound - node_2.lower_bound
-            ), f"Tiling factor must be smaller than the extent of the node: {node_2_tiling_factor} < {node_2.upper_bound - node_2.lower_bound}"
-        if type(node_3.lower_bound) is int and type(node_3.upper_bound) is int:
+                node_3.parent_iterator == node_2.name
+            ), f"Nodes {node_2.name} and {node_3.name} are not successive, parent of {node_3.name} is {node_3.parent_iterator} instead of {node_2.name}"
+
+            # # assert that the bounds are integers
+            # assert (
+            #     type(node_1.lower_bound) is int and type(node_1.upper_bound) is int
+            # ), f"Node {node_1.name} has non-integer bounds, lower bound: {node_1.lower_bound}, upper bound: {node_1.upper_bound}"
+            # assert (
+            #     type(node_2.lower_bound) is int and type(node_2.upper_bound) is int
+            # ), f"Node {node_2.name} has non-integer bounds, lower bound: {node_2.lower_bound}, upper bound: {node_2.upper_bound}"
+            # assert (
+            #     type(node_3.lower_bound) is int and type(node_3.upper_bound) is int
+            # ), f"Node {node_3.name} has non-integer bounds, lower bound: {node_3.lower_bound}, upper bound: {node_3.upper_bound}"
+
+            # check that the tiling factors are positive and smaller than the extent of the node
             assert (
-                node_3_tiling_factor < node_3.upper_bound - node_3.lower_bound
-            ), f"Tiling factor must be smaller than the extent of the node: {node_3_tiling_factor} < {node_3.upper_bound - node_3.lower_bound}"
+                node_1_tiling_factor > 0
+            ), f"Tiling factor must be positive, got {node_1_tiling_factor}"
+            assert (
+                node_2_tiling_factor > 0
+            ), f"Tiling factor must be positive, got {node_2_tiling_factor}"
+            assert (
+                node_3_tiling_factor > 0
+            ), f"Tiling factor must be positive, got {node_3_tiling_factor}"
 
-        # check that the first 2 nodes do not have any computations
-        assert (
-            len(node_1.computations_list) == 0
-        ), f"The first node must not have any computations: {node_1.name} has {node_1.computations_list}"
-        assert (
-            len(node_2.computations_list) == 0
-        ), f"The second node must not have any computations: {node_2.name} has {node_2.computations_list}"
+            if type(node_1.lower_bound) is int and type(node_1.upper_bound) is int:
+                assert (
+                    node_1_tiling_factor < node_1.upper_bound - node_1.lower_bound
+                ), f"Tiling factor must be smaller than the extent of the node: {node_1_tiling_factor} < {node_1.upper_bound - node_1.lower_bound}"
+            if type(node_2.lower_bound) is int and type(node_2.upper_bound) is int:
+                assert (
+                    node_2_tiling_factor < node_2.upper_bound - node_2.lower_bound
+                ), f"Tiling factor must be smaller than the extent of the node: {node_2_tiling_factor} < {node_2.upper_bound - node_2.lower_bound}"
+            if type(node_3.lower_bound) is int and type(node_3.upper_bound) is int:
+                assert (
+                    node_3_tiling_factor < node_3.upper_bound - node_3.lower_bound
+                ), f"Tiling factor must be smaller than the extent of the node: {node_3_tiling_factor} < {node_3.upper_bound - node_3.lower_bound}"
 
-        # check that the first node has no child iterators besides the second node
-        assert (
-            len(node_1.child_iterators) == 1
-            and node_1.child_iterators[0] == node_2.name
-        ), f"The first node must have one child which is the second node but has {node_1.child_iterators}"
+            # check that the first 2 nodes do not have any computations
+            assert (
+                len(node_1.computations_list) == 0
+            ), f"The first node must not have any computations: {node_1.name} has {node_1.computations_list}"
+            assert (
+                len(node_2.computations_list) == 0
+            ), f"The second node must not have any computations: {node_2.name} has {node_2.computations_list}"
 
-        # check that the second node has no child iterators besides the third node
-        assert (
-            len(node_2.child_iterators) == 1
-            and node_2.child_iterators[0] == node_3.name
-        ), f"The second node must have one child which is the third node but has {node_2.child_iterators}"
+            # check that the first node has no child iterators besides the second node
+            assert (
+                len(node_1.child_iterators) == 1
+                and node_1.child_iterators[0] == node_2.name
+            ), f"The first node must have one child which is the second node but has {node_1.child_iterators}"
+
+            # check that the second node has no child iterators besides the third node
+            assert (
+                len(node_2.child_iterators) == 1
+                and node_2.child_iterators[0] == node_3.name
+            ), f"The second node must have one child which is the third node but has {node_2.child_iterators}"
+        except AssertionError as e:
+            raise CannotApplyException(e)

@@ -57,4 +57,4 @@ def test_str_representation():
         [Parallelization(params=["i00"], tiramisu_tree=schedule.tree)]
     )
 
-    assert str(schedule) == "{comp02}:P(L0)"
+    assert str(schedule) == "P(L0,comps=['comp02'])"

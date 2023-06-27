@@ -87,8 +87,11 @@ def test_fusion_application():
     BaseConfig.init()
 
     sample = test_utils.multiple_roots_sample()
-    fusion = Fusion(["i", "i_0"], sample.tree)
     schedule = Schedule(sample)
+
+    assert schedule.tree
+
+    fusion = Fusion(["i", "i_0"], schedule.tree)
 
     schedule.add_optimizations([fusion])
 
@@ -99,13 +102,16 @@ def test_fusion_application():
     assert not schedule.is_legal()
 
     schedule = Schedule(sample)
-    fusion = Fusion(params=["i", "j_0"], tiramisu_tree=sample.tree)
+    assert schedule.tree
+
     schedule.add_optimizations(
         [
-            Interchange(params=["i_0", "j_0"], tiramisu_tree=sample.tree),
-            fusion,
+            Interchange(params=["i_0", "j_0"], tiramisu_tree=schedule.tree),
         ]
     )
+
+    fusion = Fusion(params=["i", "j_0"], tiramisu_tree=schedule.tree)
+    schedule.add_optimizations([fusion])
 
     assert (
         fusion.tiramisu_optim_str

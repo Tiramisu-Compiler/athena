@@ -10,6 +10,7 @@ from athena.tiramisu.tiramisu_tree import TiramisuTree
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
+    CannotApplyException,
     TiramisuActionType,
     TiramisuAction,
 )
@@ -85,7 +86,7 @@ class Tiling2D(TiramisuAction):
             if extent_1 % node_1_tiling_factor == 0:
                 tiled_1_upper_bound = node_1_tiling_factor
             else:
-                tiled_1_upper_bound = f"({extent_1} - max({node_1_outer.name}*{node_1_tiling_factor}, {extent_1 - node_1_tiling_factor}))"
+                tiled_1_upper_bound = f"({extent_1} - max({node_1_outer.name}_tiled*{node_1_tiling_factor}, {extent_1 - node_1_tiling_factor}))"
             node_1_outer_upper_bound = math.ceil(extent_1 / node_1_tiling_factor)
         else:
             tiled_1_upper_bound = "UNK"
@@ -111,7 +112,7 @@ class Tiling2D(TiramisuAction):
             if extent_2 % node_2_tiling_factor == 0:
                 tiled_2_upper_bound = node_2_tiling_factor
             else:
-                tiled_2_upper_bound = f"({extent_2} - max({node_2_outer.name}*{node_2_tiling_factor}, {extent_2 - node_2_tiling_factor}))"
+                tiled_2_upper_bound = f"({extent_2} - max({node_2_outer.name}_tiled*{node_2_tiling_factor}, {extent_2 - node_2_tiling_factor}))"
             node_2_outer_upper_bound = math.ceil(extent_2 / node_2_tiling_factor)
         else:
             tiled_2_upper_bound = "UNK"
@@ -202,51 +203,62 @@ class Tiling2D(TiramisuAction):
         for child in node_2_outer.child_iterators:
             program_tree.iterators[child].parent_iterator = node_2_outer_new_name
 
-    def verify_conditions(self, tiramisu_tree: TiramisuTree) -> None:
-        node_1 = tiramisu_tree.iterators[self.params[0]]
-        node_2 = tiramisu_tree.iterators[self.params[1]]
-        node_1_tiling_factor = self.params[2]
-        node_2_tiling_factor = self.params[3]
+    def verify_conditions(self, tiramisu_tree: TiramisuTree, params=None) -> None:
+        if params is None:
+            params = self.params
+        try:
+            assert len(params) == 4
 
-        # Check that the two nodes are successive
-        assert (
-            node_2.parent_iterator == node_1.name
-        ), f"Nodes {node_1.name} and {node_2.name} are not successive, parent of {node_2.name} is {node_2.parent_iterator} instead of {node_1.name}"
+            node_1 = tiramisu_tree.iterators[params[0]]
+            node_2 = tiramisu_tree.iterators[params[1]]
+            node_1_tiling_factor = params[2]
+            node_2_tiling_factor = params[3]
 
-        # assert that the bounds are integers
-        # assert (
-        #     type(node_1.lower_bound) is int and type(node_1.upper_bound) is int
-        # ), f"Node {node_1.name} has non-integer bounds, lower bound: {node_1.lower_bound}, upper bound: {node_1.upper_bound}"
-        # assert (
-        #     type(node_2.lower_bound) is int and type(node_2.upper_bound) is int
-        # ), f"Node {node_2.name} has non-integer bounds, lower bound: {node_2.lower_bound}, upper bound: {node_2.upper_bound}"
-
-        # check that the tiling factors are positive and smaller than the extent of the node
-        assert (
-            node_1_tiling_factor > 0
-        ), f"Tiling factor must be positive, got {node_1_tiling_factor}"
-        assert (
-            node_2_tiling_factor > 0
-        ), f"Tiling factor must be positive, got {node_2_tiling_factor}"
-
-        if node_1.has_integer_bounds():
-            assert type(node_1.lower_bound) is int and type(node_1.upper_bound) is int
+            # Check that the two nodes are successive
             assert (
-                node_1_tiling_factor < node_1.upper_bound - node_1.lower_bound
-            ), f"Tiling factor must be smaller than the extent of the node: {node_1_tiling_factor} < {node_1.upper_bound - node_1.lower_bound}"
-        if node_2.has_integer_bounds():
-            assert type(node_2.lower_bound) is int and type(node_2.upper_bound) is int
+                node_2.parent_iterator == node_1.name
+            ), f"Nodes {node_1.name} and {node_2.name} are not successive, parent of {node_2.name} is {node_2.parent_iterator} instead of {node_1.name}"
+
+            # assert that the bounds are integers
+            # assert (
+            #     type(node_1.lower_bound) is int and type(node_1.upper_bound) is int
+            # ), f"Node {node_1.name} has non-integer bounds, lower bound: {node_1.lower_bound}, upper bound: {node_1.upper_bound}"
+            # assert (
+            #     type(node_2.lower_bound) is int and type(node_2.upper_bound) is int
+            # ), f"Node {node_2.name} has non-integer bounds, lower bound: {node_2.lower_bound}, upper bound: {node_2.upper_bound}"
+
+            # check that the tiling factors are positive and smaller than the extent of the node
             assert (
-                node_2_tiling_factor < node_2.upper_bound - node_2.lower_bound
-            ), f"Tiling factor must be smaller than the extent of the node: {node_2_tiling_factor} < {node_2.upper_bound - node_2.lower_bound}"
+                node_1_tiling_factor > 0
+            ), f"Tiling factor must be positive, got {node_1_tiling_factor}"
+            assert (
+                node_2_tiling_factor > 0
+            ), f"Tiling factor must be positive, got {node_2_tiling_factor}"
 
-        # check that the first node does not have any computations
-        assert (
-            len(node_1.computations_list) == 0
-        ), f"The first node must not have any computations: {node_1.name} has {node_1.computations_list}"
+            if node_1.has_integer_bounds():
+                assert (
+                    type(node_1.lower_bound) is int and type(node_1.upper_bound) is int
+                )
+                assert (
+                    node_1_tiling_factor < node_1.upper_bound - node_1.lower_bound
+                ), f"Tiling factor must be smaller than the extent of the node: {node_1_tiling_factor} < {node_1.upper_bound - node_1.lower_bound}"
+            if node_2.has_integer_bounds():
+                assert (
+                    type(node_2.lower_bound) is int and type(node_2.upper_bound) is int
+                )
+                assert (
+                    node_2_tiling_factor < node_2.upper_bound - node_2.lower_bound
+                ), f"Tiling factor must be smaller than the extent of the node: {node_2_tiling_factor} < {node_2.upper_bound - node_2.lower_bound}"
 
-        # check that the first node has no child iterators besides the second node
-        assert (
-            len(node_1.child_iterators) == 1
-            and node_1.child_iterators[0] == node_2.name
-        ), f"The first node must have one child which is the second node but has {node_1.child_iterators}"
+            # check that the first node does not have any computations
+            assert (
+                len(node_1.computations_list) == 0
+            ), f"The first node must not have any computations: {node_1.name} has {node_1.computations_list}"
+
+            # check that the first node has no child iterators besides the second node
+            assert (
+                len(node_1.child_iterators) == 1
+                and node_1.child_iterators[0] == node_2.name
+            ), f"The first node must have one child which is the second node but has {node_1.child_iterators}"
+        except AssertionError as e:
+            raise CannotApplyException(e)

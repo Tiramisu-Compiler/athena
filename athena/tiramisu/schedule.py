@@ -46,6 +46,9 @@ class Schedule:
         """
         if self.tree is None:
             raise Exception("No Tiramisu program to apply the schedule to")
+
+        self.legality = None
+
         for optim_cmd in list_optim_cmds:
             # additional checks to see if optimiaztion can be applied
             optim_cmd.verify_conditions(self.tree)

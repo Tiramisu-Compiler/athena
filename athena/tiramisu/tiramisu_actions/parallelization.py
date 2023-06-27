@@ -7,6 +7,7 @@ from athena.tiramisu.tiramisu_tree import TiramisuTree
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
+    CannotApplyException,
     TiramisuActionType,
     TiramisuAction,
 )
@@ -18,7 +19,7 @@ class Parallelization(TiramisuAction):
     """
 
     def __init__(self, params: list, tiramisu_tree: TiramisuTree):
-        # Prallelization only takes one parameter the loop to parallelize
+        # Parallelization only takes one parameter the loop to parallelize
         assert len(params) == 1
 
         comps = tiramisu_tree.get_iterator_subtree_computations(params[0])
@@ -85,3 +86,12 @@ class Parallelization(TiramisuAction):
 
     def transform_tree(self, program_tree: TiramisuTree):
         pass
+
+    def verify_conditions(self, program_tree: TiramisuTree, params=None):
+        if params is None:
+            params = self.params
+        # Prallelization only takes one parameter the loop to parallelize
+        if not len(params) == 1:
+            raise CannotApplyException(
+                f"Parallelization takes one parameter, {len(self.params)} given."
+            )

@@ -10,6 +10,7 @@ if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
     from athena.tiramisu.schedule import Schedule
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
+    CannotApplyException,
     TiramisuActionType,
     TiramisuAction,
 )
@@ -21,7 +22,9 @@ class Skewing(TiramisuAction):
     """
 
     def __init__(self, params: list, tiramisu_tree: TiramisuTree):
-        # Skewing  takes four parameters of the 2 loops to skew and their factors
+        # Skewing takes four parameters of the form L1, L2, L3, L4
+        # L1 and L2 are the two iterators to be skewed
+        # L3 and L4 are the two iterators that will be used to skew L1 and L2
         assert len(params) == 4
 
         comps = set()
@@ -86,3 +89,12 @@ class Skewing(TiramisuAction):
 
         node_2.lower_bound = "UNK"
         node_2.upper_bound = "UNK"
+
+    def verify_conditions(self, tiramisu_tree: TiramisuTree, params=None) -> None:
+        if params is None:
+            params = self.params
+        # Skewing  takes four parameters of the 2 loops to skew and their factors
+        if len(params) != 4:
+            raise CannotApplyException(
+                f"Skewing takes four parameters of the 2 loops to skew and their factors, {len(params)} were given"
+            )

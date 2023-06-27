@@ -183,3 +183,7 @@ class TiramisuAction:
 
     def __repr__(self) -> str:
         return f"Action(type={self.type}, params={self.params}, comps={self.comps})"
+
+
+class CannotApplyException(Exception):
+    pass
