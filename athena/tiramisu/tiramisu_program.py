@@ -6,8 +6,6 @@ from typing import Dict, List
 from athena.tiramisu.compiling_service import CompilingService
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 
-from athena.utils.config import BaseConfig
-
 
 class TiramisuProgram:
     """
@@ -59,6 +57,7 @@ class TiramisuProgram:
         data: dict,
         original_str: str | None = None,
         load_code_lines: bool = True,
+        load_tree: bool = True,
     ) -> "TiramisuProgram":
         # Initiate an instante of the TiramisuProgram class
         tiramisu_prog = cls()
@@ -94,6 +93,10 @@ class TiramisuProgram:
         #         cfg.Config.config.tiramisu.hpc_name] = tmp_exec_times
 
         # After taking the neccessary fields return the instance
+        if load_tree:
+            tiramisu_prog.tree = TiramisuTree.from_annotations(
+                tiramisu_prog.annotations
+            )
         return tiramisu_prog
 
     @classmethod
@@ -139,8 +142,6 @@ class TiramisuProgram:
         """
         This function loads the file code , it is necessary to generate legality check code and annotations
         """
-        if BaseConfig.base_config is None:
-            raise Exception("BaseConfig.base_config is None")
 
         if original_str:
             self.original_str = original_str
