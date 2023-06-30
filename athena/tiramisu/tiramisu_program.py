@@ -45,8 +45,8 @@ class TiramisuProgram:
         self.schedules_solver = {}
         self.original_str: str | None = None
         self.wrappers: Dict | None = None
-        self.initial_execution_times = {}
-        self.current_machine_initial_execution_time: float | None = None
+        # self.initial_execution_times = {}
+        # self.current_machine_initial_execution_time: float | None = None
         self.tree: TiramisuTree = None
 
     # Since there is no factory constructors in python, I am creating this class method to replace the factory pattern
@@ -69,7 +69,7 @@ class TiramisuProgram:
             tiramisu_prog.schedules_solver = data["schedules_solver"]
 
             # Initialize the initial_execution_times attribute and the current_machine_initial_execution_time attribute
-            tiramisu_prog.initial_execution_times = data["initial_execution_times"]
+            # tiramisu_prog.initial_execution_times = data["initial_execution_times"]
             # if cfg.Config.config.tiramisu.hpc_name in data["initial_execution_times"]:
             #     tiramisu_prog.current_machine_initial_execution_time = min(data[
             #         "initial_execution_times"][cfg.Config.config.tiramisu.hpc_name])

@@ -38,7 +38,7 @@ class Interchange(TiramisuAction):
         for comp in self.comps:
             self.tiramisu_optim_str += f"{comp}.interchange({levels[0]},{levels[1]});\n"
         self.str_representation = (
-            f"I(L{self.params[0]},L{self.params[1]},comps={self.comps})"
+            f"I(L{levels[0]},L{levels[1]},comps={self.comps})"
         )
 
     @classmethod
