@@ -184,6 +184,15 @@ class TiramisuAction:
     def __repr__(self) -> str:
         return f"Action(type={self.type}, params={self.params}, comps={self.comps})"
 
+    def __eq__(self, __value: object) -> bool:
+        if not isinstance(__value, TiramisuAction):
+            return False
+        return (
+            self.type == __value.type
+            and self.params == __value.params
+            and self.comps == __value.comps
+        )
+
 
 class CannotApplyException(Exception):
     pass

@@ -50,6 +50,8 @@ class Schedule:
         self.legality = None
 
         for optim_cmd in list_optim_cmds:
+            if optim_cmd in self.optims_list:
+                continue
             # additional checks to see if optimiaztion can be applied
             optim_cmd.verify_conditions(self.tree)
 
