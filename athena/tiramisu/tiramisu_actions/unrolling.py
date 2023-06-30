@@ -42,7 +42,7 @@ class Unrolling(TiramisuAction):
             ]
         )
         self.str_representation = (
-            "U(L" + str(loop_level) + "," + str(unrolling_factor) + ")"
+            f"U(L{str(loop_level)},{str(unrolling_factor)},comps={self.comps})"
         )
 
     @classmethod

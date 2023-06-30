@@ -336,6 +336,25 @@ class TiramisuTree:
         for child in self.iterators[node].child_iterators:
             self.update_subtree_levels(child, level + 1)
 
+    def get_comp_iterator(self, comp: str, level: int) -> str:
+        """
+        This function returns the iterator at level `level` of the computation
+        """
+        current_iterator = None
+        for iterator in self.iterators:
+            if comp in self.iterators[iterator].computations_list:
+                current_iterator = self.iterators[iterator]
+                break
+
+        if current_iterator is None:
+            raise ValueError("The computation is not in the tree")
+
+        while current_iterator.level > level:
+            assert current_iterator.parent_iterator is not None
+            current_iterator = self.iterators[current_iterator.parent_iterator]
+
+        return current_iterator.name
+
     def __str__(self) -> str:
         # return f"Roots: {self.roots}\nComputations: {self.computations}\nIterators: {self.iterators}"
         representation = ""
