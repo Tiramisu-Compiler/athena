@@ -50,7 +50,7 @@ class Tiling3D(TiramisuAction):
                 f"{comp}.tile({', '.join(loop_levels_and_factors)});\n"
             )
         self.str_representation = "T3(L{},L{},L{},{},{},{},comps={})".format(
-            *self.params, self.comps
+            *loop_levels_and_factors, self.comps
         )
 
     @classmethod

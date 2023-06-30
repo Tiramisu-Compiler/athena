@@ -46,7 +46,7 @@ class Skewing(TiramisuAction):
                 f"{comp}.skew({', '.join(levels_with_factors)});\n"
             )
 
-        self.str_representation = f"S(L{levels_with_factors[0]},L{levels_with_factors[1]},{levels_with_factors[2]},{levels_with_factors[3]}),comps={self.comps}"
+        self.str_representation = f"S(L{levels_with_factors[0]},L{levels_with_factors[1]},{levels_with_factors[2]},{levels_with_factors[3]},comps={self.comps})"
 
     @classmethod
     def get_candidates(
