@@ -41,8 +41,9 @@ class TiramisuProgram:
         self.annotations: Dict | None = None
         self.comps: list[str] | None = None
         self.name: str | None = None
-        self.schedules_legality = {}
-        self.schedules_solver = {}
+        # self.schedules_legality = {}
+        # self.schedules_solver = {}
+        self.schedules_dict: Dict = {}
         self.original_str: str | None = None
         self.wrappers: Dict | None = None
         # self.initial_execution_times = {}
@@ -65,8 +66,8 @@ class TiramisuProgram:
         tiramisu_prog.annotations = data["program_annotation"]
         if tiramisu_prog.annotations:
             tiramisu_prog.comps = list(tiramisu_prog.annotations["computations"].keys())
-            tiramisu_prog.schedules_legality = data["schedules_legality"]
-            tiramisu_prog.schedules_solver = data["schedules_solver"]
+        if "schedules_dict" in data:
+            tiramisu_prog.schedules_dict = data["schedules_dict"]
 
             # Initialize the initial_execution_times attribute and the current_machine_initial_execution_time attribute
             # tiramisu_prog.initial_execution_times = data["initial_execution_times"]

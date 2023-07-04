@@ -22,10 +22,24 @@ class Skewing(TiramisuAction):
     """
 
     def __init__(self, params: list, tiramisu_tree: TiramisuTree):
-        # Skewing takes four parameters of the form L1, L2, L3, L4
+        # Skewing takes four parameters of the form L1, L2, F3, F4
         # L1 and L2 are the two iterators to be skewed
-        # L3 and L4 are the two iterators that will be used to skew L1 and L2
+        # F3 and F4 are the two iterators that will be used to skew L1 and L2
         assert len(params) == 4
+
+        # check if nodes were renamed
+        # check if nodes were renamed
+        while (
+            params[0] not in tiramisu_tree.iterators
+            and params[0] in tiramisu_tree.renamed_iterators
+        ):
+            params[0] = tiramisu_tree.renamed_iterators[params[0]]
+
+        while (
+            params[1] not in tiramisu_tree.iterators
+            and params[1] in tiramisu_tree.renamed_iterators
+        ):
+            params[1] = tiramisu_tree.renamed_iterators[params[1]]
 
         comps = set()
         for node in params[:2]:

@@ -34,6 +34,7 @@ class TiramisuTree:
         self.iterators: Dict[str, IteratorNode] = {}
         self.computations: List[str] = []
         self.computations_absolute_order: Dict[str, int] = {}
+        self.renamed_iterators: Dict[str, str] = {}
 
     def add_root(self, root: str) -> None:
         self.roots.append(root)

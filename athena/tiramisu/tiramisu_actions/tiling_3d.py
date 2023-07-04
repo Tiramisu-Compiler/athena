@@ -31,6 +31,25 @@ class Tiling3D(TiramisuAction):
         # 6. The tile size for the third loop
         assert len(params) == 6
 
+        # check if nodes were renamed
+        while (
+            params[0] not in tiramisu_tree.iterators
+            and params[0] in tiramisu_tree.renamed_iterators
+        ):
+            params[0] = tiramisu_tree.renamed_iterators[params[0]]
+
+        while (
+            params[1] not in tiramisu_tree.iterators
+            and params[1] in tiramisu_tree.renamed_iterators
+        ):
+            params[1] = tiramisu_tree.renamed_iterators[params[1]]
+
+        while (
+            params[2] not in tiramisu_tree.iterators
+            and params[2] in tiramisu_tree.renamed_iterators
+        ):
+            params[2] = tiramisu_tree.renamed_iterators[params[2]]
+
         comps = set()
         for node in params[:3]:
             comps.update(tiramisu_tree.get_iterator_subtree_computations(node))
@@ -169,6 +188,7 @@ class Tiling3D(TiramisuAction):
 
         node_1_outer_old_name = node_1_outer.name
         node_1_outer.name = f"{node_1_outer.name}_tiled"
+        program_tree.renamed_iterators[node_1_outer_old_name] = node_1_outer.name
 
         if node_1_outer_old_name in program_tree.roots:
             program_tree.roots = [
@@ -189,6 +209,7 @@ class Tiling3D(TiramisuAction):
 
         node_2_outer_old_name = node_2_outer.name
         node_2_outer.name = f"{node_2_outer.name}_tiled"
+        program_tree.renamed_iterators[node_2_outer_old_name] = node_2_outer.name
 
         if node_2_outer_old_name in program_tree.roots:
             program_tree.roots = [
@@ -211,6 +232,7 @@ class Tiling3D(TiramisuAction):
 
         node_3_outer_old_name = node_3_outer.name
         node_3_outer.name = f"{node_3_outer.name}_tiled"
+        program_tree.renamed_iterators[node_3_outer_old_name] = node_3_outer.name
 
         if node_3_outer_old_name in program_tree.roots:
             program_tree.roots = [

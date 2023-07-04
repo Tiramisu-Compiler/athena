@@ -37,9 +37,7 @@ class Interchange(TiramisuAction):
         levels = [tiramisu_tree.iterators[param].level for param in self.params]
         for comp in self.comps:
             self.tiramisu_optim_str += f"{comp}.interchange({levels[0]},{levels[1]});\n"
-        self.str_representation = (
-            f"I(L{levels[0]},L{levels[1]},comps={self.comps})"
-        )
+        self.str_representation = f"I(L{levels[0]},L{levels[1]},comps={self.comps})"
 
     @classmethod
     def get_candidates(
@@ -147,6 +145,20 @@ class Interchange(TiramisuAction):
             params = self.params
         # Interchange only takes two parameters of the 2 loops to interchange
         assert len(params) == 2
+
+        # check if nodes were renamed
+        while (
+            params[0] not in tiramisu_tree.iterators
+            and params[0] in tiramisu_tree.renamed_iterators
+        ):
+            params[0] = tiramisu_tree.renamed_iterators[params[0]]
+
+        while (
+            params[1] not in tiramisu_tree.iterators
+            and params[1] in tiramisu_tree.renamed_iterators
+        ):
+            params[1] = tiramisu_tree.renamed_iterators[params[1]]
+
         node_1 = tiramisu_tree.iterators[params[0]]
         node_2 = tiramisu_tree.iterators[params[1]]
 

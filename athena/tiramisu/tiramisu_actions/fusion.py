@@ -83,6 +83,20 @@ class Fusion(TiramisuAction):
     def verify_conditions(self, program_tree: TiramisuTree, params=None):
         if params is None:
             params = self.params
+
+        # check if nodes were renamed
+        while (
+            params[0] not in program_tree.iterators
+            and params[0] in program_tree.renamed_iterators
+        ):
+            params[0] = program_tree.renamed_iterators[params[0]]
+
+        while (
+            params[1] not in program_tree.iterators
+            and params[1] in program_tree.renamed_iterators
+        ):
+            params[1] = program_tree.renamed_iterators[params[1]]
+
         try:
             assert len(params) == 2
             # assert that all the iterators have the same level

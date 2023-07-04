@@ -25,6 +25,13 @@ class Unrolling(TiramisuAction):
         # Unrolling takes 2 parameters: the iterator to unroll and the unrolling factor
         assert len(params) == 2
 
+        # check if node was renamed
+        while (
+            params[0] not in tiramisu_tree.iterators
+            and params[0] in tiramisu_tree.renamed_iterators
+        ):
+            params[0] = tiramisu_tree.renamed_iterators[params[0]]
+
         comps = tiramisu_tree.get_iterator_subtree_computations(params[0])
         comps.sort(key=lambda x: tiramisu_tree.computations_absolute_order[x])
 
@@ -35,11 +42,8 @@ class Unrolling(TiramisuAction):
         loop_level = tiramisu_tree.iterators[self.params[0]].level
         unrolling_factor = self.params[1]
         # for comp in self.comps:
-        self.tiramisu_optim_str = "/n    ".join(
-            [
-                f"{comp}.unroll({loop_level},{unrolling_factor});\n"
-                for comp in self.comps
-            ]
+        self.tiramisu_optim_str = "\n    ".join(
+            [f"{comp}.unroll({loop_level},{unrolling_factor});" for comp in self.comps]
         )
         self.str_representation = (
             f"U(L{str(loop_level)},{str(unrolling_factor)},comps={self.comps})"

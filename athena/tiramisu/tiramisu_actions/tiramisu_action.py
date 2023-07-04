@@ -84,6 +84,12 @@ class TiramisuAction:
         """Apply the optimization command to the Tiramisu program."""
         raise NotImplementedError
 
+    def check_renamed_iterators(self, program_tree: TiramisuTree) -> None:
+        """Check if the iterators of the optimization command are renamed."""
+        for i in range(len(self.params)):
+            while self.params[i] in program_tree.renamed_iterators:
+                self.params[i] = program_tree.renamed_iterators[self.params[i]]
+
     #     if self.type == ActionType.INTERCHANGE:
     #         interchange_str = (
     #             ".interchange(" + ",".join([str(p) for p in self.params_list]) + ");"

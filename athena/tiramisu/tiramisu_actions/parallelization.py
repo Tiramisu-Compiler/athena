@@ -22,6 +22,13 @@ class Parallelization(TiramisuAction):
         # Parallelization only takes one parameter the loop to parallelize
         assert len(params) == 1
 
+        # check if iterator was renamed
+        while (
+            params[0] not in tiramisu_tree.iterators
+            and params[0] in tiramisu_tree.renamed_iterators
+        ):
+            params[0] = tiramisu_tree.renamed_iterators[params[0]]
+
         comps = tiramisu_tree.get_iterator_subtree_computations(params[0])
         comps.sort(key=lambda comp: tiramisu_tree.computations_absolute_order[comp])
 

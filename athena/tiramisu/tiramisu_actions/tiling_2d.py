@@ -29,6 +29,19 @@ class Tiling2D(TiramisuAction):
         # 4. The tile size for the second loop
         assert len(params) == 4
 
+        # check if nodes were renamed
+        while (
+            params[0] not in tiramisu_tree.iterators
+            and params[0] in tiramisu_tree.renamed_iterators
+        ):
+            params[0] = tiramisu_tree.renamed_iterators[params[0]]
+
+        while (
+            params[1] not in tiramisu_tree.iterators
+            and params[1] in tiramisu_tree.renamed_iterators
+        ):
+            params[1] = tiramisu_tree.renamed_iterators[params[1]]
+
         comps = set()
         for node in params[:2]:
             comps.update(tiramisu_tree.get_iterator_subtree_computations(node))
@@ -139,6 +152,7 @@ class Tiling2D(TiramisuAction):
         # update name
         node_1_outer_old_name = node_1_outer.name
         node_1_outer_new_name = f"{node_1_outer.name}_tiled"
+        program_tree.renamed_iterators[node_1_outer_old_name] = node_1_outer_new_name
 
         if node_1_outer.name in program_tree.roots:
             program_tree.roots = [
@@ -164,6 +178,7 @@ class Tiling2D(TiramisuAction):
         # update name
         node_2_outer_old_name = node_2_outer.name
         node_2_outer_new_name = f"{node_2_outer.name}_tiled"
+        program_tree.renamed_iterators[node_2_outer_old_name] = node_2_outer_new_name
 
         if node_2_outer.name in program_tree.roots:
             program_tree.roots = [
