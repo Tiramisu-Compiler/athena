@@ -59,6 +59,8 @@ class TiramisuAction:
         self.tiramisu_optim_str = ""
         # The str representation of the action
         self.str_representation = ""
+        # The legality string of the action
+        self.legality_check_string = ""
 
     def set_string_representations(self, tiramisu_tree: TiramisuTree) -> str:
         """Convert the optimization command into Tiramisu code.
@@ -70,15 +72,6 @@ class TiramisuAction:
     def verify_conditions(self, tiramisu_tree: TiramisuTree) -> None:
         """Verify that the optimization command can be applied to the Tiramisu program."""
         pass
-
-    def legality_check_string(self, tiramisu_tree: TiramisuTree) -> str:
-        """Return the tiramisu code that checks the legality of the optimization command."""
-        if self.tiramisu_optim_str == "":
-            raise ValueError(
-                "The legality check should be called after the optimization string is set."
-            )
-
-        return self.tiramisu_optim_str
 
     def transform_tree(self, program_tree: TiramisuTree):
         """Apply the optimization command to the Tiramisu program."""

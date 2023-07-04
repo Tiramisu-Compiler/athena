@@ -43,6 +43,8 @@ class Parallelization(TiramisuAction):
 
         self.str_representation = f"P(L{level},comps={self.comps})"
 
+        self.legality_check_string = f"is_legal &= loop_parallelization_is_legal({level}, {{{', '.join([f'&{comp}' for comp in self.comps]) }}});\n    {self.tiramisu_optim_str}"
+
     @classmethod
     def _get_candidates_of_node(
         cls, node_name: str, program_tree: TiramisuTree
@@ -81,15 +83,6 @@ class Parallelization(TiramisuAction):
             )
 
         return candidates
-
-    def legality_check_string(self, program_tree: TiramisuTree) -> str:
-        """Return the tiramisu code that checks the legality of the optimization command."""
-        if self.tiramisu_optim_str == "":
-            raise ValueError(
-                "The legality check should be called after the optimization string is set."
-            )
-
-        return f"is_legal &= loop_parallelization_is_legal({ program_tree.iterators[self.params[0]].level}, {{{', '.join([f'&{comp}' for comp in self.comps]) }}});\n    {self.tiramisu_optim_str}"
 
     def transform_tree(self, program_tree: TiramisuTree):
         pass

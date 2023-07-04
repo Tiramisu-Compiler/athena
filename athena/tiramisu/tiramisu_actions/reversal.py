@@ -45,6 +45,8 @@ class Reversal(TiramisuAction):
 
         self.str_representation = f"R(L{level},comps={self.comps})"
 
+        self.legality_check_string = self.tiramisu_optim_str
+
     @classmethod
     def get_candidates(cls, program_tree: TiramisuTree) -> Dict[str, List[str]]:
         candidates: Dict[str, List[str]] = {}

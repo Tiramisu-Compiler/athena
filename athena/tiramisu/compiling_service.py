@@ -84,7 +84,7 @@ class CompilingService:
 """
         for optim in schedule.optims_list:
             # if optim.is_parallelization():
-            legality_check_lines += "    " + optim.legality_check_string(schedule.tree)
+            legality_check_lines += "    " + optim.legality_check_string
             # elif optim.is_unrolling():
             #     for branch in schedule_object.branches:
             #         comps = branch["comps"]

@@ -72,6 +72,8 @@ class Tiling3D(TiramisuAction):
             *loop_levels_and_factors, self.comps
         )
 
+        self.legality_check_string = self.tiramisu_optim_str
+
     @classmethod
     def get_candidates(
         cls, program_tree: TiramisuTree

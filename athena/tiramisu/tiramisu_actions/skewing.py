@@ -62,6 +62,8 @@ class Skewing(TiramisuAction):
 
         self.str_representation = f"S(L{levels_with_factors[0]},L{levels_with_factors[1]},{levels_with_factors[2]},{levels_with_factors[3]},comps={self.comps})"
 
+        self.legality_check_string = self.tiramisu_optim_str
+
     @classmethod
     def get_candidates(
         cls, program_tree: TiramisuTree

@@ -117,7 +117,7 @@ class Schedule:
 
     @classmethod
     def from_sched_str(
-        cls, tiramisu_program: TiramisuProgram, sched_str: str
+        cls, sched_str: str, tiramisu_program: TiramisuProgram
     ) -> "Schedule":
         schedule = cls(tiramisu_program)
         assert schedule.tree

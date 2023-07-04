@@ -1,6 +1,8 @@
 from athena.tiramisu.schedule import Schedule
 from athena.tiramisu.tiramisu_actions.parallelization import Parallelization
+from athena.tiramisu import tiramisu_actions
 from athena.utils.config import BaseConfig
+import tests.utils as test_utils
 from tests.utils import benchmark_program_test_sample
 
 
@@ -58,3 +60,77 @@ def test_str_representation():
     )
 
     assert str(schedule) == "P(L0,comps=['comp02'])"
+
+
+def test_from_sched_str():
+    BaseConfig.init()
+
+    test_program = test_utils.multiple_roots_sample()
+
+    schedule = Schedule(test_program)
+
+    schedule.add_optimizations(
+        [
+            Parallelization(params=["i"], tiramisu_tree=schedule.tree),
+            tiramisu_actions.Interchange(
+                params=["i_0", "j_0"], tiramisu_tree=schedule.tree
+            ),
+            tiramisu_actions.Fusion(params=["i", "j_0"], tiramisu_tree=schedule.tree),
+            tiramisu_actions.Tiling2D(
+                params=["i_2", "j_1", 4, 4], tiramisu_tree=schedule.tree
+            ),
+            tiramisu_actions.Unrolling(params=["i_1", 4], tiramisu_tree=schedule.tree),
+            tiramisu_actions.Reversal(params=["i_1"], tiramisu_tree=schedule.tree),
+        ]
+    )
+
+    sched_str = str(schedule)
+
+    new_schedule = Schedule.from_sched_str(sched_str, test_program)
+
+    assert new_schedule is not None
+
+    assert len(new_schedule.optims_list) == len(schedule.optims_list)
+
+    for idx, optim in enumerate(schedule.optims_list):
+        assert optim == new_schedule.optims_list[idx]
+
+    schedule = Schedule(test_program)
+
+    schedule.add_optimizations(
+        [
+            tiramisu_actions.Skewing(
+                params=["i_0", "j_0", 1, 1], tiramisu_tree=schedule.tree
+            ),
+        ]
+    )
+
+    sched_str = str(schedule)
+
+    new_schedule = Schedule.from_sched_str(sched_str, test_program)
+
+    assert new_schedule is not None
+    assert len(new_schedule.optims_list) == len(schedule.optims_list)
+
+    for idx, optim in enumerate(schedule.optims_list):
+        assert optim == new_schedule.optims_list[idx]
+
+    test_program = test_utils.tiling_3d_sample()
+
+    schedule = Schedule(test_program)
+
+    schedule.add_optimizations(
+        [
+            tiramisu_actions.Tiling3D(["i0", "i1", "i2", 4, 4, 4], schedule.tree),
+        ]
+    )
+
+    sched_str = str(schedule)
+
+    new_schedule = Schedule.from_sched_str(sched_str, test_program)
+
+    assert new_schedule is not None
+    assert len(new_schedule.optims_list) == len(schedule.optims_list)
+
+    for idx, optim in enumerate(schedule.optims_list):
+        assert optim == new_schedule.optims_list[idx]

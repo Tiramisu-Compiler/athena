@@ -45,6 +45,8 @@ class Fusion(TiramisuAction):
             f"F(L{tiramisu_tree.iterators[self.params[0]].level},comps={self.comps})"
         )
 
+        self.legality_check_string = self.tiramisu_optim_str
+
     @classmethod
     def get_candidates(cls, program_tree: TiramisuTree) -> List[Tuple[str, str]]:
         # We will try to fuse all possible nodes that have the same level

@@ -49,6 +49,8 @@ class Unrolling(TiramisuAction):
             f"U(L{str(loop_level)},{str(unrolling_factor)},comps={self.comps})"
         )
 
+        self.legality_check_string = f"is_legal &= loop_unrolling_is_legal({loop_level}, {{{', '.join([f'&{comp}' for comp in self.comps])}}});\n    {self.tiramisu_optim_str}"
+
     @classmethod
     def get_candidates(cls, program_tree: TiramisuTree) -> List[str]:
         candidates: List[str] = []
@@ -59,21 +61,6 @@ class Unrolling(TiramisuAction):
                 candidates.append(iterator)
 
         return candidates
-
-    def legality_check_string(self, tiramisu_tree: TiramisuTree) -> str:
-        """Return the tiramisu code that checks the legality of the optimization command."""
-        if self.tiramisu_optim_str == "":
-            raise CannotApplyException(
-                "The legality check should be called after the optimization string is set."
-            )
-
-        level = tiramisu_tree.iterators[self.params[0]].level
-
-        legality_check_str = f"is_legal &= loop_unrolling_is_legal({level}, {{{', '.join([f'&{comp}' for comp in self.comps])}}});\n"
-
-        legality_check_str += f"    {self.tiramisu_optim_str}"
-
-        return legality_check_str
 
     def transform_tree(self, program_tree: TiramisuTree):
         """Transform the tree according to the optimization command."""
