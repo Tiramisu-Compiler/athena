@@ -264,7 +264,7 @@ class Schedule:
                         ]
                     )
             elif optimization_str[0] == "S":
-                regex = r"S\(L(\d),L(\d),(\d+),(\d+),comps=\[([\w', ]*)\]\)"
+                regex = r"S\(L(\d),L(\d),(-?\d+),(-?\d+),comps=\[([\w', ]*)\]\)"
                 match = re.match(regex, optimization_str)
                 if match:
                     outer_loop_level = int(match.group(1))
