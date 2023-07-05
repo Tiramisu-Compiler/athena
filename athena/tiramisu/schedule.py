@@ -52,8 +52,8 @@ class Schedule:
         self.legality = None
 
         for optim_cmd in list_optim_cmds:
-            if optim_cmd in self.optims_list:
-                continue
+            # if optim_cmd in self.optims_list:
+            #     continue
             # check if the iterators of the optim are renamed
             optim_cmd.check_renamed_iterators(self.tree)
             # additional checks to see if optimiaztion can be applied

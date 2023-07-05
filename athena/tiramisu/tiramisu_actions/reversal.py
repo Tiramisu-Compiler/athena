@@ -66,7 +66,11 @@ class Reversal(TiramisuAction):
         node = program_tree.iterators[self.params[0]]
 
         # Reverse the loop bounds
-        node.lower_bound, node.upper_bound = node.upper_bound, node.lower_bound
+        if type(node.lower_bound) == int and type(node.upper_bound) == int:
+            # Halide way of reversing to keep increment 1
+            node.lower_bound, node.upper_bound = -node.upper_bound, -node.lower_bound
+        else:
+            node.lower_bound, node.upper_bound = node.upper_bound, node.lower_bound
 
     def verify_conditions(self, tiramisu_tree: TiramisuTree, params=None) -> None:
         if params is None:
