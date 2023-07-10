@@ -9,9 +9,9 @@ from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 
 def load_test_data() -> Tuple[dict, dict]:
-    with open("_tmp/enabling_parallelism.pkl", "rb") as f:
+    with open("examples/test_data.pkl", "rb") as f:
         dataset = pickle.load(f)
-    with open("_tmp/enabling_parallelism_cpps.pkl", "rb") as f:
+    with open("examples/test_data_cpps.pkl", "rb") as f:
         cpps = pickle.load(f)
     return dataset, cpps
 
@@ -170,12 +170,12 @@ def tree_test_sample_2():
 
 def benchmark_program_test_sample():
     tiramisu_func = TiramisuProgram.from_file(
-        "_tmp/function_matmul_MEDIUM.cpp",
-        # "_tmp/function_matmul_MEDIUM_wrapper.cpp",
-        # "_tmp/function_matmul_MEDIUM_wrapper.h",
-        # "_tmp/function_blur_MINI_generator.cpp",
-        # "_tmp/function_blur_MINI_wrapper.cpp",
-        # "_tmp/function_blur_MINI_wrapper.h",
+        "examples/function_matmul_MEDIUM.cpp",
+        # "examples/function_matmul_MEDIUM_wrapper.cpp",
+        # "examples/function_matmul_MEDIUM_wrapper.h",
+        # "examples/function_blur_MINI_generator.cpp",
+        # "examples/function_blur_MINI_wrapper.cpp",
+        # "examples/function_blur_MINI_wrapper.h",
         load_annotations=True,
     )
 
@@ -406,25 +406,9 @@ def fusion_sample():
     return tiramisu_prog
 
 
-def random_program_sample():
-    tiramisu_func = TiramisuProgram.from_file(
-        "_tmp/test.cpp",
-        # "_tmp/function_blur_MINI_generator.cpp",
-        # "_tmp/function_blur_MINI_wrapper.cpp",
-        # "_tmp/function_blur_MINI_wrapper.h",
-        load_annotations=True,
-    )
-
-    if tiramisu_func.annotations is None:
-        raise ValueError("Annotations not found")
-
-    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
-    return tiramisu_func
-
-
 def multiple_roots_sample():
     tiramisu_func = TiramisuProgram.from_file(
-        "_tmp/function_gemver_MINI_generator.cpp",
+        "examples/function_gemver_MINI_generator.cpp",
         load_annotations=True,
     )
 
@@ -437,7 +421,7 @@ def multiple_roots_sample():
 
 def distribution_sample():
     tiramisu_func = TiramisuProgram.from_file(
-        "_tmp/function_gramschmidt_MINI_generator.cpp",
+        "examples/function_gramschmidt_MINI_generator.cpp",
         load_annotations=True,
     )
 
