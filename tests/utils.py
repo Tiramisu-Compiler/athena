@@ -89,6 +89,82 @@ def tree_test_sample():
     return tiramisu_tree
 
 
+def tree_test_sample_2():
+    tiramisu_tree = TiramisuTree()
+    tiramisu_tree.add_root("root")
+    tiramisu_tree.iterators = {
+        "root": IteratorNode(
+            name="root",
+            parent_iterator=None,
+            lower_bound=0,
+            upper_bound=256,
+            child_iterators=["i", "j"],
+            computations_list=[],
+            level=0,
+        ),
+        "i": IteratorNode(
+            name="i",
+            parent_iterator="root",
+            lower_bound=0,
+            upper_bound=256,
+            child_iterators=[],
+            computations_list=["comp01"],
+            level=1,
+        ),
+        "j": IteratorNode(
+            name="j",
+            parent_iterator="root",
+            lower_bound=0,
+            upper_bound=256,
+            child_iterators=["k"],
+            computations_list=["comp05", "comp06", "comp07"],
+            level=1,
+        ),
+        "k": IteratorNode(
+            name="k",
+            parent_iterator="j",
+            lower_bound=0,
+            upper_bound=10,
+            child_iterators=["l", "m"],
+            computations_list=[],
+            level=2,
+        ),
+        "l": IteratorNode(
+            name="l",
+            parent_iterator="k",
+            lower_bound=0,
+            upper_bound=256,
+            child_iterators=[],
+            computations_list=["comp03"],
+            level=3,
+        ),
+        "m": IteratorNode(
+            name="m",
+            parent_iterator="k",
+            lower_bound=0,
+            upper_bound=256,
+            child_iterators=[],
+            computations_list=["comp04"],
+            level=3,
+        ),
+    }
+    tiramisu_tree.computations = [
+        "comp01",
+        "comp03",
+        "comp04",
+    ]
+
+    tiramisu_tree.computations_absolute_order = {
+        "comp01": 1,
+        "comp05": 2,
+        "comp03": 5,
+        "comp04": 6,
+        "comp06": 3,
+        "comp07": 4,
+    }
+    return tiramisu_tree
+
+
 def benchmark_program_test_sample():
     tiramisu_func = TiramisuProgram.from_file(
         "_tmp/function_matmul_MEDIUM.cpp",
@@ -346,6 +422,19 @@ def random_program_sample():
 def multiple_roots_sample():
     tiramisu_func = TiramisuProgram.from_file(
         "_tmp/function_gemver_MINI_generator.cpp",
+        load_annotations=True,
+    )
+
+    if tiramisu_func.annotations is None:
+        raise ValueError("Annotations not found")
+
+    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
+    return tiramisu_func
+
+
+def distribution_sample():
+    tiramisu_func = TiramisuProgram.from_file(
+        "_tmp/function_gramschmidt_MINI_generator.cpp",
         load_annotations=True,
     )
 

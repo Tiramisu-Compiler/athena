@@ -59,7 +59,7 @@ class Schedule:
             # additional checks to see if optimiaztion can be applied
             optim_cmd.verify_conditions(self.tree)
 
-            if optim_cmd.is_fusion():
+            if optim_cmd.is_fusion() or optim_cmd.is_distribution():
                 # Fusion is a special case, we need to transform the tree before setting the string representations to get the right order of computations
                 optim_cmd.transform_tree(self.tree)
                 optim_cmd.set_string_representations(self.tree)

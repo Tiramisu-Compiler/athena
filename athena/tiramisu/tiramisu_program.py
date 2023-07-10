@@ -50,7 +50,6 @@ class TiramisuProgram:
         # self.current_machine_initial_execution_time: float | None = None
         self.tree: TiramisuTree = None
 
-    # Since there is no factory constructors in python, I am creating this class method to replace the factory pattern
     @classmethod
     def from_dict(
         cls,

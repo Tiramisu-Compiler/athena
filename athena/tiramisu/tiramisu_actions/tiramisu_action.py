@@ -24,6 +24,7 @@ class TiramisuActionType(Enum):
     FUSION = 5
     REVERSAL = 6
     TILING_3D = 7
+    DISTRIBUTION = 8
 
 
 class TiramisuAction:
@@ -48,7 +49,7 @@ class TiramisuAction:
         self,
         type: TiramisuActionType,
         params: list | dict,
-        comps: List[str],
+        comps: List[str] | List[List[str]],
     ):
         self.params = params
         # A list of concerned computations of the actions
@@ -168,6 +169,9 @@ class TiramisuAction:
 
     def is_reversal(self) -> bool:
         return self.type == TiramisuActionType.REVERSAL
+
+    def is_distribution(self) -> bool:
+        return self.type == TiramisuActionType.DISTRIBUTION
 
     @classmethod
     def get_candidates(cls, program_tree: TiramisuTree) -> list:

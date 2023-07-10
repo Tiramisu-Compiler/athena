@@ -90,10 +90,24 @@ class TiramisuTree:
                 if comp in iterators[iterator]["computations_list"]
             ]
 
+            try:
+                # integer bounds
+                lower_bound = int(iterators[iterator]["lower_bound"])
+            except ValueError:
+                # non rectangular bounds
+                lower_bound = iterators[iterator]["lower_bound"]
+
+            try:
+                # integer bounds
+                upper_bound = int(iterators[iterator]["upper_bound"])
+            except ValueError:
+                # non rectangular bounds
+                upper_bound = iterators[iterator]["upper_bound"]
+
             tiramisu_space.iterators[iterator] = IteratorNode(
                 name=iterator,
-                lower_bound=int(iterators[iterator]["lower_bound"]),
-                upper_bound=int(iterators[iterator]["upper_bound"]),
+                lower_bound=lower_bound,
+                upper_bound=upper_bound,
                 child_iterators=iterators[iterator]["child_iterators"],
                 computations_list=ordered_node_comps,
                 parent_iterator=iterators[iterator]["parent_iterator"],

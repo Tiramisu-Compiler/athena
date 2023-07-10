@@ -11,6 +11,7 @@ def test_apply_schedule():
     test_program = benchmark_program_test_sample()
 
     schedule = Schedule(test_program)
+    assert schedule.tree
     schedule.add_optimizations(
         [Parallelization(params=["i00"], tiramisu_tree=schedule.tree)]
     )
@@ -25,6 +26,8 @@ def test_is_legal():
     test_program = benchmark_program_test_sample()
 
     schedule = Schedule(test_program)
+    assert schedule.tree
+
     schedule.add_optimizations(
         [Parallelization(params=["i00"], tiramisu_tree=schedule.tree)]
     )
@@ -36,6 +39,8 @@ def test_is_legal():
 def test_copy():
     BaseConfig.init()
     original = Schedule(benchmark_program_test_sample())
+    assert original.tree
+
     original.add_optimizations(
         [Parallelization(params=["i00"], tiramisu_tree=original.tree)]
     )
@@ -55,6 +60,8 @@ def test_str_representation():
     test_program = benchmark_program_test_sample()
 
     schedule = Schedule(test_program)
+    assert schedule.tree
+
     schedule.add_optimizations(
         [Parallelization(params=["i00"], tiramisu_tree=schedule.tree)]
     )
@@ -68,6 +75,7 @@ def test_from_sched_str():
     test_program = test_utils.multiple_roots_sample()
 
     schedule = Schedule(test_program)
+    assert schedule.tree
 
     schedule.add_optimizations(
         [
@@ -96,6 +104,7 @@ def test_from_sched_str():
         assert optim == new_schedule.optims_list[idx]
 
     schedule = Schedule(test_program)
+    assert schedule.tree
 
     schedule.add_optimizations(
         [
@@ -118,6 +127,7 @@ def test_from_sched_str():
     test_program = test_utils.tiling_3d_sample()
 
     schedule = Schedule(test_program)
+    assert schedule.tree
 
     schedule.add_optimizations(
         [
