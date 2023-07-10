@@ -65,7 +65,7 @@ class Distribution(TiramisuAction):
         candidates: List[str] = []
 
         for iterator in program_tree.iterators.values():
-            if len(iterator.computations_list) > 1:
+            if len(iterator.computations_list) + len(iterator.child_iterators) > 1:
                 candidates.append(iterator.name)
 
         return candidates

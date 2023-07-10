@@ -35,4 +35,8 @@ def test_transform_tree():
     lower, upper = iterator.lower_bound, iterator.upper_bound
     reversal = Reversal(["i0"], sample.tree)
     reversal.transform_tree(sample.tree)
-    assert iterator.lower_bound == upper and iterator.upper_bound == lower
+
+    assert type(lower) is int
+    assert type(upper) is int
+
+    assert iterator.lower_bound == -upper and iterator.upper_bound == -lower

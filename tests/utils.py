@@ -152,6 +152,9 @@ def tree_test_sample_2():
         "comp01",
         "comp03",
         "comp04",
+        "comp05",
+        "comp06",
+        "comp07",
     ]
 
     tiramisu_tree.computations_absolute_order = {
