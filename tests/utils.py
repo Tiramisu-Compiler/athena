@@ -326,6 +326,9 @@ def tiling_3d_tree_sample() -> TiramisuTree:
     tiramisu_tree.computations = [
         "comp03",
     ]
+    tiramisu_tree.computations_absolute_order = {
+        "comp03": 1,
+    }
     return tiramisu_tree
 
 
