@@ -75,7 +75,9 @@ class Schedule:
         """
         return self.optims_list.pop()
 
-    def apply_schedule(self, nb_exec_tiems=1) -> List[float]:
+    def apply_schedule(
+        self, nb_exec_tiems=1, max_mins_per_schedule: float | None = None
+    ) -> List[float]:
         """
         Applies the schedule to the Tiramisu program.
 
@@ -97,7 +99,10 @@ class Schedule:
             raise Exception("Schedule is not legal")
 
         return CompilingService.get_cpu_exec_times(
-            self.tiramisu_program, self.optims_list, nb_exec_tiems
+            self.tiramisu_program,
+            self.optims_list,
+            nb_exec_tiems,
+            max_mins_per_schedule,
         )
 
     def is_legal(self) -> bool:

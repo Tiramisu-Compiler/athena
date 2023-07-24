@@ -104,6 +104,7 @@ class TiramisuProgram:
         cls,
         file_path: str,
         load_annotations=False,
+        load_tree=False,
     ) -> "TiramisuProgram":
         """
         This function loads a tiramisu function from its cpp file and its wrapper files.
@@ -133,6 +134,14 @@ class TiramisuProgram:
         if load_annotations:
             tiramisu_prog.annotations = json.loads(
                 CompilingService.compile_annotations(tiramisu_prog)
+            )
+
+        if load_tree:
+            assert (
+                tiramisu_prog.annotations is not None
+            ), "Annotations must be loaded before loading the tree"
+            tiramisu_prog.tree = TiramisuTree.from_annotations(
+                tiramisu_prog.annotations
             )
 
         # After taking the neccessary fields return the instance

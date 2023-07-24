@@ -386,6 +386,7 @@ class CompilingService:
         tiramisu_program: TiramisuProgram,
         optims_list: List[TiramisuAction],
         max_runs: int = 0,
+        max_mins_per_schedule: float | None = None,
     ) -> List[float]:
         """
         Returns the execution times of the program on the CPU after applying the optimizations in the optims_list
@@ -434,6 +435,8 @@ class CompilingService:
             for key, value in BaseConfig.base_config.env_vars.items()
         ]
 
+        results = []
+
         if BaseConfig.base_config.tiramisu.is_new_tiramisu:
             # Making the tiramisu root path explicit to the env
             shell_script = [
@@ -463,18 +466,6 @@ class CompilingService:
                 f"$CXX -std=c++11 -fno-rtti -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/Halide/include -I$TIRAMISU_ROOT/3rdParty/isl/include/ -I$TIRAMISU_ROOT/benchmarks -L$TIRAMISU_ROOT/build -L$TIRAMISU_ROOT/3rdParty/Halide/lib/ -L$TIRAMISU_ROOT/3rdParty/isl/build/lib -o {tiramisu_program.name}_wrapper -ltiramisu -lHalide -ldl -lpthread -lm -Wl,-rpath,$TIRAMISU_ROOT/build {tiramisu_program.name}_wrapper.cpp ./{tiramisu_program.name}.o.so -ltiramisu -lHalide -ldl -lpthread -lm -lisl",
             ]
 
-        run_script = [
-            # cd to the workspace
-            f"cd {BaseConfig.base_config.workspace}",
-            #  set the env variables
-            f"export DYNAMIC_RUNS=0",
-            f"export MAX_RUNS={max_runs}",
-            f"export NB_EXEC={max_runs}",
-            # run the wrapper
-            f"./{tiramisu_program.name}_wrapper",
-            # Clean generated files
-            # f"rm {tiramisu_program.name}*",
-        ]
         try:
             # run the compilation of the generator and wrapper
             compiler = subprocess.run(
@@ -487,9 +478,45 @@ class CompilingService:
 
             halide_repr = compiler.stdout
             logging.debug(f"Generated Halide code:\n{halide_repr}")
-            # run the wrapper and get the execution times
+
+            if max_mins_per_schedule:
+                # run the wrapper and get the execution time
+                compiler = subprocess.run(
+                    [
+                        " ; ".join(
+                            env_vars
+                            + CompilingService.get_n_runs_script(
+                                max_runs=1, tiramisu_program=tiramisu_program
+                            )
+                        )
+                    ],
+                    capture_output=True,
+                    text=True,
+                    shell=True,
+                    check=True,
+                )
+
+                if compiler.stdout:
+                    max_millis_per_run = max_mins_per_schedule * 60 * 1000
+                    exec_time = float(compiler.stdout)
+                    results = [exec_time]
+                    if exec_time > max_millis_per_run / max_runs:
+                        max_runs = int(max_millis_per_run / exec_time)
+                        max_runs = min(0, max_runs - 1)
+                else:
+                    raise ScheduleExecutionCrashed("No output from schedule execution")
+
+            # run the wrapper and get the execution time
             compiler = subprocess.run(
-                [" ; ".join(env_vars + run_script)],
+                [
+                    " ; ".join(
+                        env_vars
+                        + CompilingService.get_n_runs_script(
+                            max_runs=max_runs,
+                            tiramisu_program=tiramisu_program,
+                        )
+                    )
+                ],
                 capture_output=True,
                 text=True,
                 shell=True,
@@ -498,7 +525,7 @@ class CompilingService:
 
             # Extract the execution times from the output and return the minimum
             if compiler.stdout:
-                results = [float(x) for x in compiler.stdout.split()]
+                results += [float(x) for x in compiler.stdout.split()]
                 return results
             else:
                 logging.error("No output from schedule execution")
@@ -517,6 +544,20 @@ class CompilingService:
             )
         except Exception as e:
             raise e
+
+    def get_n_runs_script(tiramisu_program: TiramisuProgram, max_runs: int = 1):
+        return [
+            # cd to the workspace
+            f"cd {BaseConfig.base_config.workspace}",
+            #  set the env variables
+            f"export DYNAMIC_RUNS=0",
+            f"export MAX_RUNS={max_runs}",
+            f"export NB_EXEC={max_runs}",
+            # run the wrapper
+            f"./{tiramisu_program.name}_wrapper",
+            # Clean generated files
+            # f"rm {tiramisu_program.name}*",
+        ]
 
 
 class ScheduleExecutionCrashed(Exception):
