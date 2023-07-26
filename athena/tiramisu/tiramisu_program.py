@@ -3,6 +3,7 @@ import random
 import re
 from pathlib import Path
 from typing import Dict, List
+
 from athena.tiramisu.compiling_service import CompilingService
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 
@@ -46,7 +47,7 @@ class TiramisuProgram:
         self.schedules_dict: Dict = {}
         self.original_str: str | None = None
         self.wrappers: Dict | None = None
-        # self.initial_execution_times = {}
+        self.initial_execution_times = {}
         # self.current_machine_initial_execution_time: float | None = None
         self.tree: TiramisuTree = None
 
@@ -69,7 +70,8 @@ class TiramisuProgram:
             tiramisu_prog.schedules_dict = data["schedules_dict"]
 
             # Initialize the initial_execution_times attribute and the current_machine_initial_execution_time attribute
-            # tiramisu_prog.initial_execution_times = data["initial_execution_times"]
+            if "initial_execution_times" in data:
+                tiramisu_prog.initial_execution_times = data["initial_execution_times"]
             # if cfg.Config.config.tiramisu.hpc_name in data["initial_execution_times"]:
             #     tiramisu_prog.current_machine_initial_execution_time = min(data[
             #         "initial_execution_times"][cfg.Config.config.tiramisu.hpc_name])

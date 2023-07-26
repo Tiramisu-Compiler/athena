@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import logging
 import os
-import subprocess
 import re
-from typing import List, TYPE_CHECKING
-
+import subprocess
+from typing import TYPE_CHECKING, List
 
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_actions.tiramisu_action import TiramisuAction
@@ -514,6 +513,7 @@ class CompilingService:
                         + CompilingService.get_n_runs_script(
                             max_runs=max_runs,
                             tiramisu_program=tiramisu_program,
+                            delete_files=True,
                         )
                     )
                 ],
@@ -545,7 +545,9 @@ class CompilingService:
         except Exception as e:
             raise e
 
-    def get_n_runs_script(tiramisu_program: TiramisuProgram, max_runs: int = 1):
+    def get_n_runs_script(
+        tiramisu_program: TiramisuProgram, max_runs: int = 1, delete_files=False
+    ):
         return [
             # cd to the workspace
             f"cd {BaseConfig.base_config.workspace}",
@@ -556,7 +558,7 @@ class CompilingService:
             # run the wrapper
             f"./{tiramisu_program.name}_wrapper",
             # Clean generated files
-            # f"rm {tiramisu_program.name}*",
+            f"rm {tiramisu_program.name}*" if delete_files else "",
         ]
 
 
