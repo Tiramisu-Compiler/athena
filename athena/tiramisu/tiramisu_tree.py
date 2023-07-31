@@ -345,15 +345,28 @@ class TiramisuTree:
 
         return current_node_name
 
-    def get_iterator_of_computation(self, computation_name: str):
+    def get_iterator_of_computation(
+        self, computation_name: str, level: int | None = None
+    ) -> str:
         """
         This function returns the iterator of the computation
         """
+        computation_iterator = None
         for iterator in self.iterators:
             if computation_name in self.iterators[iterator].computations_list:
-                return self.iterators[iterator]
+                computation_iterator = self.iterators[iterator]
+                break
 
-        raise ValueError("The computation is not in the tree")
+        if computation_iterator is None:
+            raise ValueError("The computation is not in the tree")
+
+        if level is not None:
+            while computation_iterator.level != level:
+                computation_iterator = self.iterators[
+                    computation_iterator.parent_iterator
+                ]
+
+        return computation_iterator
 
     def clone_subtree(
         self,
