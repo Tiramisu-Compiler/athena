@@ -63,11 +63,11 @@ class Schedule:
 
             if optim_cmd.is_fusion() or optim_cmd.is_distribution():
                 # Fusion is a special case, we need to transform the tree before setting the string representations to get the right order of computations
-                optim_cmd.transform_tree(self.tree)
+                # optim_cmd.transform_tree(self.tree)
                 optim_cmd.set_string_representations(self.tree)
             else:
                 optim_cmd.set_string_representations(self.tree)
-                optim_cmd.transform_tree(self.tree)
+                # optim_cmd.transform_tree(self.tree)
 
             self.optims_list.append(optim_cmd)
 
@@ -118,8 +118,17 @@ class Schedule:
 
         if self.tiramisu_program is None:
             raise Exception("No Tiramisu program to apply the schedule to")
+        if with_ast:
+            legality, new_tree = CompilingService.compile_legality(
+                self, with_ast=with_ast
+            )
+        else:
+            legality, _ = CompilingService.compile_legality(self, with_ast=with_ast)
 
-        self.legality = CompilingService.compile_legality(self, with_ast=with_ast)
+        assert isinstance(legality, bool)
+        self.legality = legality
+        if with_ast:
+            self.tree = new_tree
         return self.legality
 
     @classmethod

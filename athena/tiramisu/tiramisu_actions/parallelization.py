@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
+    IteratorIdentifier,
     TiramisuAction,
     TiramisuActionType,
 )
@@ -20,28 +21,25 @@ class Parallelization(TiramisuAction):
 
     def __init__(
         self,
-        iterator_to_parallelize: str | Tuple[str, int],
+        iterator_to_parallelize: IteratorIdentifier,
         tiramisu_tree: TiramisuTree,
     ):
-        # Parallelization only takes one parameter the loop to parallelize it can be the name of the iterator or a tuple (computation_name, iterator_level)
+        # Parallelization only takes one parameter the loop to parallelize specified by a tuple (computation_name, iterator_level)
         self.loop_to_parallelize = iterator_to_parallelize
-        if isinstance(iterator_to_parallelize, str):
-            self.iterator = tiramisu_tree.iterators[iterator_to_parallelize]
-        else:
-            computation_name, iterator_level = iterator_to_parallelize
+        computation_name, iterator_level = iterator_to_parallelize
 
-            assert iterator_level >= 0, "Iterator level must be positive"
+        assert iterator_level >= 0, "Iterator level must be positive"
 
-            self.iterator = tiramisu_tree.get_iterator_of_computation(
-                computation_name, iterator_level
-            )
+        self.iterator = tiramisu_tree.get_iterator_of_computation(
+            computation_name, iterator_level
+        )
 
         comps = tiramisu_tree.get_iterator_subtree_computations(self.iterator.name)
         comps.sort(key=lambda comp: tiramisu_tree.computations_absolute_order[comp])
 
         super().__init__(
             type=TiramisuActionType.PARALLELIZATION,
-            params=[self.iterator.name],
+            params=[self.iterator],
             comps=comps,
         )
 

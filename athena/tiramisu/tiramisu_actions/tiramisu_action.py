@@ -1,16 +1,18 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Dict, List, Set
 
-from athena.tiramisu.tiramisu_tree import TiramisuTree
+from typing import TYPE_CHECKING, Dict, List, Set, Tuple
+
 import athena.tiramisu.tiramisu_actions as tiramisu_actions
+from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 if TYPE_CHECKING:
     from athena.tiramisu.schedule import Schedule
 
 from enum import Enum
 
-
 from athena.tiramisu.tiramisu_program import TiramisuProgram
+
+IteratorIdentifier = Tuple[str, int]
 
 
 class TiramisuActionType(Enum):

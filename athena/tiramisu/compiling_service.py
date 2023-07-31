@@ -60,9 +60,7 @@ class CompilingService:
             ast = TiramisuTree.from_isl_ast_string_list(
                 isl_ast_string_list=result_lines[1:]
             )
-
-            print(ast)
-            return legality_result == "1"
+            return legality_result == "1", ast
 
         else:
             result = result.strip()
