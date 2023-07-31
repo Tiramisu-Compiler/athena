@@ -1,15 +1,17 @@
 from __future__ import annotations
-from copy import deepcopy
-import re
 
-from typing import List, TYPE_CHECKING
+import re
+from copy import deepcopy
+from typing import TYPE_CHECKING, List
+
 from athena.tiramisu.compiling_service import CompilingService
 from athena.tiramisu.tiramisu_actions.tiramisu_action import TiramisuActionType
 
 if TYPE_CHECKING:
     from .tiramisu_actions.tiramisu_action import TiramisuAction
-from athena.tiramisu.tiramisu_program import TiramisuProgram
+
 from athena.tiramisu import tiramisu_actions
+from athena.tiramisu.tiramisu_program import TiramisuProgram
 
 
 class Schedule:
@@ -105,7 +107,7 @@ class Schedule:
             max_mins_per_schedule,
         )
 
-    def is_legal(self) -> bool:
+    def is_legal(self, with_ast: bool = False) -> bool:
         """
         Checks if the schedule is legal.
 
@@ -117,7 +119,7 @@ class Schedule:
         if self.tiramisu_program is None:
             raise Exception("No Tiramisu program to apply the schedule to")
 
-        self.legality = CompilingService.compile_legality(self)
+        self.legality = CompilingService.compile_legality(self, with_ast=with_ast)
         return self.legality
 
     @classmethod

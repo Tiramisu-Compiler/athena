@@ -1,7 +1,8 @@
-from typing import Dict, List, Tuple
+import re
 import uuid
+from typing import Dict, List, Tuple
+
 from athena.tiramisu.tiramisu_iterator_node import IteratorNode
-import itertools
 
 
 class TiramisuTree:
@@ -126,6 +127,96 @@ class TiramisuTree:
         ]
 
         return tiramisu_space
+
+    @classmethod
+    def from_isl_ast_string_list(cls, isl_ast_string_list: List[str]) -> "TiramisuTree":
+        tiramisu_tree = cls()
+        tiramisu_tree.computations_absolute_order = {}
+        tiramisu_tree.computations = []
+        tiramisu_tree.iterators = {}
+        tiramisu_tree.roots = []
+        tiramisu_tree.renamed_iterators = {}
+
+        level_iterator_map: Dict[int, List[str]] = {}
+        i = 0
+        upper_bound_regex = r".*<=\s*(.*)"
+        iterator_duplicates: Dict[str, int] = {}
+        for str_line in isl_ast_string_list:
+            if "|iterator|" in str_line:
+                (
+                    iterator_level,
+                    _,
+                    iterator_name,
+                    lower_bound,
+                    loop_condition,
+                    increment,
+                ) = str_line.split("|")
+                iterator_level = int(iterator_level)
+                try:
+                    lower_bound = int(lower_bound)
+                except ValueError:
+                    # Lower bound is not an integer so we keep it string
+                    pass
+
+                # Get the upper bound from the loop condition
+                matched_upper_bound = re.match(upper_bound_regex, loop_condition)
+                if matched_upper_bound:
+                    upper_bound = matched_upper_bound.group(1)
+                else:
+                    upper_bound = loop_condition
+                try:
+                    upper_bound = int(upper_bound)
+                except ValueError:
+                    # Upper bound is not an integer so we keep it string
+                    pass
+                if iterator_name in tiramisu_tree.iterators:
+                    iterator_duplicates[iterator_name] = (
+                        iterator_duplicates[iterator_name] + 1
+                    )
+                    iterator_name = (
+                        iterator_name + "_" + str(iterator_duplicates[iterator_name])
+                    )
+                else:
+                    iterator_duplicates[iterator_name] = 0
+
+                tiramisu_tree.iterators[iterator_name] = IteratorNode(
+                    name=iterator_name,
+                    lower_bound=lower_bound,
+                    upper_bound=upper_bound,
+                    child_iterators=[],
+                    computations_list=[],
+                    parent_iterator=None
+                    if iterator_level == 0
+                    else level_iterator_map[iterator_level - 1][-1],
+                    level=iterator_level,
+                )
+                if iterator_level not in level_iterator_map:
+                    level_iterator_map[iterator_level] = []
+                level_iterator_map[iterator_level].append(iterator_name)
+
+                if iterator_level == 0:
+                    tiramisu_tree.roots.append(iterator_name)
+                else:
+                    # Add the iterator to its parent's child iterators (the last iterator we added in the previous level)
+                    tiramisu_tree.iterators[
+                        level_iterator_map[iterator_level - 1][-1]
+                    ].child_iterators.append(iterator_name)
+
+            elif "|computation|" in str_line:
+                level, _, comp_name = str_line.split("|")
+                level = int(level)
+                tiramisu_tree.computations.append(comp_name)
+
+                # Add the computation to its iterator's computations list (the last iterator we added in the previous level)
+                tiramisu_tree.iterators[
+                    level_iterator_map[level - 1][-1]
+                ].computations_list.append(comp_name)
+
+                # Add the computation to the absolute order dict
+                tiramisu_tree.computations_absolute_order[comp_name] = i
+                i += 1
+
+        return tiramisu_tree
 
     def _get_subtree_representation(self, node_name: str) -> str:
         representation = ""

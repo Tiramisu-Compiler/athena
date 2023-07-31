@@ -37,9 +37,10 @@ class TiramisuProgram:
         The tree of the function
     """
 
-    def __init__(self):
+    def __init__(self: "TiramisuProgram"):
         self.file_path = ""
         self.annotations: Dict | None = None
+        self.isl_ast_string: str | None = None
         self.comps: list[str] | None = None
         self.name: str | None = None
         # self.schedules_legality = {}
@@ -106,6 +107,7 @@ class TiramisuProgram:
         cls,
         file_path: str,
         load_annotations=False,
+        load_isl_ast=False,
         load_tree=False,
     ) -> "TiramisuProgram":
         """
@@ -137,14 +139,25 @@ class TiramisuProgram:
             tiramisu_prog.annotations = json.loads(
                 CompilingService.compile_annotations(tiramisu_prog)
             )
+        elif load_isl_ast:
+            tiramisu_prog.isl_ast_string = CompilingService.compile_isl_ast_tree(
+                tiramisu_prog
+            )
 
         if load_tree:
-            assert (
-                tiramisu_prog.annotations is not None
-            ), "Annotations must be loaded before loading the tree"
-            tiramisu_prog.tree = TiramisuTree.from_annotations(
-                tiramisu_prog.annotations
-            )
+            if tiramisu_prog.annotations:
+                assert tiramisu_prog.annotations is not None
+                tiramisu_prog.tree = TiramisuTree.from_annotations(
+                    tiramisu_prog.annotations
+                )
+            elif tiramisu_prog.isl_ast_string:
+                tiramisu_prog.tree = TiramisuTree.from_isl_ast_string_list(
+                    tiramisu_prog.isl_ast_string.split("\n")
+                )
+            else:
+                raise Exception(
+                    "You should load either the annotations or the isl ast string to load the tree"
+                )
 
         # After taking the neccessary fields return the instance
         return tiramisu_prog
