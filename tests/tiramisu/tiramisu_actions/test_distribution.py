@@ -65,7 +65,7 @@ def test_get_candidates():
     BaseConfig.init()
     sample = test_utils.distribution_sample()
     candidates = Distribution.get_candidates(sample.tree)
-    assert candidates == ["k", "j"]
+    assert candidates == ["c1", "c3_2"]
 
 
 def test_get_fusion_levels():

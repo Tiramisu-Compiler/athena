@@ -100,44 +100,6 @@ class Distribution(TiramisuAction):
 
         return candidates
 
-    def verify_conditions(self, program_tree: TiramisuTree, params=None):
-        if params is None:
-            params = self.params
-
-        # check if the node was renamed
-        while (
-            params[0] not in program_tree.iterators
-            and params[0] in program_tree.renamed_iterators
-        ):
-            params[0] = program_tree.renamed_iterators[params[0]]
-
-        try:
-            assert len(params) == 1, "Distribution takes 1 parameter"
-            assert (
-                params[0] in program_tree.iterators
-            ), f"iterator {params[0]} not found"
-            assert (
-                len(program_tree.iterators[params[0]].computations_list)
-                + len(program_tree.iterators[params[0]].child_iterators)
-                > 1
-            ), f"iterator {params[0]} has only one or no computations/iterators to distribute"
-
-            all_comps = []
-            for comp_list in self.comps:
-                assert type(comp_list) == list, "children list must be a list"
-                all_comps += comp_list
-            all_comps.sort()
-            iterator_children = program_tree.iterators[params[0]].computations_list
-            iterator_children.extend(program_tree.iterators[params[0]].child_iterators)
-            iterator_children.sort()
-
-            assert (
-                all_comps == iterator_children
-            ), f"children list {all_comps} does not match iterator computation + child_iterators lists {iterator_children}"
-
-        except AssertionError as e:
-            raise CannotApplyException(e.args)
-
     def get_fusion_levels(
         self,
         ordered_computations: List[str],

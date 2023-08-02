@@ -39,7 +39,7 @@ def test_get_candidates():
     BaseConfig.init()
     sample = test_utils.benchmark_program_test_sample()
     candidates = Parallelization.get_candidates(sample.tree)
-    assert candidates == {"i00": [["i00"], ["i01"], ["i02"]]}
+    assert candidates == {"c1": [["c1"], ["c3"], ["c5"]]}
 
 
 def test_legality_check():

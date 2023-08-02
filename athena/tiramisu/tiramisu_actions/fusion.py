@@ -110,35 +110,6 @@ class Fusion(TiramisuAction):
 
         return candidates
 
-    def verify_conditions(
-        self, program_tree: TiramisuTree, params: List[IteratorIdentifier] | None = None
-    ):
-        if params is None:
-            params = self.params
-
-        try:
-            assert len(params) == 2
-
-            # assert that all the iterators have the same level
-            assert len(set([param[1] for param in params])) == 1
-
-            # assert that all the iterators have the same parent
-            assert (
-                len(
-                    set(
-                        [
-                            program_tree.get_iterator_of_computation(
-                                *param
-                            ).parent_iterator
-                            for param in params
-                        ]
-                    )
-                )
-                == 1
-            )
-        except AssertionError as e:
-            raise CannotApplyException(e.args)
-
     def reorder_computations(
         self,
         tiramisu_tree: TiramisuTree,
