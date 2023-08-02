@@ -347,7 +347,7 @@ class TiramisuTree:
 
     def get_iterator_of_computation(
         self, computation_name: str, level: int | None = None
-    ) -> str:
+    ):
         """
         This function returns the iterator of the computation
         """

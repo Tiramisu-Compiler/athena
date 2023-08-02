@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import itertools
 import re
 from typing import TYPE_CHECKING, Dict, List, Tuple
@@ -23,38 +24,45 @@ class Interchange(TiramisuAction):
     Interchange optimization command.
     """
 
-    def __init__(self, params: List[IteratorIdentifier], tiramisu_tree: TiramisuTree):
+    def __init__(
+        self, params: List[IteratorIdentifier], comps: List[str] | None = None
+    ):
         # Interchange takes 2 iterators to interchange as parameters
         assert len(params) == 2
 
-        if isinstance(params[0], str):
-            self.first_iterator = tiramisu_tree.iterators[params[0]]
-        else:
-            self.first_iterator = tiramisu_tree.get_iterator_of_computation(
-                params[0][0], params[0][1]
-            )
-
-        if isinstance(params[1], str):
-            self.second_iterator = tiramisu_tree.iterators[params[1]]
-        else:
-            self.second_iterator = tiramisu_tree.get_iterator_of_computation(
-                params[1][0], params[1][1]
-            )
-
-        comps = tiramisu_tree.get_iterator_subtree_computations(
-            self.first_iterator.name
-        )
-        comps.sort(key=lambda x: tiramisu_tree.computations_absolute_order[x])
-
-        params = [self.first_iterator, self.second_iterator]
+        self.params = params
+        self.comps = comps
 
         super().__init__(
             type=TiramisuActionType.INTERCHANGE, params=params, comps=comps
         )
 
+    def initialize_action_for_tree(self, tiramisu_tree: TiramisuTree):
+        self.tree = copy.deepcopy(tiramisu_tree)
+
+        # if comps are none get them from the tree
+        if self.comps is None:
+            innermost_iterator_id = (
+                self.params[1]
+                if self.params[1][1] > self.params[0][1]
+                else self.params[0]
+            )
+            innermost_iterator = self.tree.get_iterator_of_computation(
+                innermost_iterator_id[0], innermost_iterator_id[1]
+            )
+
+            self.comps = self.tree.get_iterator_subtree_computations(
+                innermost_iterator.name
+            )
+
+        self.set_string_representations(self.tree)
+
     def set_string_representations(self, tiramisu_tree: TiramisuTree):
+        assert self.comps is not None
+        assert len(self.params) == 2
+
         self.tiramisu_optim_str = ""
-        levels = [param.level for param in self.params]
+        levels = [param[1] for param in self.params]
         for comp in self.comps:
             self.tiramisu_optim_str += f"{comp}.interchange({levels[0]},{levels[1]});\n"
         self.str_representation = f"I(L{levels[0]},L{levels[1]},comps={self.comps})"

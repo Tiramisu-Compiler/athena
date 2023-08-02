@@ -7,23 +7,28 @@ from athena.utils.config import BaseConfig
 
 def test_parallelization_init():
     t_tree = test_utils.tree_test_sample()
-    parallelization = Parallelization(
-        iterator_to_parallelize=("comp01", 1), tiramisu_tree=t_tree
-    )
-    assert [node.name for node in parallelization.params] == ["i"]
+    parallelization = Parallelization([("comp01", 1)])
+    assert parallelization.iterator_id == ("comp01", 1)
+    assert parallelization.comps is None
+
+    parallelization = Parallelization([("comp01", 1)], comps=["comp01"])
+    assert parallelization.iterator_id == ("comp01", 1)
     assert parallelization.comps == ["comp01"]
 
-    parallelization = Parallelization(
-        iterator_to_parallelize=("comp01", 1), tiramisu_tree=t_tree
-    )
-    assert [node.name for node in parallelization.params] == ["i"]
+
+def test_initialize_action_for_tree():
+    t_tree = test_utils.tree_test_sample()
+    parallelization = Parallelization([("comp01", 1)])
+    parallelization.initialize_action_for_tree(t_tree)
+
+    assert parallelization.iterator_id == ("comp01", 1)
     assert parallelization.comps == ["comp01"]
 
 
 def test_set_string_representations():
     BaseConfig.init()
     sample = test_utils.benchmark_program_test_sample()
-    parallelization = Parallelization(("comp02", 0), sample.tree)
+    parallelization = Parallelization([("comp02", 0)])
     schedule = Schedule(sample)
     schedule.add_optimizations([parallelization])
 
@@ -43,7 +48,7 @@ def test_legality_check():
     sample = test_utils.benchmark_program_test_sample()
     schedule = Schedule(sample)
     assert schedule.tree
-    parallelization = Parallelization(("comp02", 0), schedule.tree)
+    parallelization = Parallelization([("comp02", 0)])
 
     schedule.add_optimizations([parallelization])
     legality_string = schedule.optims_list[0].legality_check_string

@@ -65,6 +65,10 @@ class TiramisuAction:
         # The legality string of the action
         self.legality_check_string = ""
 
+    def initialize_action_for_tree(self, tiramisu_tree: TiramisuTree):
+        """Initialize the optimization command for the Tiramisu program."""
+        raise NotImplementedError
+
     def set_string_representations(self, tiramisu_tree: TiramisuTree) -> str:
         """Convert the optimization command into Tiramisu code.
         Returns:

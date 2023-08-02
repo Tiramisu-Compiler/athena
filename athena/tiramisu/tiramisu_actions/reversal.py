@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import itertools
 from typing import TYPE_CHECKING, Dict, List, Tuple
 
@@ -21,22 +22,40 @@ class Reversal(TiramisuAction):
     Reversal optimization command.
     """
 
-    def __init__(self, iterator: IteratorIdentifier, tiramisu_tree: TiramisuTree):
+    def __init__(
+        self, params: List[IteratorIdentifier], comps: List[str] | None = None
+    ):
         # Reversal takes one parameter of the loop to reverse
-        self.iterator = tiramisu_tree.get_iterator_of_computation(
-            iterator[0], iterator[1]
-        )
+        assert len(params) == 1
 
-        comps = tiramisu_tree.get_iterator_subtree_computations(self.iterator.name)
-        comps.sort(key=lambda x: tiramisu_tree.computations_absolute_order[x])
+        self.iterator_id = params[0]
+        self.params = params
+        self.comps = comps
+        super().__init__(type=TiramisuActionType.REVERSAL, params=params, comps=comps)
 
-        super().__init__(
-            type=TiramisuActionType.REVERSAL, params=[self.iterator], comps=list(comps)
-        )
+    def initialize_action_for_tree(self, tiramisu_tree: TiramisuTree):
+        # clone the tree to be able to restore it later
+        self.tree = copy.deepcopy(tiramisu_tree)
+
+        if self.comps is None:
+            iterator = tiramisu_tree.get_iterator_of_computation(
+                self.iterator_id[0], self.iterator_id[1]
+            )
+
+            self.comps = tiramisu_tree.get_iterator_subtree_computations(iterator.name)
+            # order the computations by their absolute order
+            self.comps.sort(
+                key=lambda comp: tiramisu_tree.computations_absolute_order[comp]
+            )
+
+        self.set_string_representations(tiramisu_tree)
 
     def set_string_representations(self, tiramisu_tree: TiramisuTree):
+        assert self.iterator_id is not None
+        assert self.comps is not None
+
         self.tiramisu_optim_str = ""
-        level = self.iterator.level
+        level = self.iterator_id[1]
         for comp in self.comps:
             self.tiramisu_optim_str += f"{comp}.loop_reversal({level});\n"
 

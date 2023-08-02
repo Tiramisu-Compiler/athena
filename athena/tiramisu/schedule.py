@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, List
 
 from athena.tiramisu.compiling_service import CompilingService
 from athena.tiramisu.tiramisu_actions.tiramisu_action import TiramisuActionType
+from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 if TYPE_CHECKING:
     from .tiramisu_actions.tiramisu_action import TiramisuAction
@@ -54,20 +55,17 @@ class Schedule:
         self.legality = None
 
         for optim_cmd in list_optim_cmds:
-            # if optim_cmd in self.optims_list:
-            #     continue
-            # check if the iterators of the optim are renamed
-            optim_cmd.check_renamed_iterators(self.tree)
-            # additional checks to see if optimiaztion can be applied
-            optim_cmd.verify_conditions(self.tree)
-
+            # Fusion and distribution are special cases, we need to get the latest isl ast tree to get the correct fusion levels
             if optim_cmd.is_fusion() or optim_cmd.is_distribution():
-                # Fusion is a special case, we need to transform the tree before setting the string representations to get the right order of computations
-                # optim_cmd.transform_tree(self.tree)
-                optim_cmd.set_string_representations(self.tree)
-            else:
-                optim_cmd.set_string_representations(self.tree)
-                # optim_cmd.transform_tree(self.tree)
+                isl_ast_str = CompilingService.compile_isl_ast_tree(
+                    tiramisu_program=self.tiramisu_program, schedule=self
+                )
+                self.tree = TiramisuTree.from_isl_ast_string_list(
+                    isl_ast_str.split("\n")
+                )
+
+            # initialize action for the schedule tree
+            optim_cmd.initialize_action_for_tree(self.tree)
 
             self.optims_list.append(optim_cmd)
 
@@ -118,16 +116,13 @@ class Schedule:
 
         if self.tiramisu_program is None:
             raise Exception("No Tiramisu program to apply the schedule to")
-        if with_ast:
-            legality, new_tree = CompilingService.compile_legality(
-                self, with_ast=with_ast
-            )
-        else:
-            legality, _ = CompilingService.compile_legality(self, with_ast=with_ast)
+
+        legality, new_tree = CompilingService.compile_legality(self, with_ast=with_ast)
 
         assert isinstance(legality, bool)
         self.legality = legality
         if with_ast:
+            assert new_tree
             self.tree = new_tree
         return self.legality
 

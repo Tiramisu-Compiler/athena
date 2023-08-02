@@ -66,7 +66,7 @@ class CompilingService:
             result = result.strip()
             if result not in ["0", "1"]:
                 raise Exception(f"Error in legality check: {result}")
-            return result == "1"
+            return result == "1", None
 
     @classmethod
     def get_legality_code(cls, schedule: Schedule, with_ast: bool = False):
@@ -168,7 +168,9 @@ class CompilingService:
         return cls.run_cpp_code(cpp_code=cpp_code, output_path=output_path)
 
     @classmethod
-    def compile_isl_ast_tree(cls, tiramisu_program: TiramisuProgram):
+    def compile_isl_ast_tree(
+        cls, tiramisu_program: TiramisuProgram, schedule: Schedule | None = None
+    ):
         if not BaseConfig.base_config:
             raise ValueError("BaseConfig not initialized")
 
@@ -179,9 +181,13 @@ class CompilingService:
         output_path = os.path.join(
             BaseConfig.base_config.workspace, f"{tiramisu_program.name}_isl_ast"
         )
-        # Add code to the original file to get json annotations
+        get_isl_ast_lines = ""
+        if schedule:
+            for optim in schedule.optims_list:
+                # if optim.is_parallelization():
+                get_isl_ast_lines += "    " + optim.tiramisu_optim_str
 
-        get_isl_ast_lines = """
+        get_isl_ast_lines += """
     auto fct = tiramisu::global::get_implicit_function();
 
     fct->gen_time_space_domain();
@@ -298,7 +304,9 @@ class CompilingService:
         if BaseConfig.base_config is None:
             raise Exception("The base config is not loaded yet")
         legality_cpp_code = cls.get_legality_code(schedule)
-        to_replace = re.findall(r"std::cout << is_legal;", legality_cpp_code)[0]
+        to_replace = re.findall(
+            r"std::cout << is_legal << std::endl;", legality_cpp_code
+        )[0]
         header = """
         function * fct = tiramisu::global::get_implicit_function();\n"""
         legality_cpp_code = legality_cpp_code.replace(
