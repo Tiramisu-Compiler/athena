@@ -25,8 +25,7 @@ def test_set_string_representations():
     BaseConfig.init()
     sample = test_utils.fusion_sample()
     fusion = Fusion([("comp03", 3), ("comp04", 3)])
-    schedule = Schedule(sample)
-    schedule.add_optimizations([fusion])
+    fusion.initialize_action_for_tree(sample.tree)
     assert (
         fusion.tiramisu_optim_str
         == "clear_implicit_function_sched_graph();\n    comp01.then(comp03,0).then(comp04,3);\n"

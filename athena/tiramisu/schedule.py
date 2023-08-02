@@ -146,8 +146,7 @@ class Schedule:
                     schedule.add_optimizations(
                         [
                             tiramisu_actions.Parallelization(
-                                [schedule.tree.get_comp_iterator(comps[0], loop_level)],
-                                schedule.tree,
+                                [(comps[0], loop_level)],
                             )
                         ]
                     )
@@ -165,12 +164,9 @@ class Schedule:
                         [
                             tiramisu_actions.Unrolling(
                                 [
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], loop_level
-                                    ),
+                                    (comps[0], loop_level),
                                     factor,
                                 ],
-                                schedule.tree,
                             )
                         ]
                     )
@@ -186,14 +182,9 @@ class Schedule:
                         [
                             tiramisu_actions.Interchange(
                                 [
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], first_loop_level
-                                    ),
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], second_loop_level
-                                    ),
+                                    (comps[0], first_loop_level),
+                                    (comps[0], second_loop_level),
                                 ],
-                                schedule.tree,
                             )
                         ]
                     )
@@ -207,8 +198,7 @@ class Schedule:
                     schedule.add_optimizations(
                         [
                             tiramisu_actions.Reversal(
-                                [schedule.tree.get_comp_iterator(comps[0], loop_level)],
-                                schedule.tree,
+                                [(comps[0], loop_level)],
                             )
                         ]
                     )
@@ -226,16 +216,11 @@ class Schedule:
                         [
                             tiramisu_actions.Tiling2D(
                                 [
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], outer_loop_level
-                                    ),
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], inner_loop_level
-                                    ),
+                                    (comps[0], outer_loop_level),
+                                    (comps[0], inner_loop_level),
                                     outer_loop_factor,
                                     inner_loop_factor,
                                 ],
-                                schedule.tree,
                             )
                         ]
                     )
@@ -257,20 +242,13 @@ class Schedule:
                         [
                             tiramisu_actions.Tiling3D(
                                 [
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], outer_loop_level
-                                    ),
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], middle_loop_level
-                                    ),
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], inner_loop_level
-                                    ),
+                                    (comps[0], outer_loop_level),
+                                    (comps[0], middle_loop_level),
+                                    (comps[0], inner_loop_level),
                                     outer_loop_factor,
                                     middle_loop_factor,
                                     inner_loop_factor,
                                 ],
-                                schedule.tree,
                             )
                         ]
                     )
@@ -288,16 +266,11 @@ class Schedule:
                         [
                             tiramisu_actions.Skewing(
                                 [
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], outer_loop_level
-                                    ),
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], inner_loop_level
-                                    ),
+                                    (comps[0], outer_loop_level),
+                                    (comps[0], inner_loop_level),
                                     outer_loop_factor,
                                     inner_loop_factor,
                                 ],
-                                schedule.tree,
                             )
                         ]
                     )
@@ -312,14 +285,9 @@ class Schedule:
                         [
                             tiramisu_actions.Fusion(
                                 [
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], loop_level
-                                    ),
-                                    schedule.tree.get_comp_iterator(
-                                        comps[1], loop_level
-                                    ),
+                                    (comps[0], loop_level),
+                                    (comps[1], loop_level),
                                 ],
-                                schedule.tree,
                             )
                         ]
                     )

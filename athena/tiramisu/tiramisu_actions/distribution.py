@@ -46,8 +46,7 @@ class Distribution(TiramisuAction):
         if self.children is None:
             self.children = []
             iterator = tiramisu_tree.get_iterator_of_computation(*self.iterator_id)
-            # For each iterator get the last computation in its subtree and add it to the list of implicated computations
-            # The first and last computation are the one used to make the new fusion order
+            # For each iterator get its comps and add them
             for child_iterator in iterator.child_iterators:
                 child_iterator_comps = tiramisu_tree.get_iterator_subtree_computations(
                     child_iterator
@@ -59,7 +58,7 @@ class Distribution(TiramisuAction):
         else:
             for child_list in self.children:
                 for index, child in enumerate(child_list):
-                    # convert an iterator into its first and last computation
+                    # convert an iterator into its comps
                     if isinstance(child, tuple):
                         tmp_iterator = tiramisu_tree.get_iterator_of_computation(*child)
                         tmp_iterator_comps = (

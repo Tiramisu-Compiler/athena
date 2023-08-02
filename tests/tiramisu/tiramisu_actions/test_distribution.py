@@ -30,12 +30,23 @@ def test_initialize_action_for_tree():
     distribution.initialize_action_for_tree(sample)
 
     assert distribution.iterator_id == ("comp05", 1)
-    assert distribution.implicated_comps == ["comp05", "comp06", "comp07", "comp04"]
+    expected_children = [
+        ["comp05"],
+        ["comp06"],
+        ["comp07"],
+        ["comp03", "comp04"],
+    ]
+    assert len(distribution.children) == len(expected_children)
+    for child_list in distribution.children:
+        assert child_list in expected_children
 
     distribution = Distribution([("comp03", 2)], [[("comp03", 3)], [("comp04", 3)]])
     distribution.initialize_action_for_tree(sample)
     assert distribution.iterator_id == ("comp03", 2)
-    assert distribution.implicated_comps == ["comp03", "comp04"]
+    expected_children = [["comp03"], ["comp04"]]
+    assert len(distribution.children) == len(expected_children)
+    for child_list in distribution.children:
+        assert child_list in expected_children
 
 
 def test_set_string_representations():

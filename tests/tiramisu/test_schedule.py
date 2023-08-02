@@ -1,8 +1,8 @@
+import tests.utils as test_utils
+from athena.tiramisu import tiramisu_actions
 from athena.tiramisu.schedule import Schedule
 from athena.tiramisu.tiramisu_actions.parallelization import Parallelization
-from athena.tiramisu import tiramisu_actions
 from athena.utils.config import BaseConfig
-import tests.utils as test_utils
 from tests.utils import benchmark_program_test_sample
 
 
@@ -12,9 +12,7 @@ def test_apply_schedule():
 
     schedule = Schedule(test_program)
     assert schedule.tree
-    schedule.add_optimizations(
-        [Parallelization(params=["i00"], tiramisu_tree=schedule.tree)]
-    )
+    schedule.add_optimizations([Parallelization(params=[("comp02", 0)])])
     results = schedule.apply_schedule(nb_exec_tiems=10)
 
     assert results is not None
@@ -28,9 +26,7 @@ def test_is_legal():
     schedule = Schedule(test_program)
     assert schedule.tree
 
-    schedule.add_optimizations(
-        [Parallelization(params=["i00"], tiramisu_tree=schedule.tree)]
-    )
+    schedule.add_optimizations([Parallelization(params=[("comp02", 0)])])
     legality = schedule.is_legal()
 
     assert legality is True
@@ -41,9 +37,7 @@ def test_copy():
     original = Schedule(benchmark_program_test_sample())
     assert original.tree
 
-    original.add_optimizations(
-        [Parallelization(params=["i00"], tiramisu_tree=original.tree)]
-    )
+    original.add_optimizations([Parallelization(params=[("comp02", 0)])])
 
     copy = original.copy()
 
@@ -62,9 +56,7 @@ def test_str_representation():
     schedule = Schedule(test_program)
     assert schedule.tree
 
-    schedule.add_optimizations(
-        [Parallelization(params=["i00"], tiramisu_tree=schedule.tree)]
-    )
+    schedule.add_optimizations([Parallelization(params=[("comp02", 0)])])
 
     assert str(schedule) == "P(L0,comps=['comp02'])"
 
@@ -79,16 +71,12 @@ def test_from_sched_str():
 
     schedule.add_optimizations(
         [
-            Parallelization(params=["i"], tiramisu_tree=schedule.tree),
-            tiramisu_actions.Interchange(
-                params=["i_0", "j_0"], tiramisu_tree=schedule.tree
-            ),
-            tiramisu_actions.Fusion(params=["i", "j_0"], tiramisu_tree=schedule.tree),
-            tiramisu_actions.Tiling2D(
-                params=["i_2", "j_1", 4, 4], tiramisu_tree=schedule.tree
-            ),
-            tiramisu_actions.Unrolling(params=["i_1", 4], tiramisu_tree=schedule.tree),
-            tiramisu_actions.Reversal(params=["i_1"], tiramisu_tree=schedule.tree),
+            Parallelization(params=[("A_hat", 0)]),
+            tiramisu_actions.Interchange(params=[("x_temp", 0), ("x_temp", 1)]),
+            tiramisu_actions.Fusion(params=[("A_hat", 0), ("x_temp", 0)]),
+            tiramisu_actions.Tiling2D(params=[("w", 0), ("w", 1), 4, 4]),
+            tiramisu_actions.Unrolling(params=[("x", 0), 4]),
+            tiramisu_actions.Reversal(params=[("x", 0)]),
         ]
     )
 
@@ -108,9 +96,7 @@ def test_from_sched_str():
 
     schedule.add_optimizations(
         [
-            tiramisu_actions.Skewing(
-                params=["i_0", "j_0", 1, 1], tiramisu_tree=schedule.tree
-            ),
+            tiramisu_actions.Skewing([("x_temp", 0), ("x_temp", 1), 1, 1]),
         ]
     )
 
@@ -131,7 +117,9 @@ def test_from_sched_str():
 
     schedule.add_optimizations(
         [
-            tiramisu_actions.Tiling3D(["i0", "i1", "i2", 4, 4, 4], schedule.tree),
+            tiramisu_actions.Tiling3D(
+                [("comp00", 0), ("comp00", 1), ("comp00", 2), 4, 4, 4]
+            ),
         ]
     )
 
