@@ -6,6 +6,8 @@ import re
 import subprocess
 from typing import TYPE_CHECKING, List
 
+from athena.tiramisu.tiramisu_tree import TiramisuTree
+
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_actions.tiramisu_action import TiramisuAction
     from athena.tiramisu.schedule import Schedule
@@ -21,7 +23,7 @@ class CompilingService:
     """
 
     @classmethod
-    def compile_legality(cls, schedule: Schedule):
+    def compile_legality(cls, schedule: Schedule, with_ast: bool = False):
         """
         Compile the generated code with the added code to check legality of the schedule
 
@@ -43,18 +45,31 @@ class CompilingService:
             f"{schedule.tiramisu_program.name}_legality",
         )
 
-        cpp_code = cls.get_legality_code(schedule=schedule)
+        cpp_code = cls.get_legality_code(schedule=schedule, with_ast=with_ast)
 
         logging.debug("Legality Code: \n" + cpp_code)
 
         result = cls.run_cpp_code(cpp_code=cpp_code, output_path=output_path)
 
-        if result not in ["0", "1"]:
-            raise Exception(f"Error in legality check: {result}")
-        return result == "1"
+        if with_ast:
+            result_lines = result.split("\n")
+            legality_result = result_lines[0]
+            legality_result = legality_result.strip()
+            if legality_result not in ["0", "1"]:
+                raise Exception(f"Error in legality check: {legality_result}")
+            ast = TiramisuTree.from_isl_ast_string_list(
+                isl_ast_string_list=result_lines[1:]
+            )
+            return legality_result == "1", ast
+
+        else:
+            result = result.strip()
+            if result not in ["0", "1"]:
+                raise Exception(f"Error in legality check: {result}")
+            return result == "1", None
 
     @classmethod
-    def get_legality_code(cls, schedule: Schedule):
+    def get_legality_code(cls, schedule: Schedule, with_ast: bool = False):
         """
         Constructs the code to check legality of the schedule
 
@@ -95,8 +110,18 @@ class CompilingService:
         legality_check_lines += """
     prepare_schedules_for_legality_checks();
     is_legal &= check_legality_of_function();   
-    std::cout << is_legal;
+    std::cout << is_legal << std::endl;
 """
+
+        if with_ast:
+            legality_check_lines += """
+    auto fct = tiramisu::global::get_implicit_function();
+
+    fct->gen_time_space_domain();
+    fct->gen_isl_ast();
+    fct->print_isl_ast_representation(nullptr, 0);
+"""
+
         # Paste the lines responsable of checking legality of schedule in the cpp file
         cpp_code = schedule.tiramisu_program.original_str.replace(
             schedule.tiramisu_program.code_gen_line, legality_check_lines
@@ -139,6 +164,40 @@ class CompilingService:
         # Paste the lines responsable of generating the program json tree in the cpp file
         cpp_code = tiramisu_program.original_str.replace(
             tiramisu_program.code_gen_line, get_json_lines
+        )
+        return cls.run_cpp_code(cpp_code=cpp_code, output_path=output_path)
+
+    @classmethod
+    def compile_isl_ast_tree(
+        cls, tiramisu_program: TiramisuProgram, schedule: Schedule | None = None
+    ):
+        if not BaseConfig.base_config:
+            raise ValueError("BaseConfig not initialized")
+
+        if not tiramisu_program.original_str:
+            raise ValueError("Tiramisu program not initialized")
+
+        # TODO : add getting tree structure object from executing the file instead of building it
+        output_path = os.path.join(
+            BaseConfig.base_config.workspace, f"{tiramisu_program.name}_isl_ast"
+        )
+        get_isl_ast_lines = ""
+        if schedule:
+            for optim in schedule.optims_list:
+                # if optim.is_parallelization():
+                get_isl_ast_lines += "    " + optim.tiramisu_optim_str
+
+        get_isl_ast_lines += """
+    auto fct = tiramisu::global::get_implicit_function();
+
+    fct->gen_time_space_domain();
+    fct->gen_isl_ast();
+    fct->print_isl_ast_representation(nullptr, 0);
+"""
+
+        # Paste the lines responsable of generating the program json tree in the cpp file
+        cpp_code = tiramisu_program.original_str.replace(
+            tiramisu_program.code_gen_line, get_isl_ast_lines
         )
         return cls.run_cpp_code(cpp_code=cpp_code, output_path=output_path)
 
@@ -245,7 +304,9 @@ class CompilingService:
         if BaseConfig.base_config is None:
             raise Exception("The base config is not loaded yet")
         legality_cpp_code = cls.get_legality_code(schedule)
-        to_replace = re.findall(r"std::cout << is_legal;", legality_cpp_code)[0]
+        to_replace = re.findall(
+            r"std::cout << is_legal << std::endl;", legality_cpp_code
+        )[0]
         header = """
         function * fct = tiramisu::global::get_implicit_function();\n"""
         legality_cpp_code = legality_cpp_code.replace(

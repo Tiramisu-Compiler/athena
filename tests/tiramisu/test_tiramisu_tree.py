@@ -1,8 +1,8 @@
-from athena.tiramisu.tiramisu_actions.fusion import Fusion
-from athena.utils.config import BaseConfig
 import tests.utils as test_utils
+from athena.tiramisu.tiramisu_actions.fusion import Fusion
 from athena.tiramisu.tiramisu_iterator_node import IteratorNode
 from athena.tiramisu.tiramisu_tree import TiramisuTree
+from athena.utils.config import BaseConfig
 
 
 def test_from_annotations():
@@ -61,13 +61,6 @@ def test_get_root_of_node():
     assert t_tree.get_root_of_node("m") == "root"
 
 
-def test_get_iterator_node():
-    t_tree = test_utils.tree_test_sample()
-
-    assert t_tree.get_iterator_node("i").name == "i"
-    assert t_tree.get_iterator_node("l").name == "l"
-
-
 def test_get_iterator_levels():
     t_tree = test_utils.tree_test_sample()
 
@@ -88,60 +81,6 @@ def test_get_iterator_of_computation():
     assert t_tree.get_iterator_of_computation("comp03").name == "l"
     assert t_tree.get_iterator_of_computation("comp04").name == "m"
 
+    assert t_tree.get_iterator_of_computation("comp01", level=0).name == "root"
+    assert t_tree.get_iterator_of_computation("comp03", level=1).name == "j"
 
-def test_clone_subtree():
-    t_tree = test_utils.tree_test_sample()
-
-    cloned = t_tree.clone_subtree("k", suffix="_cloned")
-
-    assert cloned.roots == ["k_cloned"]
-    assert cloned.computations == ["comp03_cloned", "comp04_cloned"]
-    assert cloned.computations_absolute_order == {
-        "comp03_cloned": 1,
-        "comp04_cloned": 2,
-    }
-    assert cloned.get_iterator_levels(list(cloned.iterators.keys())) == [0, 1, 1]
-    assert cloned.get_iterator_of_computation("comp03_cloned").name == "l_cloned"
-    assert cloned.get_iterator_of_computation("comp04_cloned").name == "m_cloned"
-    assert cloned.iterators["k_cloned"].parent_iterator == None
-    assert cloned.iterators["l_cloned"].parent_iterator == "k_cloned"
-    assert cloned.iterators["m_cloned"].parent_iterator == "k_cloned"
-    assert cloned.iterators["k_cloned"].child_iterators == ["l_cloned", "m_cloned"]
-    assert cloned.iterators["l_cloned"].child_iterators == []
-    assert cloned.iterators["m_cloned"].child_iterators == []
-
-
-def test_update_subtree_levels():
-    t_tree = test_utils.tree_test_sample()
-
-    t_tree.update_subtree_levels("j", 0)
-
-    assert t_tree.get_iterator_levels(["j", "k", "l", "m"]) == [0, 1, 2, 2]
-
-
-def test_insert_subtree():
-    t_tree = test_utils.tree_test_sample()
-
-    cloned = t_tree.clone_subtree("k", suffix="_cloned")
-
-    t_tree.insert_subtree(cloned, "i")
-
-    assert t_tree.roots == ["root"]
-    assert t_tree.computations == [
-        "comp01",
-        "comp03_cloned",
-        "comp04_cloned",
-        "comp03",
-        "comp04",
-    ]
-    assert t_tree.computations_absolute_order == {
-        "comp01": 1,
-        "comp03_cloned": 2,
-        "comp04_cloned": 3,
-        "comp03": 4,
-        "comp04": 5,
-    }
-    assert t_tree.iterators["i"].child_iterators == ["k_cloned"]
-    assert t_tree.iterators["k_cloned"].parent_iterator == "i"
-    assert t_tree.iterators["k_cloned"].child_iterators == ["l_cloned", "m_cloned"]
-    assert t_tree.iterators["i"].computations_list == ["comp01"]

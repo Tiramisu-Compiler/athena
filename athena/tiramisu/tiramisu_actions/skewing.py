@@ -1,7 +1,9 @@
 from __future__ import annotations
-import itertools
 
-from typing import Dict, TYPE_CHECKING, List, Tuple
+import copy
+import itertools
+from typing import TYPE_CHECKING, Dict, List, Tuple
+
 from athena.tiramisu.compiling_service import CompilingService
 from athena.tiramisu.tiramisu_program import TiramisuProgram
 from athena.tiramisu.tiramisu_tree import TiramisuTree
@@ -9,10 +11,12 @@ from athena.tiramisu.tiramisu_tree import TiramisuTree
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
     from athena.tiramisu.schedule import Schedule
+
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
     CannotApplyException,
-    TiramisuActionType,
+    IteratorIdentifier,
     TiramisuAction,
+    TiramisuActionType,
 )
 
 
@@ -21,46 +25,62 @@ class Skewing(TiramisuAction):
     Skewing optimization command.
     """
 
-    def __init__(self, params: list, tiramisu_tree: TiramisuTree):
+    def __init__(
+        self,
+        params: List[IteratorIdentifier | int],
+        comps: List[str] | None = None,
+    ):
         # Skewing takes four parameters of the form L1, L2, F3, F4
-        # L1 and L2 are the two iterators to be skewed
-        # F3 and F4 are the two iterators that will be used to skew L1 and L2
+        # 1. L1 and L2 are the levels of the iterators to skew
+        # 2. F3 and F4 are the factors of the skewing
+
         assert len(params) == 4
+        self.params = params
+        self.comps = comps
 
-        # check if nodes were renamed
-        # check if nodes were renamed
-        while (
-            params[0] not in tiramisu_tree.iterators
-            and params[0] in tiramisu_tree.renamed_iterators
-        ):
-            params[0] = tiramisu_tree.renamed_iterators[params[0]]
+        self.iterators = params[:2]
+        self.factors = params[2:]
 
-        while (
-            params[1] not in tiramisu_tree.iterators
-            and params[1] in tiramisu_tree.renamed_iterators
-        ):
-            params[1] = tiramisu_tree.renamed_iterators[params[1]]
+        super().__init__(
+            type=TiramisuActionType.SKEWING,
+            params=params,
+            comps=comps,
+        )
 
-        comps = set()
-        for node in params[:2]:
-            comps.update(tiramisu_tree.get_iterator_subtree_computations(node))
-        comps = list(comps)
-        comps.sort(key=lambda x: tiramisu_tree.computations_absolute_order[x])
+    def initialize_action_for_tree(self, tiramisu_tree: TiramisuTree):
+        # clone the tree to be able to restore it later
+        self.tree = copy.deepcopy(tiramisu_tree)
 
-        super().__init__(type=TiramisuActionType.SKEWING, params=params, comps=comps)
-
-    def set_string_representations(self, tiramisu_tree: TiramisuTree):
-        self.tiramisu_optim_str = ""
-        levels_with_factors = [
-            str(tiramisu_tree.iterators[param].level) if index < 2 else str(param)
-            for index, param in enumerate(self.params)
-        ]
-        for comp in self.comps:
-            self.tiramisu_optim_str += (
-                f"{comp}.skew({', '.join(levels_with_factors)});\n"
+        if self.comps is None:
+            outermost_iterator_id = self.iterators[0]
+            outermost_iterator = self.tree.get_iterator_of_computation(
+                *outermost_iterator_id
             )
 
-        self.str_representation = f"S(L{levels_with_factors[0]},L{levels_with_factors[1]},{levels_with_factors[2]},{levels_with_factors[3]},comps={self.comps})"
+            # get the computations of the outermost iterator subtree (includes the innermost iterator)
+            self.comps = self.tree.get_iterator_subtree_computations(
+                outermost_iterator.name
+            )
+            # sort the computations according to the absolute order
+            self.comps.sort(
+                key=lambda comp: self.tree.computations_absolute_order[comp]
+            )
+
+        self.set_string_representations(self.tree)
+
+    def set_string_representations(self, tiramisu_tree: TiramisuTree):
+        assert self.iterators is not None
+        assert self.comps is not None
+        assert len(self.params) == 4
+        assert isinstance(self.iterators[0], tuple) and isinstance(
+            self.iterators[1], tuple
+        )
+
+        self.tiramisu_optim_str = ""
+        for comp in self.comps:
+            self.tiramisu_optim_str += f"{comp}.skew({self.iterators[0][1]}, {self.iterators[1][1]}, {self.factors[0]}, {self.factors[1]});\n"
+
+        self.str_representation = f"S(L{self.iterators[0][1]},L{self.iterators[1][1]},{self.factors[0]},{self.factors[1]},comps={self.comps})"
 
         self.legality_check_string = self.tiramisu_optim_str
 
@@ -95,22 +115,3 @@ class Skewing(TiramisuAction):
             return factors
         else:
             raise ValueError("Skewing did not return any factors")
-
-    def transform_tree(self, program_tree: TiramisuTree):
-        node_1 = program_tree.iterators[self.params[0]]
-        node_2 = program_tree.iterators[self.params[1]]
-        # We set the lower and upper bounds to UNK because we do not know how the bounds will change. Halide will calculate the new bounds based on the transformed space of the iterations.
-        node_1.lower_bound = "UNK"
-        node_1.upper_bound = "UNK"
-
-        node_2.lower_bound = "UNK"
-        node_2.upper_bound = "UNK"
-
-    def verify_conditions(self, tiramisu_tree: TiramisuTree, params=None) -> None:
-        if params is None:
-            params = self.params
-        # Skewing  takes four parameters of the 2 loops to skew and their factors
-        if len(params) != 4:
-            raise CannotApplyException(
-                f"Skewing takes four parameters of the 2 loops to skew and their factors, {len(params)} were given"
-            )

@@ -1,15 +1,17 @@
 from __future__ import annotations
 
-from typing import Dict, TYPE_CHECKING, List
+import copy
+from typing import TYPE_CHECKING, Dict, List, Tuple
 
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
+
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
-    CannotApplyException,
-    TiramisuActionType,
+    IteratorIdentifier,
     TiramisuAction,
+    TiramisuActionType,
 )
 
 
@@ -18,27 +20,45 @@ class Parallelization(TiramisuAction):
     Parallelization optimization command.
     """
 
-    def __init__(self, params: list, tiramisu_tree: TiramisuTree):
-        # Parallelization only takes one parameter the loop to parallelize
+    def __init__(
+        self,
+        params: List[IteratorIdentifier],
+        comps: List[str] | None = None,
+    ):
+        # Parallelization only takes one parameter the loop to parallelize specified by a tuple (computation_name, iterator_level)
         assert len(params) == 1
-
-        # check if iterator was renamed
-        while (
-            params[0] not in tiramisu_tree.iterators
-            and params[0] in tiramisu_tree.renamed_iterators
-        ):
-            params[0] = tiramisu_tree.renamed_iterators[params[0]]
-
-        comps = tiramisu_tree.get_iterator_subtree_computations(params[0])
-        comps.sort(key=lambda comp: tiramisu_tree.computations_absolute_order[comp])
-
+        self.params = params
+        self.comps = comps
+        self.iterator_id = self.params[0]
         super().__init__(
-            type=TiramisuActionType.PARALLELIZATION, params=params, comps=comps
+            type=TiramisuActionType.PARALLELIZATION,
+            params=params,
+            comps=comps,
         )
 
+    def initialize_action_for_tree(self, tiramisu_tree: TiramisuTree):
+        # we save a copy of the tree to be able to restore it later
+        self.tree = copy.deepcopy(tiramisu_tree)
+
+        if self.comps is None:
+            iterator = tiramisu_tree.get_iterator_of_computation(
+                self.iterator_id[0], self.iterator_id[1]
+            )
+
+            self.comps = tiramisu_tree.get_iterator_subtree_computations(iterator.name)
+            # order the computations by their absolute order
+            self.comps.sort(
+                key=lambda comp: tiramisu_tree.computations_absolute_order[comp]
+            )
+
+        self.set_string_representations(tiramisu_tree)
+
     def set_string_representations(self, tiramisu_tree: TiramisuTree):
-        level = tiramisu_tree.iterators[self.params[0]].level
-        first_comp = list(self.comps)[0]
+        assert self.iterator_id is not None
+        assert self.comps is not None
+
+        level = self.iterator_id[1]
+        first_comp = self.comps[0]
         self.tiramisu_optim_str = f"{first_comp}.tag_parallel_level({level});\n"
 
         self.str_representation = f"P(L{level},comps={self.comps})"
@@ -83,15 +103,3 @@ class Parallelization(TiramisuAction):
             )
 
         return candidates
-
-    def transform_tree(self, program_tree: TiramisuTree):
-        pass
-
-    def verify_conditions(self, program_tree: TiramisuTree, params=None):
-        if params is None:
-            params = self.params
-        # Prallelization only takes one parameter the loop to parallelize
-        if not len(params) == 1:
-            raise CannotApplyException(
-                f"Parallelization takes one parameter, {len(self.params)} given."
-            )

@@ -1,21 +1,35 @@
+import tests.utils as test_utils
 from athena.tiramisu.schedule import Schedule
 from athena.tiramisu.tiramisu_actions.skewing import Skewing
 from athena.utils.config import BaseConfig
-import tests.utils as test_utils
 
 
 def test_skewing_init():
+    skewing = Skewing([("comp00", 0), ("comp00", 1), 1, 1])
+    assert skewing.iterators == [("comp00", 0), ("comp00", 1)]
+    assert skewing.factors == [1, 1]
+    assert skewing.comps is None
+
+    skewing = Skewing([("comp00", 0), ("comp00", 1), 1, 1], ["comp00"])
+    assert skewing.iterators == [("comp00", 0), ("comp00", 1)]
+    assert skewing.factors == [1, 1]
+    assert skewing.comps == ["comp00"]
+
+
+def test_initialize_action_for_tree():
     BaseConfig.init()
     sample = test_utils.skewing_example()
-    skewing = Skewing(["i0", "i1", 5, 5], sample.tree)
-    assert skewing.params == ["i0", "i1", 5, 5]
+    skewing = Skewing([("comp00", 0), ("comp00", 1), 1, 1])
+    skewing.initialize_action_for_tree(sample.tree)
+    assert skewing.iterators == [("comp00", 0), ("comp00", 1)]
+    assert skewing.factors == [1, 1]
     assert skewing.comps == ["comp00"]
 
 
 def test_set_string_representations():
     BaseConfig.init()
     sample = test_utils.skewing_example()
-    skewing = Skewing(["i0", "i1", 1, 1], sample.tree)
+    skewing = Skewing([("comp00", 0), ("comp00", 1), 1, 1])
     schedule = Schedule(sample)
     schedule.add_optimizations([skewing])
     assert skewing.tiramisu_optim_str == "comp00.skew(0, 1, 1, 1);\n"
@@ -42,16 +56,3 @@ def test_get_factors():
         comps_skewed_loops=sample.tree.get_iterator_subtree_computations("i0"),
     )
     assert factors == (1, 1)
-
-
-def test_transform_tree():
-    BaseConfig.init()
-
-    sample = test_utils.multiple_roots_sample()
-
-    Skewing(["i_0", "j_0", 1, 1], sample.tree).transform_tree(sample.tree)
-
-    assert sample.tree.get_iterator_node("i_0").lower_bound == "UNK"
-    assert sample.tree.get_iterator_node("i_0").upper_bound == "UNK"
-    assert sample.tree.get_iterator_node("j_0").lower_bound == "UNK"
-    assert sample.tree.get_iterator_node("j_0").upper_bound == "UNK"

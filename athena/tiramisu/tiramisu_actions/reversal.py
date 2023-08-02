@@ -1,16 +1,19 @@
 from __future__ import annotations
-import itertools
 
-from typing import Dict, TYPE_CHECKING, List, Tuple
+import copy
+import itertools
+from typing import TYPE_CHECKING, Dict, List, Tuple
 
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
+
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
     CannotApplyException,
-    TiramisuActionType,
+    IteratorIdentifier,
     TiramisuAction,
+    TiramisuActionType,
 )
 
 
@@ -19,27 +22,40 @@ class Reversal(TiramisuAction):
     Reversal optimization command.
     """
 
-    def __init__(self, params: list, tiramisu_tree: TiramisuTree):
+    def __init__(
+        self, params: List[IteratorIdentifier], comps: List[str] | None = None
+    ):
         # Reversal takes one parameter of the loop to reverse
         assert len(params) == 1
 
-        # check if iterator was renamed
-        while (
-            params[0] not in tiramisu_tree.iterators
-            and params[0] in tiramisu_tree.renamed_iterators
-        ):
-            params[0] = tiramisu_tree.renamed_iterators[params[0]]
+        self.iterator_id = params[0]
+        self.params = params
+        self.comps = comps
+        super().__init__(type=TiramisuActionType.REVERSAL, params=params, comps=comps)
 
-        comps = tiramisu_tree.get_iterator_subtree_computations(params[0])
-        comps.sort(key=lambda x: tiramisu_tree.computations_absolute_order[x])
+    def initialize_action_for_tree(self, tiramisu_tree: TiramisuTree):
+        # clone the tree to be able to restore it later
+        self.tree = copy.deepcopy(tiramisu_tree)
 
-        super().__init__(
-            type=TiramisuActionType.REVERSAL, params=params, comps=list(comps)
-        )
+        if self.comps is None:
+            iterator = tiramisu_tree.get_iterator_of_computation(
+                self.iterator_id[0], self.iterator_id[1]
+            )
+
+            self.comps = tiramisu_tree.get_iterator_subtree_computations(iterator.name)
+            # order the computations by their absolute order
+            self.comps.sort(
+                key=lambda comp: tiramisu_tree.computations_absolute_order[comp]
+            )
+
+        self.set_string_representations(tiramisu_tree)
 
     def set_string_representations(self, tiramisu_tree: TiramisuTree):
+        assert self.iterator_id is not None
+        assert self.comps is not None
+
         self.tiramisu_optim_str = ""
-        level = tiramisu_tree.iterators[self.params[0]].level
+        level = self.iterator_id[1]
         for comp in self.comps:
             self.tiramisu_optim_str += f"{comp}.loop_reversal({level});\n"
 
@@ -71,12 +87,3 @@ class Reversal(TiramisuAction):
             node.lower_bound, node.upper_bound = -node.upper_bound, -node.lower_bound
         else:
             node.lower_bound, node.upper_bound = node.upper_bound, node.lower_bound
-
-    def verify_conditions(self, tiramisu_tree: TiramisuTree, params=None) -> None:
-        if params is None:
-            params = self.params
-        # Reversal only takes one parameters of the loop to reverse
-        if len(params) != 1:
-            raise CannotApplyException(
-                f"Reversal optimization command takes one parameter, {len(params)} were given"
-            )

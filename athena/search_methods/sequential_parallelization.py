@@ -13,8 +13,13 @@ def parallelize_first_legal_outermost(
         tmp_schedule = schedule.copy()
         for candidate in candidates_per_root[root]:
             for node in candidate:
+                comps = tiramisu_program.tree.get_iterator_subtree_computations(node)
                 tmp_schedule.add_optimizations(
-                    [Parallelization(params=[node], tiramisu_tree=tmp_schedule.tree)]
+                    [
+                        Parallelization(
+                            [(comps[0], tiramisu_program.tree.iterators[node].level)]
+                        )
+                    ]
                 )
             if tmp_schedule.is_legal():
                 schedule = tmp_schedule

@@ -1,14 +1,19 @@
 from __future__ import annotations
-import itertools
 
-from typing import Dict, TYPE_CHECKING, List, Tuple
+import copy
+import itertools
+from typing import TYPE_CHECKING, Dict, List, Tuple
+
+from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
+
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
     CannotApplyException,
-    TiramisuActionType,
+    IteratorIdentifier,
     TiramisuAction,
+    TiramisuActionType,
 )
 
 
@@ -17,33 +22,56 @@ class Fusion(TiramisuAction):
     Fusion optimization command.
     """
 
-    def __init__(self, params: List[str], tiramisu_tree: TiramisuTree):
+    def __init__(self, params: List[IteratorIdentifier]):
         # Fusion takes 2 parameters the iterators to be fused
         assert len(params) == 2
+        assert isinstance(params[0], tuple) and isinstance(params[1], tuple)
+        # same level for both iterators
+        assert params[0][1] == params[1][1]
 
-        comps = set()
-        for node in params:
-            comps.update(tiramisu_tree.get_iterator_subtree_computations(node))
-        comps = list(comps)
-        comps.sort(key=lambda x: tiramisu_tree.computations_absolute_order[x])
+        self.params = params
+        self.comps: List[str] | None = None
+        self.main_fusion_level = params[0][1]
 
-        super().__init__(type=TiramisuActionType.FUSION, params=params, comps=comps)
+        super().__init__(type=TiramisuActionType.FUSION, params=params, comps=None)
+
+    def initialize_action_for_tree(self, tiramisu_tree: TiramisuTree):
+        # clone the tree to be able to restore it later
+        self.tree = copy.deepcopy(tiramisu_tree)
+
+        self.comps = []
+        for iterator_id in self.params:
+            iterator = tiramisu_tree.get_iterator_of_computation(
+                iterator_id[0], iterator_id[1]
+            )
+            self.comps.extend(
+                tiramisu_tree.get_iterator_subtree_computations(iterator.name)
+            )
+
+        # sort the comps by the absolute order of the tree
+        self.comps.sort(
+            key=lambda comp: tiramisu_tree.computations_absolute_order[comp]
+        )
+
+        self.set_string_representations(tiramisu_tree)
 
     def set_string_representations(self, tiramisu_tree: TiramisuTree):
-        self.tiramisu_optim_str = ""
-        # get order of computations from the tree
-        ordered_computations = tiramisu_tree.computations
-        ordered_computations.sort(
-            key=lambda x: tiramisu_tree.computations_absolute_order[x]
-        )
+        assert self.comps is not None
+        assert len(self.comps) > 1
 
-        fusion_levels = self.get_fusion_levels(ordered_computations, tiramisu_tree)
+        self.tiramisu_optim_str = ""
+
+        (
+            ordered_computations,
+            fusion_levels,
+        ) = self.reorder_computations(
+            tiramisu_tree=tiramisu_tree,
+        )
 
         first_comp = ordered_computations[0]
+
         self.tiramisu_optim_str += f"clear_implicit_function_sched_graph();\n    {first_comp}{''.join([f'.then({comp},{fusion_level})' for comp, fusion_level in zip(ordered_computations[1:], fusion_levels)])};\n"
-        self.str_representation = (
-            f"F(L{tiramisu_tree.iterators[self.params[0]].level},comps={self.comps})"
-        )
+        self.str_representation = f"F(L{self.params[0][1]},comps={self.comps})"
 
         self.legality_check_string = self.tiramisu_optim_str
 
@@ -82,53 +110,58 @@ class Fusion(TiramisuAction):
 
         return candidates
 
-    def verify_conditions(self, program_tree: TiramisuTree, params=None):
-        if params is None:
-            params = self.params
+    def reorder_computations(
+        self,
+        tiramisu_tree: TiramisuTree,
+    ):
+        assert self.comps is not None
+        assert len(self.comps) > 1
+        assert self.main_fusion_level is not None
+        assert isinstance(self.main_fusion_level, int)
 
-        # check if nodes were renamed
-        while (
-            params[0] not in program_tree.iterators
-            and params[0] in program_tree.renamed_iterators
-        ):
-            params[0] = program_tree.renamed_iterators[params[0]]
+        fused_computations = self.comps
+        main_fusion_level = self.main_fusion_level
 
-        while (
-            params[1] not in program_tree.iterators
-            and params[1] in program_tree.renamed_iterators
-        ):
-            params[1] = program_tree.renamed_iterators[params[1]]
+        new_absolute_order = tiramisu_tree.computations_absolute_order.copy()
+        fused_in_iterator = tiramisu_tree.get_iterator_of_computation(
+            fused_computations[0], self.main_fusion_level
+        )
+        comps_in_fused_iterator = tiramisu_tree.get_iterator_subtree_computations(
+            fused_in_iterator.name
+        )
+        max_order = max(
+            [
+                tiramisu_tree.computations_absolute_order[comp]
+                for comp in comps_in_fused_iterator
+            ]
+        )
+        fusion_comps_to_move = [
+            comp
+            for comp in fused_computations
+            if tiramisu_tree.computations_absolute_order[comp] > max_order
+        ]
 
-        try:
-            assert len(params) == 2
-            # assert that all the iterators have the same level
-            assert (
-                len(set([program_tree.iterators[param].level for param in params])) == 1
-            )
+        # move the computations that are after the fused iterator and not included in fusion
+        for comp in tiramisu_tree.computations_absolute_order:
+            if (
+                tiramisu_tree.computations_absolute_order[comp] > max_order
+                and comp not in fused_computations
+            ):
+                new_absolute_order[comp] += len(fusion_comps_to_move)
+        # move the computations that are in the fused iterator
+        for index, comp in enumerate(fusion_comps_to_move):
+            new_absolute_order[comp] = max_order + index + 1
 
-            # assert that all the iterators have the same parent
-            assert (
-                len(
-                    set(
-                        [
-                            program_tree.iterators[param].parent_iterator
-                            for param in params
-                        ]
-                    )
-                )
-                == 1
-            )
-        except AssertionError as e:
-            raise CannotApplyException(e.args)
+        computations = tiramisu_tree.computations
+        computations.sort(key=lambda x: new_absolute_order[x])
 
-    def get_fusion_levels(self, computations: List[str], tiramisu_tree: TiramisuTree):
-        fusion_levels = []
+        fusion_levels: List[int] = []
         # for every pair of successive computations get the shared iterator level
         for comp1, comp2 in itertools.pairwise(computations):
             # get the shared iterator level
             iter_comp_1 = tiramisu_tree.get_iterator_of_computation(comp1)
             iter_comp_2 = tiramisu_tree.get_iterator_of_computation(comp2)
-            fusion_level = None
+            fusion_level: int | None = None
 
             # get the shared iterator level
             while iter_comp_1.name != iter_comp_2.name:
@@ -150,82 +183,14 @@ class Fusion(TiramisuAction):
                             iter_comp_2.parent_iterator
                         ]
 
+            # same iterator
             if fusion_level is None:
                 fusion_level = iter_comp_1.level
 
+            if comp1 in fused_computations and comp2 in fused_computations:
+                if fusion_level <= main_fusion_level:
+                    fusion_level = main_fusion_level
+
             fusion_levels.append(fusion_level)
 
-        return fusion_levels
-
-    def transform_tree(self, program_tree: TiramisuTree):
-        """
-        Transform the tree by fusing the two iterators of the fusion command.
-
-        Parameters
-        ----------
-        `program_tree` : `TiramisuTree`
-            The tree to transform.
-        """
-        # get the iterators to fuse
-        node_1_name = self.params[0]
-        node_2_name = self.params[1]
-
-        node_1 = program_tree.iterators[node_1_name]
-        node_2 = program_tree.iterators[node_2_name]
-
-        # update absolute order of the computations
-        max_node_1_order = max(
-            [
-                program_tree.computations_absolute_order[comp]
-                for comp in program_tree.get_iterator_subtree_computations(node_1_name)
-            ]
-        )
-
-        node_2_comp_family = program_tree.get_iterator_subtree_computations(node_2_name)
-
-        # order them by absolute order
-        node_2_comp_family.sort(
-            key=lambda comp: program_tree.computations_absolute_order[comp]
-        )
-
-        for comp in program_tree.computations_absolute_order:
-            if comp in node_2_comp_family:
-                program_tree.computations_absolute_order[comp] = (
-                    max_node_1_order + node_2_comp_family.index(comp) + 1
-                )
-            elif (
-                program_tree.computations_absolute_order[comp] > max_node_1_order
-            ) and (
-                program_tree.computations_absolute_order[comp]
-                <= max_node_1_order + len(node_2_comp_family)
-            ):
-                program_tree.computations_absolute_order[comp] += len(
-                    node_2_comp_family
-                )
-
-        # Fuse the computations
-        node_1.computations_list += node_2.computations_list
-
-        # Fuse the child iterators
-        node_1.child_iterators += node_2.child_iterators
-
-        # Update the parent iterator of the child iterators
-        for child in node_2.child_iterators:
-            program_tree.iterators[child].parent_iterator = node_1_name
-
-        # remove node2 from the parent iterator
-        if node_2.parent_iterator:
-            program_tree.iterators[node_2.parent_iterator].child_iterators.remove(
-                node_2_name
-            )
-
-        # remove node2 from the iterator list
-        del program_tree.iterators[node_2_name]
-
-        # remove node2 from the root list if it is a root
-        if node_2_name in program_tree.roots:
-            program_tree.roots.remove(node_2_name)
-
-        program_tree.computations.sort(
-            key=lambda comp: program_tree.computations_absolute_order[comp]
-        )
+        return computations, fusion_levels

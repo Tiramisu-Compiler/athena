@@ -1,16 +1,20 @@
 from __future__ import annotations
-import itertools
 
-from typing import Dict, TYPE_CHECKING, List, Tuple
+import copy
+import itertools
+from typing import TYPE_CHECKING, Dict, List, Tuple
 
 from athena.tiramisu.tiramisu_iterator_node import IteratorNode
+from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
+
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
     CannotApplyException,
-    TiramisuActionType,
+    IteratorIdentifier,
     TiramisuAction,
+    TiramisuActionType,
 )
 
 
@@ -21,41 +25,67 @@ class Distribution(TiramisuAction):
 
     def __init__(
         self,
-        params: List[str],
-        tiramisu_tree: TiramisuTree,
-        children: List[List[str]] | None = None,
+        params: List[IteratorIdentifier],
+        children: List[List[IteratorIdentifier | str]] | None = None,
     ):
         # Distribution takes 1 parameters the iterator to be distributed
         assert len(params) == 1
+        assert isinstance(params[0], tuple)
 
-        if children is None:
-            children = []
-            for comp in tiramisu_tree.iterators[params[0]].computations_list:
-                children.append([comp])
-            for child_iterator in tiramisu_tree.iterators[params[0]].child_iterators:
-                children.append([child_iterator])
+        self.iterator_id = params[0]
 
+        self.children = children
         super().__init__(
             type=TiramisuActionType.DISTRIBUTION, params=params, comps=children
         )
 
+    def initialize_action_for_tree(self, tiramisu_tree: TiramisuTree):
+        # clone the tree to be able to restore it later
+        self.tree = copy.deepcopy(tiramisu_tree)
+
+        if self.children is None:
+            self.children = []
+            iterator = tiramisu_tree.get_iterator_of_computation(*self.iterator_id)
+            # For each iterator get its comps and add them
+            for child_iterator in iterator.child_iterators:
+                child_iterator_comps = tiramisu_tree.get_iterator_subtree_computations(
+                    child_iterator
+                )
+                self.children.append(child_iterator_comps)
+            # Add the computation of the iterator itself
+            for comp in iterator.computations_list:
+                self.children.append([comp])
+        else:
+            for child_list in self.children:
+                for index, child in enumerate(child_list):
+                    # convert an iterator into its comps
+                    if isinstance(child, tuple):
+                        tmp_iterator = tiramisu_tree.get_iterator_of_computation(*child)
+                        tmp_iterator_comps = (
+                            tiramisu_tree.get_iterator_subtree_computations(
+                                tmp_iterator.name
+                            )
+                        )
+                        child_list.pop(index)
+                        child_list.extend(tmp_iterator_comps)
+
+        self.set_string_representations(tiramisu_tree)
+
     def set_string_representations(self, tiramisu_tree: TiramisuTree):
         self.tiramisu_optim_str = ""
-        # get order of computations from the tree
+
         ordered_computations = tiramisu_tree.computations
         ordered_computations.sort(
             key=lambda x: tiramisu_tree.computations_absolute_order[x]
         )
 
-        comps = []
-        for comp_list in self.comps:
-            comps.extend(comp_list)
-
-        fusion_levels = self.get_fusion_levels(ordered_computations, tiramisu_tree)
+        fusion_levels = self.get_fusion_levels(
+            ordered_computations=ordered_computations, tiramisu_tree=tiramisu_tree
+        )
 
         first_comp = ordered_computations[0]
         self.tiramisu_optim_str += f"clear_implicit_function_sched_graph();\n    {first_comp}{''.join([f'.then({comp},{fusion_level})' for comp, fusion_level in zip(ordered_computations[1:], fusion_levels)])};\n"
-        self.str_representation = f"D(L{tiramisu_tree.iterators[self.params[0]].level},comps={comps},distribution={self.comps})"
+        self.str_representation = f"D(L{self.iterator_id[1]},comps={self.iterator_id[0]},distribution={self.children})"
 
         self.legality_check_string = self.tiramisu_optim_str
 
@@ -70,52 +100,24 @@ class Distribution(TiramisuAction):
 
         return candidates
 
-    def verify_conditions(self, program_tree: TiramisuTree, params=None):
-        if params is None:
-            params = self.params
+    def get_fusion_levels(
+        self,
+        ordered_computations: List[str],
+        tiramisu_tree: TiramisuTree,
+    ):
+        assert self.children is not None
 
-        # check if the node was renamed
-        while (
-            params[0] not in program_tree.iterators
-            and params[0] in program_tree.renamed_iterators
-        ):
-            params[0] = program_tree.renamed_iterators[params[0]]
+        distributed_iterator = tiramisu_tree.get_iterator_of_computation(
+            *self.iterator_id
+        )
 
-        try:
-            assert len(params) == 1, "Distribution takes 1 parameter"
-            assert (
-                params[0] in program_tree.iterators
-            ), f"iterator {params[0]} not found"
-            assert (
-                len(program_tree.iterators[params[0]].computations_list)
-                + len(program_tree.iterators[params[0]].child_iterators)
-                > 1
-            ), f"iterator {params[0]} has only one or no computations/iterators to distribute"
-
-            all_comps = []
-            for comp_list in self.comps:
-                assert type(comp_list) == list, "children list must be a list"
-                all_comps += comp_list
-            all_comps.sort()
-            iterator_children = program_tree.iterators[params[0]].computations_list
-            iterator_children.extend(program_tree.iterators[params[0]].child_iterators)
-            iterator_children.sort()
-
-            assert (
-                all_comps == iterator_children
-            ), f"children list {all_comps} does not match iterator computation + child_iterators lists {iterator_children}"
-
-        except AssertionError as e:
-            raise CannotApplyException(e.args)
-
-    def get_fusion_levels(self, computations: List[str], tiramisu_tree: TiramisuTree):
-        fusion_levels = []
+        fusion_levels: List[int] = []
         # for every pair of successive computations get the shared iterator level
-        for comp1, comp2 in itertools.pairwise(computations):
+        for comp1, comp2 in itertools.pairwise(ordered_computations):
             # get the shared iterator level
             iter_comp_1 = tiramisu_tree.get_iterator_of_computation(comp1)
             iter_comp_2 = tiramisu_tree.get_iterator_of_computation(comp2)
-            fusion_level = None
+            fusion_level: int | None = None
 
             # get the shared iterator level
             while iter_comp_1.name != iter_comp_2.name:
@@ -137,84 +139,23 @@ class Distribution(TiramisuAction):
                             iter_comp_2.parent_iterator
                         ]
 
+            # same iterator
             if fusion_level is None:
                 fusion_level = iter_comp_1.level
+
+            if (
+                fusion_level == distributed_iterator.level
+                and iter_comp_1.name == distributed_iterator.name
+            ):
+                no_distribution = False
+                for child_list in self.children:
+                    if comp1 in child_list and comp2 in child_list:
+                        no_distribution = True
+                        break
+
+                if not no_distribution:
+                    fusion_level -= 1
 
             fusion_levels.append(fusion_level)
 
         return fusion_levels
-
-    def transform_tree(self, program_tree: TiramisuTree):
-        """
-        Transform the tree by fusing the two iterators of the fusion command.
-
-        Parameters
-        ----------
-        `program_tree` : `TiramisuTree`
-            The tree to transform.
-        """
-        # get the iterators to fuse
-        node_1_name = self.params[0]
-
-        node_1 = program_tree.iterators[node_1_name]
-
-        assert type(self.comps) == list and type(self.comps[0]) == list
-
-        new_iterators = []
-        for idx, list_comp in enumerate(self.comps):
-            assert type(list_comp) == list
-            new_node_name = f"{node_1_name}_dist_{idx}" if idx > 0 else node_1_name
-
-            computations = [
-                comp for comp in list_comp if comp in program_tree.computations
-            ]
-
-            iterators = []
-
-            # filter the iterators
-            for child in list_comp:
-                if child in program_tree.iterators:
-                    # add it to the list of child iterators of the new node
-                    iterators.append(child)
-                    # change the parent of the child iterator
-                    program_tree.iterators[child].parent_iterator = new_node_name
-
-            # create new iterator node
-            new_iterator = IteratorNode(
-                name=new_node_name,
-                level=node_1.level,
-                parent_iterator=node_1.parent_iterator,
-                computations_list=computations,
-                child_iterators=iterators,
-                lower_bound=node_1.lower_bound,
-                upper_bound=node_1.upper_bound,
-            )
-
-            new_iterators.append(new_iterator)
-
-        # remove node_1 from the tree
-        program_tree.iterators.pop(node_1_name)
-
-        # add the new iterators to the tree
-        for new_iterator in new_iterators:
-            program_tree.iterators[new_iterator.name] = new_iterator
-
-        # order the new iterators
-        new_iterators.sort(
-            key=lambda x: program_tree.computations_absolute_order[
-                program_tree.get_iterator_subtree_computations(x.name)[0]
-            ]
-        )
-
-        # update the node_1 parent
-        if node_1.parent_iterator is not None:
-            parent_node = program_tree.iterators[node_1.parent_iterator]
-            parent_node.child_iterators.remove(node_1_name)
-            parent_node.child_iterators.extend(
-                [new_iterator.name for new_iterator in new_iterators]
-            )
-        else:
-            program_tree.roots.remove(node_1_name)
-            program_tree.roots.extend(
-                [new_iterator.name for new_iterator in new_iterators]
-            )

@@ -1,10 +1,8 @@
 import pickle
 from typing import Tuple
 
-from athena.tiramisu.tiramisu_program import TiramisuProgram
-
 from athena.tiramisu.tiramisu_iterator_node import IteratorNode
-
+from athena.tiramisu.tiramisu_program import TiramisuProgram
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 
@@ -176,13 +174,10 @@ def benchmark_program_test_sample():
         # "examples/function_blur_MINI_generator.cpp",
         # "examples/function_blur_MINI_wrapper.cpp",
         # "examples/function_blur_MINI_wrapper.h",
-        load_annotations=True,
+        load_isl_ast=True,
+        load_tree=True,
     )
 
-    if tiramisu_func.annotations is None:
-        raise ValueError("Annotations not found")
-
-    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
     return tiramisu_func
 
 
@@ -411,25 +406,15 @@ def fusion_sample():
 
 def multiple_roots_sample():
     tiramisu_func = TiramisuProgram.from_file(
-        "examples/function_gemver_MINI_generator.cpp",
-        load_annotations=True,
+        "examples/function_gemver_MINI_generator.cpp", load_isl_ast=True, load_tree=True
     )
-
-    if tiramisu_func.annotations is None:
-        raise ValueError("Annotations not found")
-
-    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
     return tiramisu_func
 
 
 def distribution_sample():
     tiramisu_func = TiramisuProgram.from_file(
         "examples/function_gramschmidt_MINI_generator.cpp",
-        load_annotations=True,
+        load_isl_ast=True,
+        load_tree=True,
     )
-
-    if tiramisu_func.annotations is None:
-        raise ValueError("Annotations not found")
-
-    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
     return tiramisu_func

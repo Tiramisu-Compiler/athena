@@ -1,15 +1,18 @@
 from __future__ import annotations
-from copy import deepcopy
-import re
 
-from typing import List, TYPE_CHECKING
+import re
+from copy import deepcopy
+from typing import TYPE_CHECKING, List
+
 from athena.tiramisu.compiling_service import CompilingService
 from athena.tiramisu.tiramisu_actions.tiramisu_action import TiramisuActionType
+from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 if TYPE_CHECKING:
     from .tiramisu_actions.tiramisu_action import TiramisuAction
-from athena.tiramisu.tiramisu_program import TiramisuProgram
+
 from athena.tiramisu import tiramisu_actions
+from athena.tiramisu.tiramisu_program import TiramisuProgram
 
 
 class Schedule:
@@ -52,20 +55,17 @@ class Schedule:
         self.legality = None
 
         for optim_cmd in list_optim_cmds:
-            # if optim_cmd in self.optims_list:
-            #     continue
-            # check if the iterators of the optim are renamed
-            optim_cmd.check_renamed_iterators(self.tree)
-            # additional checks to see if optimiaztion can be applied
-            optim_cmd.verify_conditions(self.tree)
-
+            # Fusion and distribution are special cases, we need to get the latest isl ast tree to get the correct fusion levels
             if optim_cmd.is_fusion() or optim_cmd.is_distribution():
-                # Fusion is a special case, we need to transform the tree before setting the string representations to get the right order of computations
-                optim_cmd.transform_tree(self.tree)
-                optim_cmd.set_string_representations(self.tree)
-            else:
-                optim_cmd.set_string_representations(self.tree)
-                optim_cmd.transform_tree(self.tree)
+                isl_ast_str = CompilingService.compile_isl_ast_tree(
+                    tiramisu_program=self.tiramisu_program, schedule=self
+                )
+                self.tree = TiramisuTree.from_isl_ast_string_list(
+                    isl_ast_str.split("\n")
+                )
+
+            # initialize action for the schedule tree
+            optim_cmd.initialize_action_for_tree(self.tree)
 
             self.optims_list.append(optim_cmd)
 
@@ -105,7 +105,7 @@ class Schedule:
             max_mins_per_schedule,
         )
 
-    def is_legal(self) -> bool:
+    def is_legal(self, with_ast: bool = False) -> bool:
         """
         Checks if the schedule is legal.
 
@@ -117,7 +117,13 @@ class Schedule:
         if self.tiramisu_program is None:
             raise Exception("No Tiramisu program to apply the schedule to")
 
-        self.legality = CompilingService.compile_legality(self)
+        legality, new_tree = CompilingService.compile_legality(self, with_ast=with_ast)
+
+        assert isinstance(legality, bool)
+        self.legality = legality
+        if with_ast:
+            assert new_tree
+            self.tree = new_tree
         return self.legality
 
     @classmethod
@@ -140,8 +146,7 @@ class Schedule:
                     schedule.add_optimizations(
                         [
                             tiramisu_actions.Parallelization(
-                                [schedule.tree.get_comp_iterator(comps[0], loop_level)],
-                                schedule.tree,
+                                [(comps[0], loop_level)],
                             )
                         ]
                     )
@@ -159,12 +164,9 @@ class Schedule:
                         [
                             tiramisu_actions.Unrolling(
                                 [
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], loop_level
-                                    ),
+                                    (comps[0], loop_level),
                                     factor,
                                 ],
-                                schedule.tree,
                             )
                         ]
                     )
@@ -180,14 +182,9 @@ class Schedule:
                         [
                             tiramisu_actions.Interchange(
                                 [
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], first_loop_level
-                                    ),
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], second_loop_level
-                                    ),
+                                    (comps[0], first_loop_level),
+                                    (comps[0], second_loop_level),
                                 ],
-                                schedule.tree,
                             )
                         ]
                     )
@@ -201,8 +198,7 @@ class Schedule:
                     schedule.add_optimizations(
                         [
                             tiramisu_actions.Reversal(
-                                [schedule.tree.get_comp_iterator(comps[0], loop_level)],
-                                schedule.tree,
+                                [(comps[0], loop_level)],
                             )
                         ]
                     )
@@ -220,16 +216,11 @@ class Schedule:
                         [
                             tiramisu_actions.Tiling2D(
                                 [
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], outer_loop_level
-                                    ),
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], inner_loop_level
-                                    ),
+                                    (comps[0], outer_loop_level),
+                                    (comps[0], inner_loop_level),
                                     outer_loop_factor,
                                     inner_loop_factor,
                                 ],
-                                schedule.tree,
                             )
                         ]
                     )
@@ -251,20 +242,13 @@ class Schedule:
                         [
                             tiramisu_actions.Tiling3D(
                                 [
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], outer_loop_level
-                                    ),
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], middle_loop_level
-                                    ),
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], inner_loop_level
-                                    ),
+                                    (comps[0], outer_loop_level),
+                                    (comps[0], middle_loop_level),
+                                    (comps[0], inner_loop_level),
                                     outer_loop_factor,
                                     middle_loop_factor,
                                     inner_loop_factor,
                                 ],
-                                schedule.tree,
                             )
                         ]
                     )
@@ -282,16 +266,11 @@ class Schedule:
                         [
                             tiramisu_actions.Skewing(
                                 [
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], outer_loop_level
-                                    ),
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], inner_loop_level
-                                    ),
+                                    (comps[0], outer_loop_level),
+                                    (comps[0], inner_loop_level),
                                     outer_loop_factor,
                                     inner_loop_factor,
                                 ],
-                                schedule.tree,
                             )
                         ]
                     )
@@ -306,14 +285,9 @@ class Schedule:
                         [
                             tiramisu_actions.Fusion(
                                 [
-                                    schedule.tree.get_comp_iterator(
-                                        comps[0], loop_level
-                                    ),
-                                    schedule.tree.get_comp_iterator(
-                                        comps[1], loop_level
-                                    ),
+                                    (comps[0], loop_level),
+                                    (comps[1], loop_level),
                                 ],
-                                schedule.tree,
                             )
                         ]
                     )

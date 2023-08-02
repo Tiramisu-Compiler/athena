@@ -47,7 +47,7 @@ from athena.tiramisu import Schedule, tiramisu_actions
 
 schedule = Schedule(tiramisu_program)
 
-tiramisu_action = tiramisu_actions.Parallelization(["i"], tiramisu_program.tree)
+tiramisu_action = tiramisu_actions.Parallelization([("comp00",1)])
 
 schedule.add_optimizations([tiramisu_action])
 ```
@@ -63,7 +63,7 @@ from athena.tiramisu import Schedule, tiramisu_actions
 
 schedule = Schedule(tiramisu_program)
 
-tiramisu_action = tiramisu_actions.Parallelization(["i"], tiramisu_program.tree)
+tiramisu_action = tiramisu_actions.Parallelization([("comp00",1)])
 
 schedule.add_optimizations([tiramisu_action])
 
@@ -82,7 +82,7 @@ from athena.tiramisu import Schedule, tiramisu_actions
 
 schedule = Schedule(tiramisu_program)
 
-tiramisu_action = tiramisu_actions.Parallelization(["i"], tiramisu_program.tree)
+tiramisu_action = tiramisu_actions.Parallelization([("comp00",1)])
 
 schedule.add_optimizations([tiramisu_action])
 
@@ -125,7 +125,7 @@ coverage report
 For HTML coverage report, you can use the following command:
 
 ```bash
-coverage html
+coverage html --include="athena/**/*"
 ```
 
 ### Code Formatting

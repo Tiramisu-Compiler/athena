@@ -1,7 +1,8 @@
-from typing import Dict, List, Tuple
+import re
 import uuid
+from typing import Dict, List, Tuple
+
 from athena.tiramisu.tiramisu_iterator_node import IteratorNode
-import itertools
 
 
 class TiramisuTree:
@@ -127,6 +128,96 @@ class TiramisuTree:
 
         return tiramisu_space
 
+    @classmethod
+    def from_isl_ast_string_list(cls, isl_ast_string_list: List[str]) -> "TiramisuTree":
+        tiramisu_tree = cls()
+        tiramisu_tree.computations_absolute_order = {}
+        tiramisu_tree.computations = []
+        tiramisu_tree.iterators = {}
+        tiramisu_tree.roots = []
+        tiramisu_tree.renamed_iterators = {}
+
+        level_iterator_map: Dict[int, List[str]] = {}
+        i = 1
+        upper_bound_regex = r".*<=\s*(.*)"
+        iterator_duplicates: Dict[str, int] = {}
+        for str_line in isl_ast_string_list:
+            if "|iterator|" in str_line:
+                (
+                    iterator_level_str,
+                    _,
+                    iterator_name,
+                    lower_bound_str,
+                    loop_condition,
+                    increment,
+                ) = str_line.split("|")
+                iterator_level = int(iterator_level_str)
+                try:
+                    lower_bound = int(lower_bound_str)
+                except ValueError:
+                    # Lower bound is not an integer so we keep it string
+                    pass
+
+                # Get the upper bound from the loop condition
+                matched_upper_bound = re.match(upper_bound_regex, loop_condition)
+                if matched_upper_bound:
+                    upper_bound = matched_upper_bound.group(1)
+                else:
+                    upper_bound = loop_condition
+                try:
+                    upper_bound = int(upper_bound)
+                except ValueError:
+                    # Upper bound is not an integer so we keep it string
+                    pass
+                if iterator_name in tiramisu_tree.iterators:
+                    iterator_duplicates[iterator_name] = (
+                        iterator_duplicates[iterator_name] + 1
+                    )
+                    iterator_name = (
+                        iterator_name + "_" + str(iterator_duplicates[iterator_name])
+                    )
+                else:
+                    iterator_duplicates[iterator_name] = 0
+
+                tiramisu_tree.iterators[iterator_name] = IteratorNode(
+                    name=iterator_name,
+                    lower_bound=lower_bound,
+                    upper_bound=upper_bound,
+                    child_iterators=[],
+                    computations_list=[],
+                    parent_iterator=None
+                    if iterator_level == 0
+                    else level_iterator_map[iterator_level - 1][-1],
+                    level=iterator_level,
+                )
+                if iterator_level not in level_iterator_map:
+                    level_iterator_map[iterator_level] = []
+                level_iterator_map[iterator_level].append(iterator_name)
+
+                if iterator_level == 0:
+                    tiramisu_tree.roots.append(iterator_name)
+                else:
+                    # Add the iterator to its parent's child iterators (the last iterator we added in the previous level)
+                    tiramisu_tree.iterators[
+                        level_iterator_map[iterator_level - 1][-1]
+                    ].child_iterators.append(iterator_name)
+
+            elif "|computation|" in str_line:
+                level_str, _, comp_name = str_line.split("|")
+                level = int(level_str)
+                tiramisu_tree.computations.append(comp_name)
+
+                # Add the computation to its iterator's computations list (the last iterator we added in the previous level)
+                tiramisu_tree.iterators[
+                    level_iterator_map[level - 1][-1]
+                ].computations_list.append(comp_name)
+
+                # Add the computation to the absolute order dict
+                tiramisu_tree.computations_absolute_order[comp_name] = i
+                i += 1
+
+        return tiramisu_tree
+
     def _get_subtree_representation(self, node_name: str) -> str:
         representation = ""
         representation += (
@@ -236,12 +327,6 @@ class TiramisuTree:
         """
         return [self.iterators[iterator].level for iterator in iterators_list]
 
-    def get_iterator_node(self, iterator_name: str) -> IteratorNode:
-        """
-        This function returns the iterator node corresponding to the iterator name
-        """
-        return self.iterators[iterator_name]
-
     def get_root_of_node(self, iterator_name: str) -> str:
         # Get the root node of the iterator
         current_node_name = iterator_name
@@ -254,142 +339,28 @@ class TiramisuTree:
 
         return current_node_name
 
-    def get_iterator_of_computation(self, computation_name: str):
+    def get_iterator_of_computation(
+        self, computation_name: str, level: int | None = None
+    ):
         """
         This function returns the iterator of the computation
         """
+        computation_iterator = None
         for iterator in self.iterators:
             if computation_name in self.iterators[iterator].computations_list:
-                return self.iterators[iterator]
-
-        raise ValueError("The computation is not in the tree")
-
-    def clone_subtree(
-        self,
-        node: str,
-        suffix: str = f"_clone_{uuid.uuid4()}",
-        tiramisu_tree: "TiramisuTree" = None,
-    ):
-        """
-        This function clones the subtree rooted at the node
-        """
-        if node not in self.iterators:
-            raise ValueError("The node is not in the tree")
-
-        is_root = False
-
-        new_node = self.iterators[node].clone(suffix)
-        if tiramisu_tree is None:
-            is_root = True
-            tiramisu_tree = TiramisuTree()
-            tiramisu_tree.add_root(new_node.name)
-
-        tiramisu_tree.iterators[new_node.name] = new_node
-        tiramisu_tree.computations += new_node.computations_list
-
-        for child in self.iterators[node].child_iterators:
-            self.clone_subtree(child, suffix, tiramisu_tree=tiramisu_tree)
-
-        if is_root:
-            tiramisu_tree.computations.sort(
-                key=lambda x: self.computations_absolute_order[x.replace(suffix, "")]
-            )
-            tiramisu_tree.computations_absolute_order = {
-                comp: i + 1 for i, comp in enumerate(tiramisu_tree.computations)
-            }
-            tiramisu_tree.update_subtree_levels(tiramisu_tree.roots[0], 0)
-            new_node.parent_iterator = None
-
-        return tiramisu_tree
-
-    def insert_subtree(
-        self, subtree: "TiramisuTree", parent_node: str, is_root_parent: bool = False
-    ):
-        """
-        This function inserts the subtree rooted at the subtree_root
-        into the parent_node
-        """
-
-        if parent_node not in self.iterators:
-            raise ValueError("The node is not in the tree")
-
-        subtree_root = subtree.roots[0]
-
-        for node in subtree.iterators:
-            self.iterators[node] = subtree.iterators[node]
-
-        # get order of last computation of parent node
-        parent_node_list = self.get_iterator_subtree_computations(parent_node)
-        parent_node_list.sort(key=lambda x: self.computations_absolute_order[x])
-        last_comp_order = self.computations_absolute_order[parent_node_list[-1]]
-
-        # update computations absosulte orde
-        computations_to_update = [
-            comp
-            for comp in self.computations_absolute_order
-            if self.computations_absolute_order[comp] > last_comp_order
-        ]
-
-        nbr_comps = len(subtree.computations)
-
-        for comp in computations_to_update:
-            self.computations_absolute_order[comp] += nbr_comps
-
-        for i, comp in enumerate(subtree.computations):
-            self.computations_absolute_order[comp] = last_comp_order + i + 1
-
-        if is_root_parent:
-            self.roots.append(subtree_root)
-            subtree.iterators[subtree_root].parent_iterator = None
-        else:
-            self.iterators[parent_node].child_iterators.append(subtree_root)
-            subtree.iterators[subtree_root].parent_iterator = parent_node
-
-        self.computations += subtree.computations
-        self.computations.sort(key=lambda x: self.computations_absolute_order[x])
-
-        # update levels
-        if is_root_parent:
-            self.update_subtree_levels(subtree_root, 0)
-            # sort roots
-            self.roots.sort(
-                key=lambda x: self.computations_absolute_order[
-                    self.get_iterator_subtree_computations(x)[0]
-                ]
-            )
-        else:
-            self.update_subtree_levels(parent_node, self.iterators[parent_node].level)
-
-    def update_subtree_levels(self, node: str, level: int):
-        """
-        This function updates the levels of the subtree rooted at the node
-        """
-        if node not in self.iterators:
-            raise ValueError("The node is not in the tree")
-
-        self.iterators[node].level = level
-
-        for child in self.iterators[node].child_iterators:
-            self.update_subtree_levels(child, level + 1)
-
-    def get_comp_iterator(self, comp: str, level: int) -> str:
-        """
-        This function returns the iterator at level `level` of the computation
-        """
-        current_iterator = None
-        for iterator in self.iterators:
-            if comp in self.iterators[iterator].computations_list:
-                current_iterator = self.iterators[iterator]
+                computation_iterator = self.iterators[iterator]
                 break
 
-        if current_iterator is None:
+        if computation_iterator is None:
             raise ValueError("The computation is not in the tree")
 
-        while current_iterator.level > level:
-            assert current_iterator.parent_iterator is not None
-            current_iterator = self.iterators[current_iterator.parent_iterator]
+        if level is not None:
+            while computation_iterator.level != level:
+                computation_iterator = self.iterators[
+                    computation_iterator.parent_iterator
+                ]
 
-        return current_iterator.name
+        return computation_iterator
 
     def __str__(self) -> str:
         # return f"Roots: {self.roots}\nComputations: {self.computations}\nIterators: {self.iterators}"
