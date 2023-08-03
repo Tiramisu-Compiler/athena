@@ -1,4 +1,6 @@
-from typing import List
+from typing import List, Tuple
+
+IteratorIdentifier = Tuple[str, int]
 
 
 class IteratorNode:

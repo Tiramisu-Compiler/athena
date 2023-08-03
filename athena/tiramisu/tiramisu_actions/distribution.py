@@ -4,7 +4,7 @@ import copy
 import itertools
 from typing import TYPE_CHECKING, Dict, List, Tuple
 
-from athena.tiramisu.tiramisu_iterator_node import IteratorNode
+from athena.tiramisu.tiramisu_iterator_node import IteratorIdentifier, IteratorNode
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 if TYPE_CHECKING:
@@ -12,7 +12,6 @@ if TYPE_CHECKING:
 
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
     CannotApplyException,
-    IteratorIdentifier,
     TiramisuAction,
     TiramisuActionType,
 )
@@ -85,7 +84,7 @@ class Distribution(TiramisuAction):
 
         first_comp = ordered_computations[0]
         self.tiramisu_optim_str += f"clear_implicit_function_sched_graph();\n    {first_comp}{''.join([f'.then({comp},{fusion_level})' for comp, fusion_level in zip(ordered_computations[1:], fusion_levels)])};\n"
-        self.str_representation = f"D(L{self.iterator_id[1]},comps={self.iterator_id[0]},distribution={self.children})"
+        self.str_representation = f"D(L{self.iterator_id[1]},comps=[{self.iterator_id[0]}],distribution={self.children})"
 
         self.legality_check_string = self.tiramisu_optim_str
 

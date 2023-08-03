@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
     CannotApplyException,
-    IteratorIdentifier,
     TiramisuAction,
     TiramisuActionType,
 )
