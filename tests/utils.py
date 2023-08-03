@@ -418,3 +418,13 @@ def distribution_sample():
         load_tree=True,
     )
     return tiramisu_func
+
+
+def expansion_sample():
+    tiramisu_func = TiramisuProgram.from_file(
+        "./examples/function_test_expansion.cpp",
+        load_isl_ast=True,
+        load_tree=True,
+    )
+
+    return tiramisu_func

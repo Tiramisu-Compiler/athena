@@ -1,10 +1,11 @@
-from .tiramisu_action import TiramisuAction, TiramisuActionType, CannotApplyException
-from .parallelization import Parallelization
+from .distribution import Distribution
+from .expansion import Expansion
+from .fusion import Fusion
 from .interchange import Interchange
-from .skewing import Skewing
+from .parallelization import Parallelization
 from .reversal import Reversal
-from .unrolling import Unrolling
+from .skewing import Skewing
 from .tiling_2d import Tiling2D
 from .tiling_3d import Tiling3D
-from .fusion import Fusion
-from .distribution import Distribution
+from .tiramisu_action import CannotApplyException, TiramisuAction, TiramisuActionType
+from .unrolling import Unrolling
