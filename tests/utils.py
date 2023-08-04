@@ -166,6 +166,76 @@ def tree_test_sample_2():
     return tiramisu_tree
 
 
+def tree_test_sample_3():
+    tiramisu_tree = TiramisuTree()
+    tiramisu_tree.add_root("root")
+    tiramisu_tree.iterators = {
+        "root": IteratorNode(
+            name="root",
+            parent_iterator=None,
+            lower_bound=0,
+            upper_bound=256,
+            child_iterators=["i", "j"],
+            computations_list=[],
+            level=0,
+        ),
+        "i": IteratorNode(
+            name="i",
+            parent_iterator="root",
+            lower_bound=0,
+            upper_bound=256,
+            child_iterators=[],
+            computations_list=["comp01"],
+            level=1,
+        ),
+        "j": IteratorNode(
+            name="j",
+            parent_iterator="root",
+            lower_bound=0,
+            upper_bound=256,
+            child_iterators=["k"],
+            computations_list=["comp05", "comp06", "comp07"],
+            level=1,
+        ),
+        "k": IteratorNode(
+            name="k",
+            parent_iterator="j",
+            lower_bound=0,
+            upper_bound=10,
+            child_iterators=["l"],
+            computations_list=[],
+            level=2,
+        ),
+        "l": IteratorNode(
+            name="l",
+            parent_iterator="k",
+            lower_bound=0,
+            upper_bound=256,
+            child_iterators=[],
+            computations_list=["comp03", "comp04"],
+            level=3,
+        ),
+    }
+    tiramisu_tree.computations = [
+        "comp01",
+        "comp03",
+        "comp04",
+        "comp05",
+        "comp06",
+        "comp07",
+    ]
+
+    tiramisu_tree.computations_absolute_order = {
+        "comp01": 1,
+        "comp05": 2,
+        "comp03": 5,
+        "comp04": 6,
+        "comp06": 3,
+        "comp07": 4,
+    }
+    return tiramisu_tree
+
+
 def benchmark_program_test_sample():
     tiramisu_func = TiramisuProgram.from_file(
         "examples/function_matmul_MEDIUM.cpp",

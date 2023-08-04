@@ -80,6 +80,11 @@ class Tiling2D(TiramisuAction):
         assert self.iterators is not None
         assert self.tile_sizes is not None
 
+        all_comps = tiramisu_tree.computations
+        all_comps.sort(key=lambda comp: tiramisu_tree.computations_absolute_order[comp])
+
+        fusion_levels = self.get_fusion_levels(all_comps, tiramisu_tree)
+
         self.tiramisu_optim_str = ""
         loop_levels_and_factors = [
             str(self.iterators[0][1]),
@@ -92,6 +97,8 @@ class Tiling2D(TiramisuAction):
             self.tiramisu_optim_str += (
                 f"{comp}.tile({', '.join(loop_levels_and_factors)});\n"
             )
+        self.tiramisu_optim_str += f"clear_implicit_function_sched_graph();\n    {all_comps[0]}{''.join([f'.then({comp},{fusion_level})' for comp, fusion_level in zip(all_comps[1:], fusion_levels)])};\n"
+
         self.str_representation = "T2(L{},L{},{},{},comps={})".format(
             *loop_levels_and_factors, self.comps
         )
@@ -115,3 +122,47 @@ class Tiling2D(TiramisuAction):
                     candidates[root].extend(list(itertools.pairwise(section)))
 
         return candidates
+
+    def get_fusion_levels(
+        self,
+        ordered_computations: List[str],
+        tiramisu_tree: TiramisuTree,
+    ):
+        fusion_levels: List[int] = []
+        # for every pair of successive computations get the shared iterator level
+        for comp1, comp2 in itertools.pairwise(ordered_computations):
+            # get the shared iterator level
+            iter_comp_1 = tiramisu_tree.get_iterator_of_computation(comp1)
+            iter_comp_2 = tiramisu_tree.get_iterator_of_computation(comp2)
+            fusion_level: int | None = None
+
+            # get the shared iterator level
+            while iter_comp_1.name != iter_comp_2.name:
+                if iter_comp_1.level > iter_comp_2.level:
+                    # if parent is None then the iterators don't have a common parent
+                    if iter_comp_1.parent_iterator is None:
+                        fusion_level = -1
+                        break
+                    else:
+                        iter_comp_1 = tiramisu_tree.iterators[
+                            iter_comp_1.parent_iterator
+                        ]
+                else:
+                    if iter_comp_2.parent_iterator is None:
+                        fusion_level = -1
+                        break
+                    else:
+                        iter_comp_2 = tiramisu_tree.iterators[
+                            iter_comp_2.parent_iterator
+                        ]
+
+            # same iterator
+            if fusion_level is None:
+                fusion_level = iter_comp_1.level
+
+            if comp1 in self.comps and comp2 in self.comps:
+                fusion_level += 2
+
+            fusion_levels.append(fusion_level)
+
+        return fusion_levels
