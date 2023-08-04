@@ -81,9 +81,11 @@ class Tiling2D(TiramisuAction):
         assert self.tile_sizes is not None
 
         all_comps = tiramisu_tree.computations
-        all_comps.sort(key=lambda comp: tiramisu_tree.computations_absolute_order[comp])
-
-        fusion_levels = self.get_fusion_levels(all_comps, tiramisu_tree)
+        if len(all_comps) > 1:
+            all_comps.sort(
+                key=lambda comp: tiramisu_tree.computations_absolute_order[comp]
+            )
+            fusion_levels = self.get_fusion_levels(all_comps, tiramisu_tree)
 
         self.tiramisu_optim_str = ""
         loop_levels_and_factors = [
@@ -97,7 +99,8 @@ class Tiling2D(TiramisuAction):
             self.tiramisu_optim_str += (
                 f"{comp}.tile({', '.join(loop_levels_and_factors)});\n"
             )
-        self.tiramisu_optim_str += f"clear_implicit_function_sched_graph();\n    {all_comps[0]}{''.join([f'.then({comp},{fusion_level})' for comp, fusion_level in zip(all_comps[1:], fusion_levels)])};\n"
+        if len(all_comps) > 1:
+            self.tiramisu_optim_str += f"clear_implicit_function_sched_graph();\n    {all_comps[0]}{''.join([f'.then({comp},{fusion_level})' for comp, fusion_level in zip(all_comps[1:], fusion_levels)])};\n"
 
         self.str_representation = "T2(L{},L{},{},{},comps={})".format(
             *loop_levels_and_factors, self.comps

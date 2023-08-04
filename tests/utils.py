@@ -211,9 +211,18 @@ def tree_test_sample_3():
             parent_iterator="k",
             lower_bound=0,
             upper_bound=256,
+            child_iterators=["m"],
+            computations_list=[],
+            level=3,
+        ),
+        "m": IteratorNode(
+            name="m",
+            parent_iterator="l",
+            lower_bound=0,
+            upper_bound=256,
             child_iterators=[],
             computations_list=["comp03", "comp04"],
-            level=3,
+            level=4,
         ),
     }
     tiramisu_tree.computations = [
