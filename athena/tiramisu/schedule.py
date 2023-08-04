@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import re
 from copy import deepcopy
 from typing import TYPE_CHECKING, List
@@ -288,6 +289,37 @@ class Schedule:
                                     (comps[0], loop_level),
                                     (comps[1], loop_level),
                                 ],
+                            )
+                        ]
+                    )
+            elif optimization_str[0] == "D":
+                regex = r"D\(L(\d),comps=\[([\w', ]*)\],distribution=([\[\]'\w, ]*)\)"
+                match = re.match(regex, optimization_str)
+                if match:
+                    loop_level = int(match.group(1))
+                    comps = match.group(2).split(",")
+                    comps = [comp.strip("' ").strip() for comp in comps]
+                    distribution = ast.literal_eval(match.group(3))
+                    assert isinstance(distribution, list)
+                    schedule.add_optimizations(
+                        [
+                            tiramisu_actions.Distribution(
+                                [
+                                    (comps[0], loop_level),
+                                ],
+                                distribution,
+                            )
+                        ]
+                    )
+            elif optimization_str[0] == "E":
+                regex = r"E\(comps=\[([\w', ]*)\]\)"
+                match = re.match(regex, optimization_str)
+                if match:
+                    comp = match.group(1).strip("' ")
+                    schedule.add_optimizations(
+                        [
+                            tiramisu_actions.Expansion(
+                                [comp],
                             )
                         ]
                     )

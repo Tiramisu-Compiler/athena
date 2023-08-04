@@ -5,15 +5,13 @@ import itertools
 import math
 from typing import TYPE_CHECKING, Dict, List, Tuple
 
-from athena.tiramisu.tiramisu_iterator_node import IteratorNode
+from athena.tiramisu.tiramisu_iterator_node import IteratorIdentifier
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 if TYPE_CHECKING:
     from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
-    CannotApplyException,
-    IteratorIdentifier,
     TiramisuAction,
     TiramisuActionType,
 )

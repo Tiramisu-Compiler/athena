@@ -2,7 +2,7 @@ import re
 import uuid
 from typing import Dict, List, Tuple
 
-from athena.tiramisu.tiramisu_iterator_node import IteratorNode
+from athena.tiramisu.tiramisu_iterator_node import IteratorIdentifier, IteratorNode
 
 
 class TiramisuTree:
@@ -361,6 +361,19 @@ class TiramisuTree:
                 ]
 
         return computation_iterator
+
+    def get_iterator_id_from_name(self, iterator_name: str) -> IteratorIdentifier:
+        """
+        This function returns the id of the iterator
+        """
+        iterator = self.iterators[iterator_name]
+        identifying_comp = None
+        if iterator.computations_list:
+            identifying_comp = iterator.computations_list[0]
+        else:
+            identifying_comp = self.get_iterator_subtree_computations(iterator_name)[0]
+
+        return (identifying_comp, iterator.level)
 
     def __str__(self) -> str:
         # return f"Roots: {self.roots}\nComputations: {self.computations}\nIterators: {self.iterators}"
