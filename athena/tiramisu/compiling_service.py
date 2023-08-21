@@ -92,7 +92,7 @@ class CompilingService:
         # Add code to the original file to get legality result
         legality_check_lines = """
     prepare_schedules_for_legality_checks();
-    performe_full_dependency_analysis();
+    perform_full_dependency_analysis();
     bool is_legal=true;
 
 """

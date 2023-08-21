@@ -199,7 +199,6 @@ class TiramisuProgram:
                 r"buffer " + buf_name + ".*{(.*)}", self.original_str
             )[0]
             self.buffer_sizes.append(re.findall(r"\d+", sizes_vect))
-        self.program_annotations = ""
         self.wrapper_is_compiled = False
 
     def construct_wrapper_code(

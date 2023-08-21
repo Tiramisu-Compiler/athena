@@ -21,6 +21,7 @@ class TiramisuActionType(Enum):
     TILING_3D = 7
     DISTRIBUTION = 8
     EXPANSION = 9
+    TILING_GENERAL = 10
 
 
 class TiramisuAction:
