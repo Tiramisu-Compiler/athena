@@ -86,3 +86,14 @@ def test_get_candidates():
 
     candidates = Tiling3D.get_candidates(test_utils.tiling_3d_tree_sample())
     assert candidates == {"root": [("root", "j", "k"), ("j", "k", "l")]}
+
+
+def test_fusion_levels():
+    t_tree = test_utils.tree_test_sample_3()
+
+    action = Tiling3D([("comp03", 2), ("comp03", 3), ("comp03", 4), 32, 32, 32])
+    action.initialize_action_for_tree(t_tree)
+    assert (
+        action.tiramisu_optim_str.split("\n")[-2]
+        == "    comp01.then(comp05,0).then(comp06,1).then(comp07,1).then(comp03,1).then(comp04,7);"
+    )

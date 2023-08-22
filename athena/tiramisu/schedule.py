@@ -323,6 +323,9 @@ class Schedule:
                             )
                         ]
                     )
+            elif optimization_str[:2] == "TG":
+                raise NotImplementedError
+                # regex =
 
         return schedule
 
