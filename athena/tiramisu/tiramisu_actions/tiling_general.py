@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import itertools
 import math
+import random
 from typing import TYPE_CHECKING, Dict, List, Tuple
 
 from athena.tiramisu.tiramisu_iterator_node import IteratorIdentifier
@@ -111,8 +112,8 @@ class TilingGeneral(TiramisuAction):
                 f"{comp}.tile({', '.join(loop_levels_and_factors)});\n"
             )
 
-        if len(all_comps) > 1:
-            self.tiramisu_optim_str += f"clear_implicit_function_sched_graph();\n    {all_comps[0]}{''.join([f'.then({comp},{fusion_level})' for comp, fusion_level in zip(all_comps[1:], fusion_levels)])};\n"
+        # if len(all_comps) > 1:
+        #     self.tiramisu_optim_str += f"clear_implicit_function_sched_graph();\n    {all_comps[0]}{''.join([f'.then({comp},{fusion_level})' for comp, fusion_level in zip(all_comps[1:], fusion_levels)])};\n"
         str_levels_and_sizes = [
             f"L{iterator[1]}" if isinstance(iterator, tuple) else str(iterator)
             for iterator in self.params
@@ -268,3 +269,17 @@ class TilingGeneral(TiramisuAction):
         if current_node.child_iterators:
             return candidate_section, current_node.child_iterators
         return candidate_section, []
+
+    @classmethod
+    def from_candidate(
+        cls,
+        candidate: List[str],
+        tiramisu_tree: TiramisuTree,
+        random_tile_sizes: List[int] = [2, 4, 8, 10, 16, 32, 64],
+    ):
+        iterators = [
+            tiramisu_tree.get_iterator_id_from_name(iterator_name)
+            for iterator_name in candidate
+        ]
+        tile_sizes = [random.choice(random_tile_sizes) for _ in iterators]
+        return TilingGeneral(iterators + tile_sizes)

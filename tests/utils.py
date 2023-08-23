@@ -567,7 +567,7 @@ def multiple_roots_sample():
     return tiramisu_func
 
 
-def distribution_sample():
+def gramschmidt_sample():
     tiramisu_func = TiramisuProgram.from_file(
         "examples/function_gramschmidt_MINI_generator.cpp",
         load_isl_ast=True,

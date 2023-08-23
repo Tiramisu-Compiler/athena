@@ -51,7 +51,7 @@ def test_initialize_action_for_tree():
 
 def test_set_string_representations():
     BaseConfig.init()
-    sample = test_utils.distribution_sample()
+    sample = test_utils.gramschmidt_sample()
     distribution = Distribution([("R_up_init", 1)])
     schedule = Schedule(sample)
     schedule.add_optimizations([distribution])
@@ -63,14 +63,14 @@ def test_set_string_representations():
 
 def test_get_candidates():
     BaseConfig.init()
-    sample = test_utils.distribution_sample()
+    sample = test_utils.gramschmidt_sample()
     candidates = Distribution.get_candidates(sample.tree)
     assert candidates == ["c1", "c3_2"]
 
 
 def test_get_fusion_levels():
     BaseConfig.init()
-    sample = test_utils.distribution_sample()
+    sample = test_utils.gramschmidt_sample()
     distribution = Distribution([("R_up_init", 1)])
     distribution.initialize_action_for_tree(sample.tree)
     ordered_computations = sample.tree.computations
@@ -116,7 +116,7 @@ def test_get_fusion_levels():
 def test_distribution_application():
     BaseConfig.init()
 
-    sample = test_utils.distribution_sample()
+    sample = test_utils.gramschmidt_sample()
     schedule = Schedule(sample)
 
     assert schedule.tree
@@ -131,7 +131,7 @@ def test_distribution_application():
     )
     assert not schedule.is_legal()
 
-    sample = test_utils.distribution_sample()
+    sample = test_utils.gramschmidt_sample()
     schedule = Schedule(sample)
     assert schedule.tree
 

@@ -108,6 +108,7 @@ class CompilingService:
             # legality_check_lines += optim.tiramisu_optim_str + "\n"
 
         legality_check_lines += """
+    prepare_schedules_for_legality_checks();
     is_legal &= check_legality_of_function();   
     std::cout << is_legal << std::endl;
 """
