@@ -21,7 +21,7 @@ def test_tiling_general_init():
 
 def test_initialize_action_for_tree():
     BaseConfig.init()
-    sample = test_utils.distribution_sample()
+    sample = test_utils.gramschmidt_sample()
     tiling_general = TilingGeneral(
         [("R_up_init", 1), ("R_up", 2), ("A_out", 2), 10, 10, 10]
     )
@@ -42,7 +42,7 @@ def test_initialize_action_for_tree():
 
 def test_set_string_representations():
     BaseConfig.init()
-    sample = test_utils.distribution_sample()
+    sample = test_utils.gramschmidt_sample()
     tiling_general = TilingGeneral(
         [("R_up_init", 1), ("R_up", 2), ("A_out", 2), 10, 5, 2]
     )
@@ -66,7 +66,7 @@ def test_set_string_representations():
 
 def test_get_candidates():
     BaseConfig.init()
-    sample = test_utils.distribution_sample()
+    sample = test_utils.gramschmidt_sample()
     candidates = TilingGeneral.get_candidates(sample.tree)
     assert candidates == {
         "c1": [("c1", "c3", "c3_1", "c3_2", "c5", "c5_1"), ("c3_2", "c5", "c5_1")]
