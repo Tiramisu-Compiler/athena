@@ -1,5 +1,5 @@
-from dataclasses import dataclass, field
 import logging
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Literal
 
 import yaml
@@ -32,11 +32,16 @@ def parse_yaml_file(yaml_string: str) -> Dict[Any, Any]:
 
 
 def dict_to_config(parsed_yaml: Dict[Any, Any]) -> AthenaConfig:
-    tiramisu = TiramisuConfig(**parsed_yaml["tiramisu"])
-
+    tiramisu = (
+        TiramisuConfig(**parsed_yaml["tiramisu"])
+        if "tiramisu" in parsed_yaml
+        else TiramisuConfig()
+    )
+    athena = parsed_yaml["athena"] if "athena" in parsed_yaml else {}
+    env_vars = parsed_yaml["env_vars"] if "env_vars" in parsed_yaml else {}
     return AthenaConfig(
-        **parsed_yaml["athena"],
-        env_vars=parsed_yaml["env_vars"] if "env_vars" in parsed_yaml else {},
+        **athena,
+        env_vars=env_vars,
         tiramisu=tiramisu,
     )
 
