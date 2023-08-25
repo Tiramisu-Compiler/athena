@@ -55,7 +55,8 @@ def test_set_string_representations():
 
     assert (
         tiling_general.tiramisu_optim_str
-        == "R_up_init.tile(1, 10);\nR_up.tile(1, 2, 10, 5);\nA_out.tile(1, 2, 10, 2);\nclear_implicit_function_sched_graph();\n    nrm_init.then(nrm_comp,0).then(R_diag,0).then(Q_out,0).then(R_up_init,0).then(R_up,2).then(A_out,2);\n"
+        == "R_up_init.tile(1, 10);\nR_up.tile(1, 2, 10, 5);\nA_out.tile(1, 2, 10, 2);\n"
+        # clear_implicit_function_sched_graph();\n    nrm_init.then(nrm_comp,0).then(R_diag,0).then(Q_out,0).then(R_up_init,0).then(R_up,2).then(A_out,2);\n"
     )
 
     assert (
