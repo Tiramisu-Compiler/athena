@@ -22,6 +22,7 @@ class TiramisuActionType(Enum):
     DISTRIBUTION = 8
     EXPANSION = 9
     TILING_GENERAL = 10
+    # WHENEVER YOU ADD AN ACTION GO EDIT THE NUMBER OF ACTIONS TEXT
 
 
 class TiramisuAction:
@@ -97,6 +98,9 @@ class TiramisuAction:
 
     def is_distribution(self) -> bool:
         return self.type == TiramisuActionType.DISTRIBUTION
+
+    def is_tiling_general(self) -> bool:
+        return self.type == TiramisuActionType.TILING_GENERAL
 
     @classmethod
     def get_candidates(cls, program_tree: TiramisuTree) -> list:
