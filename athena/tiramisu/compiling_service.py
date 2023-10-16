@@ -119,7 +119,7 @@ class CompilingService:
 
     fct->gen_time_space_domain();
     fct->gen_isl_ast();
-    fct->print_isl_ast_representation(nullptr, 0);
+    fct->print_isl_ast_representation();
 """
 
         # Paste the lines responsable of checking legality of schedule in the cpp file
@@ -192,7 +192,7 @@ class CompilingService:
 
     fct->gen_time_space_domain();
     fct->gen_isl_ast();
-    fct->print_isl_ast_representation(nullptr, 0);
+    fct->print_isl_ast_representation();
 """
 
         # Paste the lines responsable of generating the program json tree in the cpp file
@@ -447,6 +447,7 @@ class CompilingService:
         optims_list: List[TiramisuAction],
         max_runs: int = 0,
         max_mins_per_schedule: float | None = None,
+        delete_fiels: bool = True,
     ) -> List[float]:
         """
         Returns the execution times of the program on the CPU after applying the optimizations in the optims_list
@@ -574,7 +575,7 @@ class CompilingService:
                         + CompilingService.get_n_runs_script(
                             max_runs=max_runs,
                             tiramisu_program=tiramisu_program,
-                            delete_files=True,
+                            delete_files=delete_fiels,
                         )
                     )
                 ],

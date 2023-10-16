@@ -150,4 +150,4 @@ def test_distribution_application():
 
     assert schedule.is_legal()
 
-    assert schedule.apply_schedule()
+    assert schedule.execute()

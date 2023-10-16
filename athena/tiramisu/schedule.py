@@ -56,8 +56,17 @@ class Schedule:
         self.legality = None
 
         for optim_cmd in list_optim_cmds:
-            # Fusion and distribution are special cases, we need to get the latest isl ast tree to get the correct fusion levels
-            if optim_cmd.is_fusion() or optim_cmd.is_distribution():
+            # initialize action for the schedule tree
+            optim_cmd.initialize_action_for_tree(self.tree)
+
+            self.optims_list.append(optim_cmd)
+
+            # Fusion, distribution and tiling are special cases, we need to get the new tree with the new fusion levels
+            if (
+                optim_cmd.is_fusion()
+                or optim_cmd.is_distribution()
+                or optim_cmd.is_any_tiling()
+            ):
                 isl_ast_str = CompilingService.compile_isl_ast_tree(
                     tiramisu_program=self.tiramisu_program, schedule=self
                 )
@@ -65,19 +74,17 @@ class Schedule:
                     isl_ast_str.split("\n")
                 )
 
-            # initialize action for the schedule tree
-            optim_cmd.initialize_action_for_tree(self.tree)
-
-            self.optims_list.append(optim_cmd)
-
     def pop_optimization(self) -> TiramisuAction:
         """
         Removes the last optimization from the schedule and returns it.
         """
         return self.optims_list.pop()
 
-    def apply_schedule(
-        self, nb_exec_tiems=1, max_mins_per_schedule: float | None = None
+    def execute(
+        self,
+        nb_exec_tiems=1,
+        max_mins_per_schedule: float | None = None,
+        delete_files: bool = True,
     ) -> List[float]:
         """
         Applies the schedule to the Tiramisu program.
@@ -104,6 +111,7 @@ class Schedule:
             self.optims_list,
             nb_exec_tiems,
             max_mins_per_schedule,
+            delete_files,
         )
 
     def is_legal(self, with_ast: bool = False) -> bool:
