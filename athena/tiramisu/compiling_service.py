@@ -447,6 +447,7 @@ class CompilingService:
         optims_list: List[TiramisuAction],
         max_runs: int = 0,
         max_mins_per_schedule: float | None = None,
+        delete_fiels: bool = True,
     ) -> List[float]:
         """
         Returns the execution times of the program on the CPU after applying the optimizations in the optims_list
@@ -574,7 +575,7 @@ class CompilingService:
                         + CompilingService.get_n_runs_script(
                             max_runs=max_runs,
                             tiramisu_program=tiramisu_program,
-                            delete_files=True,
+                            delete_files=delete_fiels,
                         )
                     )
                 ],

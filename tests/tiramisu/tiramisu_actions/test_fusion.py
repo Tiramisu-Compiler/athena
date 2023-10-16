@@ -129,4 +129,4 @@ def test_fusion_application():
 
     assert schedule.is_legal()
 
-    assert schedule.apply_schedule()
+    assert schedule.execute()

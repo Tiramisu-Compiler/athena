@@ -6,14 +6,14 @@ from athena.utils.config import BaseConfig
 from tests.utils import benchmark_program_test_sample
 
 
-def test_apply_schedule():
+def test_execute():
     BaseConfig.init()
     test_program = benchmark_program_test_sample()
 
     schedule = Schedule(test_program)
     assert schedule.tree
     schedule.add_optimizations([Parallelization(params=[("comp02", 0)])])
-    results = schedule.apply_schedule(nb_exec_tiems=10)
+    results = schedule.execute(nb_exec_tiems=10)
 
     assert results is not None
     assert len(results) == 10
