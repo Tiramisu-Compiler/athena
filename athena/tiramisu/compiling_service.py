@@ -119,7 +119,7 @@ class CompilingService:
 
     fct->gen_time_space_domain();
     fct->gen_isl_ast();
-    fct->print_isl_ast_representation(nullptr, 0);
+    fct->print_isl_ast_representation();
 """
 
         # Paste the lines responsable of checking legality of schedule in the cpp file
@@ -192,7 +192,7 @@ class CompilingService:
 
     fct->gen_time_space_domain();
     fct->gen_isl_ast();
-    fct->print_isl_ast_representation(nullptr, 0);
+    fct->print_isl_ast_representation();
 """
 
         # Paste the lines responsable of generating the program json tree in the cpp file
