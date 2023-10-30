@@ -485,11 +485,24 @@ class CompilingService:
 
         cls.write_to_disk(cpp_code, output_path + "_schedule")
 
-        # write the wrappers
-        cls.write_to_disk(tiramisu_program.wrappers["cpp"], output_path + "_wrapper")
-        cls.write_to_disk(
-            tiramisu_program.wrappers["h"], output_path + "_wrapper", ".h"
-        )
+        if tiramisu_program.wrapper_obj:
+            # write the object file to disk
+            with open(output_path + "_wrapper", "wb") as f:
+                f.write(tiramisu_program.wrapper_obj)
+            # write the wrapper header file needed by the schedule file
+            cls.write_to_disk(
+                tiramisu_program.wrappers["h"], output_path + "_wrapper", ".h"
+            )
+            # give it execution rights to be able to run it
+            subprocess.check_output(["chmod", "+x", output_path + "_wrapper"])
+        else:
+            # write the wrappers
+            cls.write_to_disk(
+                tiramisu_program.wrappers["cpp"], output_path + "_wrapper"
+            )
+            cls.write_to_disk(
+                tiramisu_program.wrappers["h"], output_path + "_wrapper", ".h"
+            )
 
         env_vars = [
             f"export {key}={value}"
@@ -508,10 +521,14 @@ class CompilingService:
                 f"$CXX -Wl,--no-as-needed -ldl -g -fno-rtti -lpthread -std=c++17 -O0 {tiramisu_program.name}.o -o {tiramisu_program.name}.out   -L$TIRAMISU_ROOT/build  -L$TIRAMISU_ROOT/3rdParty/Halide/install/lib64  -L$TIRAMISU_ROOT/3rdParty/isl/build/lib  -Wl,-rpath,$TIRAMISU_ROOT/build:$TIRAMISU_ROOT/3rdParty/Halide/install/lib64:$TIRAMISU_ROOT/3rdParty/isl/build/lib -ltiramisu -ltiramisu_auto_scheduler -lHalide -lisl",
                 # Run the generator
                 f"./{tiramisu_program.name}.out",
-                # compile the wrapper
                 f"$CXX -shared -o {tiramisu_program.name}.o.so {tiramisu_program.name}.o",
-                f"$CXX -std=c++17 -fno-rtti -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/Halide/install/include -I$TIRAMISU_ROOT/3rdParty/isl/include/ -I$TIRAMISU_ROOT/benchmarks -L$TIRAMISU_ROOT/build -L$TIRAMISU_ROOT/3rdParty/Halide/install/lib64/ -L$TIRAMISU_ROOT/3rdParty/isl/build/lib -o {tiramisu_program.name}_wrapper -ltiramisu -lHalide -ldl -lpthread -lm -Wl,-rpath,$TIRAMISU_ROOT/build {tiramisu_program.name}_wrapper.cpp ./{tiramisu_program.name}.o.so -ltiramisu -lHalide -ldl -lpthread -lm -lisl",
             ]
+
+            if not tiramisu_program.wrapper_obj:
+                shell_script += [
+                    # compile the wrapper
+                    f"$CXX -std=c++17 -fno-rtti -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/Halide/install/include -I$TIRAMISU_ROOT/3rdParty/isl/include/ -I$TIRAMISU_ROOT/benchmarks -L$TIRAMISU_ROOT/build -L$TIRAMISU_ROOT/3rdParty/Halide/install/lib64/ -L$TIRAMISU_ROOT/3rdParty/isl/build/lib -o {tiramisu_program.name}_wrapper -ltiramisu -lHalide -ldl -lpthread -lm -Wl,-rpath,$TIRAMISU_ROOT/build {tiramisu_program.name}_wrapper.cpp ./{tiramisu_program.name}.o.so -ltiramisu -lHalide -ldl -lpthread -lm -lisl",
+                ]
 
         else:
             shell_script = [
@@ -522,10 +539,14 @@ class CompilingService:
                 f"$CXX -Wl,--no-as-needed -ldl -g -fno-rtti -lpthread -std=c++11 -O0 {tiramisu_program.name}.o -o {tiramisu_program.name}.out   -L$TIRAMISU_ROOT/build  -L$TIRAMISU_ROOT/3rdParty/Halide/lib  -L$TIRAMISU_ROOT/3rdParty/isl/build/lib  -Wl,-rpath,$TIRAMISU_ROOT/build:$TIRAMISU_ROOT/3rdParty/Halide/lib:$TIRAMISU_ROOT/3rdParty/isl/build/lib -ltiramisu -ltiramisu_auto_scheduler -lHalide -lisl",
                 # Run the generator
                 f"./{tiramisu_program.name}.out",
-                # compile the wrapper
                 f"$CXX -shared -o {tiramisu_program.name}.o.so {tiramisu_program.name}.o",
-                f"$CXX -std=c++11 -fno-rtti -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/Halide/include -I$TIRAMISU_ROOT/3rdParty/isl/include/ -I$TIRAMISU_ROOT/benchmarks -L$TIRAMISU_ROOT/build -L$TIRAMISU_ROOT/3rdParty/Halide/lib/ -L$TIRAMISU_ROOT/3rdParty/isl/build/lib -o {tiramisu_program.name}_wrapper -ltiramisu -lHalide -ldl -lpthread -lm -Wl,-rpath,$TIRAMISU_ROOT/build {tiramisu_program.name}_wrapper.cpp ./{tiramisu_program.name}.o.so -ltiramisu -lHalide -ldl -lpthread -lm -lisl",
             ]
+
+            if not tiramisu_program.wrapper_obj:
+                shell_script += [
+                    # compile the wrapper
+                    f"$CXX -std=c++11 -fno-rtti -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/Halide/include -I$TIRAMISU_ROOT/3rdParty/isl/include/ -I$TIRAMISU_ROOT/benchmarks -L$TIRAMISU_ROOT/build -L$TIRAMISU_ROOT/3rdParty/Halide/lib/ -L$TIRAMISU_ROOT/3rdParty/isl/build/lib -o {tiramisu_program.name}_wrapper -ltiramisu -lHalide -ldl -lpthread -lm -Wl,-rpath,$TIRAMISU_ROOT/build {tiramisu_program.name}_wrapper.cpp ./{tiramisu_program.name}.o.so -ltiramisu -lHalide -ldl -lpthread -lm -lisl",
+                ]
 
         try:
             # run the compilation of the generator and wrapper

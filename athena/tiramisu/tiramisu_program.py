@@ -51,6 +51,7 @@ class TiramisuProgram:
         self.initial_execution_times = {}
         # self.current_machine_initial_execution_time: float | None = None
         self.tree: TiramisuTree = None
+        self.wrapper_obj: bytes | None = None
 
     @classmethod
     def from_dict(
@@ -60,6 +61,7 @@ class TiramisuProgram:
         original_str: str | None = None,
         load_code_lines: bool = True,
         load_tree: bool = True,
+        wrapper_obj: bytes | None = None,
     ) -> "TiramisuProgram":
         # Initiate an instante of the TiramisuProgram class
         tiramisu_prog = cls()
@@ -79,6 +81,9 @@ class TiramisuProgram:
 
         if load_code_lines:
             tiramisu_prog.load_code_lines(original_str)
+
+        if wrapper_obj:
+            tiramisu_prog.wrapper_obj = wrapper_obj
 
         # construct the wrapper code
         wrapper_cpp, wrapper_header = tiramisu_prog.construct_wrapper_code()
