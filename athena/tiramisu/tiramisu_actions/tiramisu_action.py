@@ -5,8 +5,6 @@ from typing import List  # ,TYPE_CHECKING
 
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 
-# if TYPE_CHECKING:
-
 
 class TiramisuActionType(Enum):
     """The type of an optimization command."""

@@ -35,7 +35,7 @@ def test_set_string_representations():
     assert reversal.tiramisu_optim_str == "comp00.unroll(0,4);"
     assert (
         reversal.legality_check_string
-        == "is_legal &= loop_unrolling_is_legal(0, {&comp00});\n    comp00.unroll(0,4);"
+        == "prepare_schedules_for_legality_checks(true);\n    is_legal &= loop_unrolling_is_legal(0, {&comp00});\n    comp00.unroll(0,4);"
     )
 
 

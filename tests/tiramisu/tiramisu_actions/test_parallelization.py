@@ -54,7 +54,7 @@ def test_legality_check():
     legality_string = schedule.optims_list[0].legality_check_string
     assert (
         legality_string
-        == "is_legal &= loop_parallelization_is_legal(0, {&comp02});\n    comp02.tag_parallel_level(0);\n"
+        == "prepare_schedules_for_legality_checks(true);\n    is_legal &= loop_parallelization_is_legal(0, {&comp02});\n    comp02.tag_parallel_level(0);\n"
     )
 
     # sample = test_utils.multiple_roots_sample()

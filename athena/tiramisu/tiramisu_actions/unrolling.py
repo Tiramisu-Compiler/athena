@@ -67,7 +67,7 @@ class Unrolling(TiramisuAction):
             f"U(L{str(loop_level)},{str(unrolling_factor)},comps={self.comps})"
         )
 
-        self.legality_check_string = f"is_legal &= loop_unrolling_is_legal({loop_level}, {{{', '.join([f'&{comp}' for comp in self.comps])}}});\n    {self.tiramisu_optim_str}"
+        self.legality_check_string = f"prepare_schedules_for_legality_checks(true);\n    is_legal &= loop_unrolling_is_legal({loop_level}, {{{', '.join([f'&{comp}' for comp in self.comps])}}});\n    {self.tiramisu_optim_str}"
 
     @classmethod
     def get_candidates(cls, program_tree: TiramisuTree) -> List[str]:

@@ -4,7 +4,7 @@ import copy
 import itertools
 from typing import TYPE_CHECKING, Dict, List, Tuple
 
-from athena.tiramisu.tiramisu_iterator_node import IteratorIdentifier
+from athena.tiramisu.tiramisu_iterator_node import IteratorIdentifier, IteratorNode
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 if TYPE_CHECKING:
@@ -40,13 +40,18 @@ class Fusion(TiramisuAction):
         self.tree = copy.deepcopy(tiramisu_tree)
 
         self.comps = []
+        self.iterators: List[IteratorNode] = []
+        self.itertors_computations: List[List[str]] = []
         for iterator_id in self.params:
             iterator = tiramisu_tree.get_iterator_of_computation(
                 iterator_id[0], iterator_id[1]
             )
-            self.comps.extend(
-                tiramisu_tree.get_iterator_subtree_computations(iterator.name)
+            self.iterators.append(iterator)
+            iterator_computations = tiramisu_tree.get_iterator_subtree_computations(
+                iterator.name
             )
+            self.itertors_computations.append(iterator_computations)
+            self.comps.extend(iterator_computations)
 
         # sort the comps by the absolute order of the tree
         self.comps.sort(
@@ -68,12 +73,41 @@ class Fusion(TiramisuAction):
             tiramisu_tree=tiramisu_tree,
         )
 
-        first_comp = ordered_computations[0]
+        computations_of_first_iterator = self.itertors_computations[0]
 
-        self.tiramisu_optim_str += f"clear_implicit_function_sched_graph();\n    {first_comp}{''.join([f'.then({comp},{fusion_level})' for comp, fusion_level in zip(ordered_computations[1:], fusion_levels)])};\n"
+        self.itertors_computations[1].sort(
+            key=lambda comp: tiramisu_tree.computations_absolute_order[comp]
+        )
+
+        computation_to_fuse = self.params[1][0]
+        computation_to_fuse_iterator = tiramisu_tree.get_iterator_of_computation(
+            computation_to_fuse
+        )
+
+        # self.tiramisu_optim_str += f"clear_implicit_function_sched_graph();\n    {first_comp}{''.join([f'.then({comp},{fusion_level})' for comp, fusion_level in zip(ordered_computations[1:], fusion_levels)])};\n"
+        self.tiramisu_optim_str += f"""
+perform_full_dependency_analysis();
+    clear_implicit_function_sched_graph();
+    {ordered_computations[0]}{''.join([f'.then({comp},{fusion_level})' for comp, fusion_level in zip(ordered_computations[1:], fusion_levels)])};
+    prepare_schedules_for_legality_checks(true);
+    std::vector<std::tuple<tiramisu::var, int>> factors = tiramisu::global::get_implicit_function()->correcting_loop_fusion_with_shifting({{{", ".join([f"&{comp}" for comp in computations_of_first_iterator])}}}, {computation_to_fuse}, {{{", ".join([str(i) for i in range(computation_to_fuse_iterator.level + 1)])}}});
+    for (const auto &tuple : factors)
+    {{
+        tiramisu::var var = std::get<0>(tuple);
+        int value = std::get<1>(tuple);
+
+        if (value != 0)
+        {{
+            {computation_to_fuse}.shift(var, value);
+        }}
+    }}
+"""
+
         self.str_representation = f"F(L{self.params[0][1]},comps={self.comps})"
 
-        self.legality_check_string = self.tiramisu_optim_str
+        self.legality_check_string = (
+            self.tiramisu_optim_str + "\n    is_legal &= factors.size() > 0;\n"
+        )
 
     @classmethod
     def get_candidates(cls, program_tree: TiramisuTree) -> List[Tuple[str, str]]:

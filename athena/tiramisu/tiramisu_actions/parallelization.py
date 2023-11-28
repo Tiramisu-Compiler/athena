@@ -63,7 +63,7 @@ class Parallelization(TiramisuAction):
 
         self.str_representation = f"P(L{level},comps={self.comps})"
 
-        self.legality_check_string = f"is_legal &= loop_parallelization_is_legal({level}, {{{', '.join([f'&{comp}' for comp in self.comps]) }}});\n    {self.tiramisu_optim_str}"
+        self.legality_check_string = f"prepare_schedules_for_legality_checks(true);\n    is_legal &= loop_parallelization_is_legal({level}, {{{', '.join([f'&{comp}' for comp in self.comps]) }}});\n    {self.tiramisu_optim_str}"
 
     @classmethod
     def _get_candidates_of_node(

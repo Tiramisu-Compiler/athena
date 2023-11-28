@@ -91,24 +91,16 @@ class CompilingService:
 
         # Add code to the original file to get legality result
         legality_check_lines = """
-    prepare_schedules_for_legality_checks();
+    prepare_schedules_for_legality_checks(true);
     perform_full_dependency_analysis();
     bool is_legal=true;
 
 """
         for optim in schedule.optims_list:
-            # if optim.is_parallelization():
             legality_check_lines += "    " + optim.legality_check_string
-            # elif optim.is_unrolling():
-            #     for branch in schedule_object.branches:
-            #         comps = branch["comps"]
-            #         level = len(branch["iterators"]) - 1
-            #         legality_check_lines += print(
-            #             f"\n\tis_legal &= loop_unrolling_is_legal({level}, {{{', '.join([f'&{comp}' for comp in comps])}}});")
-            # legality_check_lines += optim.tiramisu_optim_str + "\n"
 
         legality_check_lines += """
-    prepare_schedules_for_legality_checks();
+    prepare_schedules_for_legality_checks(true);
     is_legal &= check_legality_of_function();   
     std::cout << is_legal << std::endl;
 """
@@ -275,6 +267,7 @@ class CompilingService:
         except subprocess.CalledProcessError as e:
             logging.error(f"Process terminated with error code: {e.returncode}")
             logging.error(f"Error output: {e.stderr}")
+            logging.error(env_vars + shell_script)
             raise e
         except Exception as e:
             raise e
