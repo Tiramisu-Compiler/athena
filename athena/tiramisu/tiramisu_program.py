@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from athena.tiramisu.compiling_service import CompilingService
+from athena.tiramisu.function_server import FunctionServer
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 
@@ -52,6 +53,7 @@ class TiramisuProgram:
         # self.current_machine_initial_execution_time: float | None = None
         self.tree: TiramisuTree = None
         self.wrapper_obj: bytes | None = None
+        self.server: FunctionServer | None = None
 
     @classmethod
     def from_dict(
@@ -167,6 +169,55 @@ class TiramisuProgram:
         # After taking the neccessary fields return the instance
         return tiramisu_prog
 
+    @classmethod
+    def init_server(
+        cls,
+        original_code: str,
+        from_file: bool = False,
+        load_annotations=False,
+        load_isl_ast=False,
+        load_tree=False,
+        reuseServer=False,
+    ):
+        # Initiate an instante of the TiramisuProgram class
+        tiramisu_prog = cls()
+        if from_file:
+            tiramisu_prog.file_path = original_code
+            tiramisu_prog.load_code_lines()
+        else:
+            tiramisu_prog.load_code_lines(original_code)
+        # load the wrapper code
+        wrapper_cpp, wrapper_header = tiramisu_prog.construct_wrapper_code()
+
+        tiramisu_prog.wrappers = {"cpp": wrapper_cpp, "h": wrapper_header}
+
+        tiramisu_prog.server = FunctionServer(tiramisu_prog, reuseServer=reuseServer)
+
+        if load_annotations:
+            annotations_str = tiramisu_prog.server.get_annotations()
+            tiramisu_prog.annotations = json.loads(annotations_str)
+        elif load_isl_ast:
+            result = tiramisu_prog.server.run()
+            tiramisu_prog.isl_ast_string = result.isl_ast
+
+        if load_tree:
+            if tiramisu_prog.annotations:
+                assert tiramisu_prog.annotations is not None
+                tiramisu_prog.tree = TiramisuTree.from_annotations(
+                    tiramisu_prog.annotations
+                )
+            elif tiramisu_prog.isl_ast_string:
+                tiramisu_prog.tree = TiramisuTree.from_isl_ast_string_list(
+                    tiramisu_prog.isl_ast_string.split("\n")
+                )
+            else:
+                raise Exception(
+                    "You should load either the annotations or the isl ast string to load the tree"
+                )
+
+        # After taking the neccessary fields return the instance
+        return tiramisu_prog
+
     def load_code_lines(self, original_str: str | None = None):
         """
         This function loads the file code , it is necessary to generate legality check code and annotations
@@ -184,7 +235,7 @@ class TiramisuProgram:
             else "."
         ) + "/"
         self.body = re.findall(
-            r"(tiramisu::init(?s:.)+)tiramisu::codegen", self.original_str
+            r"int main\([\w\s,*]+\)\s*\{([\W\w\s]*)tiramisu::codegen", self.original_str
         )[0]
         self.name = re.findall(r"tiramisu::init\(\"(\w+)\"\);", self.original_str)[0]
         # Remove the wrapper include from the original string
