@@ -20,12 +20,12 @@ poetry shell
 ```
 
 ### Loading a Tiramisu Program
-To load a Tiramisu program, you need to create a `TiramisuProgram` object and pass the path to the Tiramisu program to its constructor:
+To load a Tiramisu program, you need to create a `TiramisuProgram` object and pass the path to the Tiramisu program to its `from_file` constructor:
 
 ```python
 from athena.tiramisu import TiramisuProgram
 
-tiramisu_program = TiramisuProgram("path/to/tiramisu/program.cpp")
+tiramisu_program = TiramisuProgram.from_file("path/to/tiramisu/program.cpp")
 ```
 
 ### Building a Schedule
