@@ -11,85 +11,9 @@ if TYPE_CHECKING:
     from athena.tiramisu.schedule import Schedule
     from athena.tiramisu.tiramisu_program import TiramisuProgram
 
-template = """
-#include <tiramisu/tiramisu.h>
-#include <tiramisu/auto_scheduler/evaluator.h>
-#include <tiramisu/auto_scheduler/search_method.h>
-#include <HermesII/utils.h>
-
-using namespace tiramisu;
-
-int main(int argc, char *argv[])
-{{
-    // check the number of arguemnts is 2 or 3
-    assert(argc == 1 || argc == 2 || argc == 3 && "Invalid number of arguments");
-    // get the operation to perform
-    Operation operation = Operation::legality;
-
-    if (argc >= 2)
-    {{
-        operation = get_operation_from_string(argv[1]);
-    }}
-    // get the schedule string if provided
-    std::string schedule_str = "";
-    if (argc == 3)
-        schedule_str = argv[2];
-
-    std::string function_name = "{name}";
-    
-    {body}
-
-    Result result = {{
-        .name = function_name,
-        .legality = false,
-        .exec_times = "",
-    }};
-
-    auto implicit_function = global::get_implicit_function();
-
-    prepare_schedules_for_legality_checks();
-    perform_full_dependency_analysis();
-    bool is_legal = true;
-
-    is_legal &= apply_actions_from_schedule_str(schedule_str, implicit_function);
-
-    prepare_schedules_for_legality_checks();
-    is_legal &= check_legality_of_function();
-    result.legality = is_legal;
-
-    std::string isl_ast = implicit_function->generate_isl_ast_representation_string(nullptr, 0, "");
-    result.isl_ast = isl_ast;
-
-    if (operation == Operation::execution)
-    {{
-        {code_gen_line}
-
-        std::string gpp_command = "g++";
-        std::string wrapper_cmd = "./" + function_name + "_wrapper";
-
-        std::string gcc_cmd = gpp_command + " -shared -o " + function_name + ".o.so " + function_name + ".o";
-        // run the command and retrieve the execution status
-        int status = system(gcc_cmd.c_str());
-        assert(status != 139 && "Segmentation Fault when trying to execute schedule");
-        // write the wrapper to a file
-        if (write_wrapper_from_db(function_name)){{
-            std::cout << "Error: could not write wrapper to file" << std::endl;
-            return 1;
-        }};
-        // run the wrapper
-        result.exec_times = exec(wrapper_cmd.c_str());
-    }}
-    result.success = true;
-
-    std::cout << serialize_result(result) << std::endl;
-    return 0;
-}}
-"""
-
 templateWithEverythinginUtils = """
 #include <tiramisu/tiramisu.h>
-#include <tiramisu/auto_scheduler/evaluator.h>
-#include <tiramisu/auto_scheduler/search_method.h>
+#include <HermesII/actions.h>
 #include <HermesII/utils.h>
 
 using namespace tiramisu;
@@ -138,8 +62,12 @@ class ResultInterface:
         self.name = result_dict["name"]
         self.legality = result_dict["legality"] == 1
         self.isl_ast = result_dict["isl_ast"]
-        self.exec_times = result_dict["exec_times"]
         self.success = result_dict["success"]
+
+        # convert exec_times to list of floats
+        self.exec_times = [float(x) for x in result_dict["exec_times"].split()] if result_dict["exec_times"] else []
+
+        self.additional_info = result_dict["additional_info"]
 
     def __str__(self) -> str:
         isl_ast = self.isl_ast.replace("\n", ",")
@@ -196,7 +124,7 @@ class FunctionServer:
 
     @classmethod
     def _generate_server_code_from_original_string(
-        self, tiramisu_program: "TiramisuProgram", abstracted: bool = True
+        self, tiramisu_program: "TiramisuProgram"
     ):
         original_str = tiramisu_program.original_str
         # Generate function
@@ -213,16 +141,11 @@ class FunctionServer:
         )[0]
 
         # fill the template
-        if abstracted:
-            function_str = templateWithEverythinginUtils.format(
-                name=name,
-                body=body,
-                buffers=buffers_vector,
-            )
-        else:
-            function_str = template.format(
-                name=name, body=body, code_gen_line=code_gen_line
-            )
+        function_str = templateWithEverythinginUtils.format(
+            name=name,
+            body=body,
+            buffers=buffers_vector,
+        )
         return function_str
 
     def _compile_server_code(self):

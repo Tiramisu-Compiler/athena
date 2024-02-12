@@ -136,6 +136,19 @@ class Schedule:
                 isl_ast_string_list=result.isl_ast.split("\n")
             )
             self.legality = result.legality
+
+            # Update the skewing factors if they are not set
+            if result.additional_info:
+                if "skewing_factors" in result.additional_info:
+                    for action in self.optims_list:
+                        if action.type == TiramisuActionType.SKEWING:
+                            if action.params[2] == 0:
+                                factors = result.additional_info.replace("skewing_factors:", "").split(",")
+                                factors = [int(factor) for factor in factors]
+                                action.params[2] = factors[0]
+                                action.params[3] = factors[1]
+                                action.factors = factors
+                                action.set_string_representations(self.tree)
             return result.legality
 
         legality, new_tree = CompilingService.compile_legality(self, with_ast=with_ast)
