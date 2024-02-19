@@ -2,6 +2,7 @@ from .distribution import Distribution
 from .expansion import Expansion
 from .fusion import Fusion
 from .interchange import Interchange
+from .matrix import MatrixTransform
 from .parallelization import Parallelization
 from .reversal import Reversal
 from .skewing import Skewing
