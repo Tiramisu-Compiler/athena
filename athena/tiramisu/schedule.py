@@ -67,12 +67,7 @@ class Schedule:
                 or optim_cmd.is_distribution()
                 or optim_cmd.is_any_tiling()
             ):
-                isl_ast_str = CompilingService.compile_isl_ast_tree(
-                    tiramisu_program=self.tiramisu_program, schedule=self
-                )
-                self.tree = TiramisuTree.from_isl_ast_string_list(
-                    isl_ast_str.split("\n")
-                )
+                self.update_tree_from_isl_ast()
 
     def pop_optimization(self) -> TiramisuAction:
         """
@@ -82,7 +77,7 @@ class Schedule:
 
     def execute(
         self,
-        nb_exec_tiems=1,
+        nb_exec_times=1,
         max_mins_per_schedule: float | None = None,
         delete_files: bool = True,
     ) -> List[float]:
@@ -100,6 +95,15 @@ class Schedule:
         if self.tiramisu_program is None:
             raise Exception("No Tiramisu program to apply the schedule to")
 
+        if self.tiramisu_program.server:
+            result = self.tiramisu_program.server.run(
+                operation="execution", schedule=self, nbr_executions=nb_exec_times
+            )
+            if result.legality == False:
+                raise Exception("Schedule is not legal")
+
+            return result.exec_times
+
         if self.legality is None and self.optims_list:
             self.is_legal()
 
@@ -109,7 +113,7 @@ class Schedule:
         return CompilingService.get_cpu_exec_times(
             self.tiramisu_program,
             self.optims_list,
-            nb_exec_tiems,
+            nb_exec_times,
             max_mins_per_schedule,
             delete_files,
         )
@@ -126,6 +130,27 @@ class Schedule:
         if self.tiramisu_program is None:
             raise Exception("No Tiramisu program to apply the schedule to")
 
+        if self.tiramisu_program.server:
+            result = self.tiramisu_program.server.run("legality", self)
+            self.tree = TiramisuTree.from_isl_ast_string_list(
+                isl_ast_string_list=result.isl_ast.split("\n")
+            )
+            self.legality = result.legality
+
+            # Update the skewing factors if they are not set
+            if result.additional_info:
+                if "skewing_factors" in result.additional_info:
+                    for action in self.optims_list:
+                        if action.type == TiramisuActionType.SKEWING:
+                            if action.params[2] == 0:
+                                factors = result.additional_info.replace("skewing_factors:", "").split(",")
+                                factors = [int(factor) for factor in factors]
+                                action.params[2] = factors[0]
+                                action.params[3] = factors[1]
+                                action.factors = factors
+                                action.set_string_representations(self.tree)
+            return result.legality
+
         legality, new_tree = CompilingService.compile_legality(self, with_ast=with_ast)
 
         assert isinstance(legality, bool)
@@ -134,6 +159,24 @@ class Schedule:
             assert new_tree
             self.tree = new_tree
         return self.legality
+
+    def update_tree_from_isl_ast(self):
+        """
+        Updates the schedule tree from the isl ast.
+        """
+        if self.tiramisu_program is None:
+            raise Exception("No Tiramisu program to apply the schedule to")
+
+        if self.tiramisu_program.server:
+            result = self.tiramisu_program.server.run("legality", self)
+            self.tree = TiramisuTree.from_isl_ast_string_list(
+                isl_ast_string_list=result.isl_ast.split("\n")
+            )
+        else:
+            isl_ast_str = CompilingService.compile_isl_ast_tree(
+                tiramisu_program=self.tiramisu_program, schedule=self
+            )
+            self.tree = TiramisuTree.from_isl_ast_string_list(isl_ast_str.split("\n"))
 
     @classmethod
     def from_sched_str(
