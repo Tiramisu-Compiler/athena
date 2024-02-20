@@ -99,7 +99,8 @@ class FunctionServer:
         )
 
         server_path = (
-            Path(BaseConfig.base_config.workspace) / f"{tiramisu_program.name}_server"
+            Path(BaseConfig.base_config.workspace)
+            / f"{tiramisu_program.name}_server"
         )
 
         if reuseServer and server_path.exists():
