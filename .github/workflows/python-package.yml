@@ -52,7 +52,7 @@ jobs:
         echo "  TIRAMISU_ROOT: \"${TIRAMISU_ROOT}\"" >> config.yaml
         echo "  LD_LIBRARY_PATH: \"${LD_LIBRARY_PATH}\"" >> config.yaml
         echo "  TIRAMISU_HERMESII_PATH: $(pwd)/HermesII/install" >> config.yaml
-        echo "  CONDA_ENV: . >> config.yaml
+        echo "  CONDA_ENV: ." >> config.yaml
     - name: Test with pytest
       run: |
         pytest
