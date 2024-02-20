@@ -93,9 +93,13 @@ class FunctionServer:
 
         self.tiramisu_program = tiramisu_program
 
-        server_path = (
+        server_path_cpp = (
             Path(BaseConfig.base_config.workspace)
             / f"{tiramisu_program.name}_server.cpp"
+        )
+
+        server_path = (
+            Path(BaseConfig.base_config.workspace) / f"{tiramisu_program.name}_server"
         )
 
         if reuseServer and server_path.exists():
@@ -110,7 +114,7 @@ class FunctionServer:
         )
 
         # Write the server code to a file
-        server_path.write_text(server_code)
+        server_path_cpp.write_text(server_code)
 
         # Write the wrapper code to a file
         wrapper_path = (
