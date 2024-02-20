@@ -35,6 +35,7 @@ jobs:
         # flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics --ignore=E203,W503
     - name: Install HermesII
       run: |
+        apt install -y sqlite3 
         git clone https://github.com/skourta/HermesII.git
         cd HermesII
         cmake . -B build -DTIRAMISU_ROOT=${TIRAMISU_ROOT}
