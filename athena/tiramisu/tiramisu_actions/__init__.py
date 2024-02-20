@@ -8,5 +8,26 @@ from .skewing import Skewing
 from .tiling_2d import Tiling2D
 from .tiling_3d import Tiling3D
 from .tiling_general import TilingGeneral
-from .tiramisu_action import CannotApplyException, TiramisuAction, TiramisuActionType
+from .tiramisu_action import (
+    CannotApplyException,
+    TiramisuAction,
+    TiramisuActionType,
+)
 from .unrolling import Unrolling
+
+__all__ = [
+    "TiramisuAction",
+    "TiramisuActionType",
+    "CannotApplyException",
+    "Interchange",
+    "Tiling2D",
+    "Tiling3D",
+    "TilingGeneral",
+    "Parallelization",
+    "Skewing",
+    "Unrolling",
+    "Fusion",
+    "Reversal",
+    "Expansion",
+    "Distribution",
+]

@@ -1,13 +1,10 @@
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING, Dict, List, Tuple
+from typing import Dict, List
 
 from athena.tiramisu.tiramisu_iterator_node import IteratorIdentifier
 from athena.tiramisu.tiramisu_tree import TiramisuTree
-
-if TYPE_CHECKING:
-    from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
     TiramisuAction,
@@ -25,7 +22,8 @@ class Parallelization(TiramisuAction):
         params: List[IteratorIdentifier],
         comps: List[str] | None = None,
     ):
-        # Parallelization only takes one parameter the loop to parallelize specified by a tuple (computation_name, iterator_level)
+        # Parallelization only takes one parameter the loop to
+        # parallelize specified by a tuple (computation_name, iterator_level)
         assert len(params) == 1
         self.params = params
         self.comps = comps
@@ -45,10 +43,14 @@ class Parallelization(TiramisuAction):
                 self.iterator_id[0], self.iterator_id[1]
             )
 
-            self.comps = tiramisu_tree.get_iterator_subtree_computations(iterator.name)
+            self.comps = tiramisu_tree.get_iterator_subtree_computations(
+                iterator.name
+            )
             # order the computations by their absolute order
             self.comps.sort(
-                key=lambda comp: tiramisu_tree.computations_absolute_order[comp]
+                key=lambda comp: tiramisu_tree.computations_absolute_order[
+                    comp
+                ]
             )
 
         self.set_string_representations(tiramisu_tree)
@@ -59,11 +61,13 @@ class Parallelization(TiramisuAction):
 
         level = self.iterator_id[1]
         first_comp = self.comps[0]
-        self.tiramisu_optim_str = f"{first_comp}.tag_parallel_level({level});\n"
+        self.tiramisu_optim_str = (
+            f"{first_comp}.tag_parallel_level({level});\n"
+        )
 
         self.str_representation = f"P(L{level},comps={self.comps})"
 
-        self.legality_check_string = f"prepare_schedules_for_legality_checks(true);\n    is_legal &= loop_parallelization_is_legal({level}, {{{', '.join([f'&{comp}' for comp in self.comps]) }}});\n    {self.tiramisu_optim_str}"
+        self.legality_check_string = f"prepare_schedules_for_legality_checks(true);\n    is_legal &= loop_parallelization_is_legal({level}, {{{', '.join([f'&{comp}' for comp in self.comps]) }}});\n    {self.tiramisu_optim_str}"  # noqa: E501
 
     @classmethod
     def _get_candidates_of_node(
@@ -81,7 +85,9 @@ class Parallelization(TiramisuAction):
         return candidates
 
     @classmethod
-    def get_candidates(cls, program_tree: TiramisuTree) -> Dict[str, List[str]]:
+    def get_candidates(
+        cls, program_tree: TiramisuTree
+    ) -> Dict[str, List[str]]:
         """Get the list of candidates for parallelization.
 
         Parameters:

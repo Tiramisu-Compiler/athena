@@ -1,20 +1,17 @@
 from __future__ import annotations
 
 import copy
-import itertools
 import os
-from typing import TYPE_CHECKING, Dict, List, Tuple
+from typing import TYPE_CHECKING, List
 
 from athena.tiramisu.compiling_service import CompilingService
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 from athena.utils.config import BaseConfig
 
 if TYPE_CHECKING:
-    from athena.tiramisu.tiramisu_tree import TiramisuTree
     from athena.tiramisu.schedule import Schedule
 
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
-    CannotApplyException,
     TiramisuAction,
     TiramisuActionType,
 )
@@ -31,7 +28,9 @@ class Expansion(TiramisuAction):
         assert isinstance(params[0], str)
         self.computation = params[0]
 
-        super().__init__(type=TiramisuActionType.EXPANSION, params=params, comps=None)
+        super().__init__(
+            type=TiramisuActionType.EXPANSION, params=params, comps=None
+        )
 
     def initialize_action_for_tree(self, tiramisu_tree: TiramisuTree):
         # clone the tree to be able to restore it later
@@ -58,9 +57,7 @@ class Expansion(TiramisuAction):
             candidates_code += "    " + optim.tiramisu_optim_str
 
         for comp in schedule.tree.computations:
-            candidates_code += (
-                f'    std::cout << "{comp}|" << {comp}.expandable() << std::endl;\n'
-            )
+            candidates_code += f'    std::cout << "{comp}|" << {comp}.expandable() << std::endl;\n'  # noqa
 
         cpp_code = schedule.tiramisu_program.original_str.replace(
             schedule.tiramisu_program.code_gen_line, candidates_code

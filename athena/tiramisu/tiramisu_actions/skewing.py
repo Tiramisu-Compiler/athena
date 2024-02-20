@@ -9,7 +9,6 @@ from athena.tiramisu.tiramisu_iterator_node import IteratorIdentifier
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 if TYPE_CHECKING:
-    from athena.tiramisu.tiramisu_tree import TiramisuTree
     from athena.tiramisu.schedule import Schedule
 
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
@@ -55,7 +54,8 @@ class Skewing(TiramisuAction):
                 *outermost_iterator_id
             )
 
-            # get the computations of the outermost iterator subtree (includes the innermost iterator)
+            # get the computations of the outermost iterator subtree
+            # (includes the innermost iterator)
             self.comps = self.tree.get_iterator_subtree_computations(
                 outermost_iterator.name
             )
@@ -76,9 +76,9 @@ class Skewing(TiramisuAction):
 
         self.tiramisu_optim_str = ""
         for comp in self.comps:
-            self.tiramisu_optim_str += f"{comp}.skew({self.iterators[0][1]}, {self.iterators[1][1]}, {self.factors[0]}, {self.factors[1]});\n"
+            self.tiramisu_optim_str += f"{comp}.skew({self.iterators[0][1]}, {self.iterators[1][1]}, {self.factors[0]}, {self.factors[1]});\n"  # noqa: E501
 
-        self.str_representation = f"S(L{self.iterators[0][1]},L{self.iterators[1][1]},{self.factors[0]},{self.factors[1]},comps={self.comps})"
+        self.str_representation = f"S(L{self.iterators[0][1]},L{self.iterators[1][1]},{self.factors[0]},{self.factors[1]},comps={self.comps})"  # noqa: E501
 
         self.legality_check_string = self.tiramisu_optim_str
 

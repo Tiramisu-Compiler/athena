@@ -2,7 +2,7 @@ import json
 import random
 import re
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict
 
 from athena.tiramisu.compiling_service import CompilingService
 from athena.tiramisu.function_server import FunctionServer
@@ -11,8 +11,8 @@ from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 class TiramisuProgram:
     """
-    This class represents a tiramisu function. It contains all the neccessary information
-    about the function to be able to generate the code for it.
+    This class represents a tiramisu function. It contains all the neccessary
+    information about the function to be able to generate the code for it.
 
     Attributes
     ----------
@@ -70,17 +70,18 @@ class TiramisuProgram:
         tiramisu_prog.name = name
         tiramisu_prog.annotations = data["program_annotation"]
         if tiramisu_prog.annotations:
-            tiramisu_prog.comps = list(tiramisu_prog.annotations["computations"].keys())
+            tiramisu_prog.comps = list(
+                tiramisu_prog.annotations["computations"].keys()
+            )
         if "schedules_dict" in data:
             tiramisu_prog.schedules_dict = data["schedules_dict"]
 
-            # Initialize the initial_execution_times attribute and the current_machine_initial_execution_time attribute
+            # Initialize the initial_execution_times attribute and
+            # the current_machine_initial_execution_time attribute
             if "initial_execution_times" in data:
-                tiramisu_prog.initial_execution_times = data["initial_execution_times"]
-            # if cfg.Config.config.tiramisu.hpc_name in data["initial_execution_times"]:
-            #     tiramisu_prog.current_machine_initial_execution_time = min(data[
-            #         "initial_execution_times"][cfg.Config.config.tiramisu.hpc_name])
-
+                tiramisu_prog.initial_execution_times = data[
+                    "initial_execution_times"
+                ]
         if load_code_lines:
             tiramisu_prog.load_code_lines(original_str)
 
@@ -91,18 +92,7 @@ class TiramisuProgram:
         wrapper_cpp, wrapper_header = tiramisu_prog.construct_wrapper_code()
 
         tiramisu_prog.wrappers = {"cpp": wrapper_cpp, "h": wrapper_header}
-        # If the current_machine_initial_execution_time attribute is not found in the data, compute itcio
-        # if not tiramisu_prog.current_machine_initial_execution_time:
-        #     tmp_exec_times = CompilingModule.CompilingService.get_cpu_exec_times(
-        #         tiramisu_program=tiramisu_prog, optims_list=[])
-        #     # Store the minimum execution time in the initial_execution_time attribute
-        #     tiramisu_prog.current_machine_initial_execution_time = min(
-        #         tmp_exec_times)
 
-        #     tiramisu_prog.initial_execution_times[
-        #         cfg.Config.config.tiramisu.hpc_name] = tmp_exec_times
-
-        # After taking the neccessary fields return the instance
         if load_tree:
             tiramisu_prog.tree = TiramisuTree.from_annotations(
                 tiramisu_prog.annotations
@@ -118,7 +108,8 @@ class TiramisuProgram:
         load_tree=False,
     ) -> "TiramisuProgram":
         """
-        This function loads a tiramisu function from its cpp file and its wrapper files.
+        This function loads a tiramisu function from its cpp file and its
+        wrapper files.
 
         Parameters
         ----------
@@ -147,8 +138,8 @@ class TiramisuProgram:
                 CompilingService.compile_annotations(tiramisu_prog)
             )
         elif load_isl_ast:
-            tiramisu_prog.isl_ast_string = CompilingService.compile_isl_ast_tree(
-                tiramisu_prog
+            tiramisu_prog.isl_ast_string = (
+                CompilingService.compile_isl_ast_tree(tiramisu_prog)
             )
 
         if load_tree:
@@ -163,7 +154,8 @@ class TiramisuProgram:
                 )
             else:
                 raise Exception(
-                    "You should load either the annotations or the isl ast string to load the tree"
+                    "You should load either the annotations or the isl ast\
+                    string to load the tree"
                 )
 
         # After taking the neccessary fields return the instance
@@ -191,7 +183,9 @@ class TiramisuProgram:
 
         tiramisu_prog.wrappers = {"cpp": wrapper_cpp, "h": wrapper_header}
 
-        tiramisu_prog.server = FunctionServer(tiramisu_prog, reuseServer=reuseServer)
+        tiramisu_prog.server = FunctionServer(
+            tiramisu_prog, reuseServer=reuseServer
+        )
 
         if load_annotations:
             annotations_str = tiramisu_prog.server.get_annotations()
@@ -212,7 +206,8 @@ class TiramisuProgram:
                 )
             else:
                 raise Exception(
-                    "You should load either the annotations or the isl ast string to load the tree"
+                    "You should load either the annotations or the isl ast \
+                    string to load the tree"
                 )
 
         # After taking the neccessary fields return the instance
@@ -220,7 +215,8 @@ class TiramisuProgram:
 
     def load_code_lines(self, original_str: str | None = None):
         """
-        This function loads the file code , it is necessary to generate legality check code and annotations
+        This function loads the file code , it is necessary to generate
+        legality check code and annotations
         """
 
         if original_str:
@@ -235,18 +231,21 @@ class TiramisuProgram:
             else "."
         ) + "/"
         self.body = re.findall(
-            r"int main\([\w\s,*]+\)\s*\{([\W\w\s]*)tiramisu::codegen", self.original_str
+            r"int main\([\w\s,*]+\)\s*\{([\W\w\s]*)tiramisu::codegen",
+            self.original_str,
         )[0]
-        self.name = re.findall(r"tiramisu::init\(\"(\w+)\"\);", self.original_str)[0]
+        self.name = re.findall(
+            r"tiramisu::init\(\"(\w+)\"\);", self.original_str
+        )[0]
         # Remove the wrapper include from the original string
         self.wrapper_str = f'#include "{self.name}_wrapper.h"'
         self.original_str = self.original_str.replace(
             self.wrapper_str, f"// {self.wrapper_str}"
         )
         self.comps = re.findall(r"computation (\w+)\(", self.original_str)
-        self.code_gen_line = re.findall(r"tiramisu::codegen\({.+;", self.original_str)[
-            0
-        ]
+        self.code_gen_line = re.findall(
+            r"tiramisu::codegen\({.+;", self.original_str
+        )[0]
         buffers_vect = re.findall(r"{(.+)}", self.code_gen_line)[0]
         self.IO_buffer_names = re.findall(r"\w+", buffers_vect)
         self.buffer_sizes = []
@@ -266,11 +265,13 @@ class TiramisuProgram:
     double *c_{buffer_name} = (double*)malloc({'*'.join(self.buffer_sizes[i][::-1])}* sizeof(double));
     parallel_init_buffer(c_{buffer_name}, {'*'.join(self.buffer_sizes[i][::-1])}, (double){str(random.randint(1,10))});
     Halide::Buffer<double> {buffer_name}(c_{buffer_name}, {','.join(self.buffer_sizes[i][::-1])});
-    """
+    """  # noqa: E501
         if self.name is None:
             raise Exception("TiramisuProgram.name is None")
 
-        wrapper_cpp_code = wrapper_cpp_template.replace("$func_name$", self.name)
+        wrapper_cpp_code = wrapper_cpp_template.replace(
+            "$func_name$", self.name
+        )
         wrapper_cpp_code = wrapper_cpp_code.replace(
             "$buffers_init$", buffers_init_lines
         )
@@ -279,13 +280,17 @@ class TiramisuProgram:
         )
         wrapper_cpp_code = wrapper_cpp_code.replace(
             "$func_params$",
-            ",".join([name + ".raw_buffer()" for name in self.IO_buffer_names]),
+            ",".join(
+                [name + ".raw_buffer()" for name in self.IO_buffer_names]
+            ),
         )
 
         wrapper_h_code = wrapper_h_template.replace("$func_name$", self.name)
         wrapper_h_code = wrapper_h_code.replace(
             "$func_params$",
-            ",".join(["halide_buffer_t *" + name for name in self.IO_buffer_names]),
+            ",".join(
+                ["halide_buffer_t *" + name for name in self.IO_buffer_names]
+            ),
         )
 
         return wrapper_cpp_code, wrapper_h_code
@@ -309,27 +314,27 @@ using namespace std::chrono;
 using namespace std;
 
 int main(int, char **argv){
-        
+
 $buffers_init$
-    
+
     //halide_set_num_threads(48);
-    
+
     int nb_execs = get_nb_exec();
 
     double duration;
-    
+
     for (int i = 0; i < nb_execs; ++i) {
-        auto begin = std::chrono::high_resolution_clock::now(); 
+        auto begin = std::chrono::high_resolution_clock::now();
         $func_name$($func_params$);
-        auto end = std::chrono::high_resolution_clock::now(); 
+        auto end = std::chrono::high_resolution_clock::now();
 
         duration = std::chrono::duration_cast<std::chrono::nanoseconds>(end-begin).count() / (double)1000000;
-        std::cout << duration << " "; 
+        std::cout << duration << " ";
 
     }
     std::cout << std::endl;
     return 0;
-}"""
+}"""  # noqa: E501
 wrapper_h_template = """#include <tiramisu/utils.h>
 #include <sys/time.h>
 #include <cstdlib>
@@ -357,16 +362,16 @@ void *init_part(void *params)
 }
 
 void parallel_init_buffer(double* buf, unsigned long long int size, double value){
-    pthread_t threads[NB_THREAD_INIT]; 
+    pthread_t threads[NB_THREAD_INIT];
     struct args params[NB_THREAD_INIT];
     for (int i = 0; i < NB_THREAD_INIT; i++) {
         unsigned long long int start = i*size/NB_THREAD_INIT;
         unsigned long long int end = std::min((i+1)*size/NB_THREAD_INIT, size);
         params[i] = (struct args){buf, start, end, value};
-        pthread_create(&threads[i], NULL, init_part, (void*)&(params[i])); 
+        pthread_create(&threads[i], NULL, init_part, (void*)&(params[i]));
     }
-    for (int i = 0; i < NB_THREAD_INIT; i++) 
-        pthread_join(threads[i], NULL); 
+    for (int i = 0; i < NB_THREAD_INIT; i++)
+        pthread_join(threads[i], NULL);
     return;
 }
 #ifdef __cplusplus
@@ -407,4 +412,4 @@ int get_nb_exec(){
         return 30;
     }
 }
-"""
+"""  # noqa: E501
