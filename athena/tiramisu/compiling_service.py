@@ -18,14 +18,15 @@ from athena.utils.config import BaseConfig
 
 class CompilingService:
     """
-    Class responsible of compiling the generated code and running it to get the results
-    Contains nothing but class methods
+    Class responsible of compiling the generated code and running it
+    to get the results Contains nothing but class methods
     """
 
     @classmethod
     def compile_legality(cls, schedule: Schedule, with_ast: bool = False):
         """
-        Compile the generated code with the added code to check legality of the schedule
+        Compile the generated code with the added code to check legality of
+        the schedule
 
         Parameters
         ----------
@@ -101,7 +102,7 @@ class CompilingService:
 
         legality_check_lines += """
     prepare_schedules_for_legality_checks(true);
-    is_legal &= check_legality_of_function();   
+    is_legal &= check_legality_of_function();
     std::cout << is_legal << std::endl;
 """
 
@@ -114,7 +115,6 @@ class CompilingService:
     fct->print_isl_ast_representation();
 """
 
-        # Paste the lines responsable of checking legality of schedule in the cpp file
         cpp_code = schedule.tiramisu_program.original_str.replace(
             schedule.tiramisu_program.code_gen_line, legality_check_lines
         )
@@ -141,9 +141,9 @@ class CompilingService:
         if not tiramisu_program.original_str:
             raise ValueError("Tiramisu program not initialized")
 
-        # TODO : add getting tree structure object from executing the file instead of building it
         output_path = os.path.join(
-            BaseConfig.base_config.workspace, f"{tiramisu_program.name}_annotations"
+            BaseConfig.base_config.workspace,
+            f"{tiramisu_program.name}_annotations",
         )
         # Add code to the original file to get json annotations
 
@@ -151,9 +151,8 @@ class CompilingService:
             auto ast = tiramisu::auto_scheduler::syntax_tree(tiramisu::global::get_implicit_function(), {});
             std::string program_json = tiramisu::auto_scheduler::evaluate_by_learning_model::get_program_json(ast);
             std::cout << program_json;
-            """
+            """  # noqa: E501
 
-        # Paste the lines responsable of generating the program json tree in the cpp file
         cpp_code = tiramisu_program.original_str.replace(
             tiramisu_program.code_gen_line, get_json_lines
         )
@@ -161,7 +160,9 @@ class CompilingService:
 
     @classmethod
     def compile_isl_ast_tree(
-        cls, tiramisu_program: TiramisuProgram, schedule: Schedule | None = None
+        cls,
+        tiramisu_program: TiramisuProgram,
+        schedule: Schedule | None = None,
     ):
         if not BaseConfig.base_config:
             raise ValueError("BaseConfig not initialized")
@@ -169,9 +170,9 @@ class CompilingService:
         if not tiramisu_program.original_str:
             raise ValueError("Tiramisu program not initialized")
 
-        # TODO : add getting tree structure object from executing the file instead of building it
         output_path = os.path.join(
-            BaseConfig.base_config.workspace, f"{tiramisu_program.name}_isl_ast"
+            BaseConfig.base_config.workspace,
+            f"{tiramisu_program.name}_isl_ast",
         )
         get_isl_ast_lines = ""
         if schedule:
@@ -187,7 +188,6 @@ class CompilingService:
     fct->print_isl_ast_representation();
 """
 
-        # Paste the lines responsable of generating the program json tree in the cpp file
         cpp_code = tiramisu_program.original_str.replace(
             tiramisu_program.code_gen_line, get_isl_ast_lines
         )
@@ -221,11 +221,11 @@ class CompilingService:
             # Making the tiramisu root path explicit to the env
             shell_script = [
                 # Compile intermidiate tiramisu file
-                "$CXX -I$TIRAMISU_ROOT/3rdParty/Halide/install/include -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/isl/include  -Wl,--no-as-needed -ldl -g -fno-rtti   -lpthread -std=c++17 -O0 -o {}.o -c -x c++ -".format(
+                "$CXX -I$TIRAMISU_ROOT/3rdParty/Halide/install/include -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/isl/include  -Wl,--no-as-needed -ldl -g -fno-rtti   -lpthread -std=c++17 -O0 -o {}.o -c -x c++ -".format(  # noqa: E501
                     output_path
                 ),
                 # Link generated file with executer
-                "$CXX -Wl,--no-as-needed -ldl -g -fno-rtti -lpthread -std=c++17 -O0 {}.o -o {}.out   -L$TIRAMISU_ROOT/build  -L$TIRAMISU_ROOT/3rdParty/Halide/install/lib64  -L$TIRAMISU_ROOT/3rdParty/isl/build/lib  -Wl,-rpath,$TIRAMISU_ROOT/build:$TIRAMISU_ROOT/3rdParty/Halide/install/lib64:$TIRAMISU_ROOT/3rdParty/isl/build/lib -ltiramisu -ltiramisu_auto_scheduler -lHalide -lisl".format(
+                "$CXX -Wl,--no-as-needed -ldl -g -fno-rtti -lpthread -std=c++17 -O0 {}.o -o {}.out   -L$TIRAMISU_ROOT/build  -L$TIRAMISU_ROOT/3rdParty/Halide/install/lib64  -L$TIRAMISU_ROOT/3rdParty/isl/build/lib  -Wl,-rpath,$TIRAMISU_ROOT/build:$TIRAMISU_ROOT/3rdParty/Halide/install/lib64:$TIRAMISU_ROOT/3rdParty/isl/build/lib -ltiramisu -ltiramisu_auto_scheduler -lHalide -lisl".format(  # noqa: E501
                     output_path, output_path
                 ),
                 # Run the program
@@ -236,11 +236,11 @@ class CompilingService:
         else:
             shell_script = [
                 # Compile intermidiate tiramisu file
-                "$CXX -I$TIRAMISU_ROOT/3rdParty/Halide/include -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/isl/include  -Wl,--no-as-needed -ldl -g -fno-rtti   -lpthread -std=c++11 -O0 -o {}.o -c -x c++ -".format(
+                "$CXX -I$TIRAMISU_ROOT/3rdParty/Halide/include -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/isl/include  -Wl,--no-as-needed -ldl -g -fno-rtti   -lpthread -std=c++11 -O0 -o {}.o -c -x c++ -".format(  # noqa: E501
                     output_path
                 ),
                 # Link generated file with executer
-                "$CXX -Wl,--no-as-needed -ldl -g -fno-rtti -lpthread -std=c++11 -O0 {}.o -o {}.out   -L$TIRAMISU_ROOT/build  -L$TIRAMISU_ROOT/3rdParty/Halide/lib  -L$TIRAMISU_ROOT/3rdParty/isl/build/lib  -Wl,-rpath,$TIRAMISU_ROOT/build:$TIRAMISU_ROOT/3rdParty/Halide/lib:$TIRAMISU_ROOT/3rdParty/isl/build/lib -ltiramisu -ltiramisu_auto_scheduler -lHalide -lisl".format(
+                "$CXX -Wl,--no-as-needed -ldl -g -fno-rtti -lpthread -std=c++11 -O0 {}.o -o {}.out   -L$TIRAMISU_ROOT/build  -L$TIRAMISU_ROOT/3rdParty/Halide/lib  -L$TIRAMISU_ROOT/3rdParty/isl/build/lib  -Wl,-rpath,$TIRAMISU_ROOT/build:$TIRAMISU_ROOT/3rdParty/Halide/lib:$TIRAMISU_ROOT/3rdParty/isl/build/lib -ltiramisu -ltiramisu_auto_scheduler -lHalide -lisl".format(  # noqa: E501
                     output_path, output_path
                 ),
                 # Run the program
@@ -265,7 +265,9 @@ class CompilingService:
                 raise Exception("Compiler returned no output")
 
         except subprocess.CalledProcessError as e:
-            logging.error(f"Process terminated with error code: {e.returncode}")
+            logging.error(
+                f"Process terminated with error code: {e.returncode}"
+            )
             logging.error(f"Error output: {e.stderr}")
             logging.error(env_vars + shell_script)
             raise e
@@ -305,9 +307,13 @@ class CompilingService:
         legality_cpp_code = legality_cpp_code.replace(
             "is_legal &= check_legality_of_function();", ""
         )
-        legality_cpp_code = legality_cpp_code.replace("bool is_legal=true;", "")
+        legality_cpp_code = legality_cpp_code.replace(
+            "bool is_legal=true;", ""
+        )
         legality_cpp_code = re.sub(
-            r"is_legal &= loop_parallelization_is_legal.*\n", "", legality_cpp_code
+            r"is_legal &= loop_parallelization_is_legal.*\n",
+            "",
+            legality_cpp_code,
         )
         legality_cpp_code = re.sub(
             r"is_legal &= loop_unrolling_is_legal.*\n", "", legality_cpp_code
@@ -321,7 +327,7 @@ class CompilingService:
             + ",{},{},1);\n".format(*loop_levels)
         )
 
-        solver_lines += """    
+        solver_lines += """
         std::vector<std::pair<int,int>> outer1, outer2,outer3;
         tie( outer1,  outer2,  outer3 )= auto_skewing_result;
         if (outer1.size()>0){
@@ -347,7 +353,7 @@ class CompilingService:
         }else {
             std::cout << "None,None";
         }
-        
+
             """
 
         solver_code = legality_cpp_code.replace(to_replace, solver_lines)
@@ -357,15 +363,15 @@ class CompilingService:
             f"{schedule.tiramisu_program.name}_skewing_solver",
         )
 
-        result_str = cls.run_cpp_code(cpp_code=solver_code, output_path=output_path)
+        result_str = cls.run_cpp_code(
+            cpp_code=solver_code, output_path=output_path
+        )
         result_str = result_str.split(",")
 
-        # Skewing Solver returns 3 solutions in form of tuples, the first tuple is for outer parallelism ,
-        # second is for inner parallelism , and last one is for locality, we are going to use the first preferably
-        # if availble , else , we are going to use the scond one if available, this policy of choosing factors may change
-        # in later versions!
-        # The compiler in our case returns a tuple of type : (fac0,fac1,fac2,fac3,fac4,fac5) each 2 factors represent the
-        # solutions mentioned above
+        # Skewing Solver returns 3 solutions in form of tuples:
+        # - the first tuple is for outer parallelism.
+        # - second is for inner parallelism , and last one is for locality.
+
         if result_str[0] != "None":
             # Means we have a solution for outer parallelism
             fac1 = int(result_str[0])
@@ -381,10 +387,13 @@ class CompilingService:
 
     @classmethod
     def get_schedule_code(
-        cls, tiramisu_program: TiramisuProgram, optims_list: List[TiramisuAction]
+        cls,
+        tiramisu_program: TiramisuProgram,
+        optims_list: List[TiramisuAction],
     ):
         """
-        Returns the code of the schedule after applying the optimizations in the optims_list
+        Returns the code of the schedule after applying the optimizations in
+        the optims_list
 
         Parameters
         ----------
@@ -407,7 +416,6 @@ class CompilingService:
 
         # Add code gen line to the schedule code
         schedule_code += "\n    " + tiramisu_program.code_gen_line + "\n"
-        # Paste the lines responsable of checking legality of schedule in the cpp file
         cpp_code = tiramisu_program.original_str.replace(
             tiramisu_program.code_gen_line, schedule_code
         )
@@ -417,7 +425,9 @@ class CompilingService:
         return cpp_code
 
     @classmethod
-    def write_to_disk(cls, cpp_code: str, output_path: str, extension: str = ".cpp"):
+    def write_to_disk(
+        cls, cpp_code: str, output_path: str, extension: str = ".cpp"
+    ):
         """
         Writes the code to a file
 
@@ -443,7 +453,8 @@ class CompilingService:
         delete_fiels: bool = True,
     ) -> List[float]:
         """
-        Returns the execution times of the program on the CPU after applying the optimizations in the optims_list
+        Returns the execution times of the program on the CPU after applying
+        the optimizations in the optims_list
 
         Parameters
         ----------
@@ -509,36 +520,36 @@ class CompilingService:
             shell_script = [
                 f"cd {BaseConfig.base_config.workspace}",
                 # Compile intermidiate tiramisu file
-                f"$CXX -I$TIRAMISU_ROOT/3rdParty/Halide/install/include -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/isl/include  -Wl,--no-as-needed -ldl -g -fno-rtti   -lpthread -std=c++17 -O0 -o {tiramisu_program.name}.o -c {tiramisu_program.name}_schedule.cpp",
+                f"$CXX -I$TIRAMISU_ROOT/3rdParty/Halide/install/include -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/isl/include  -Wl,--no-as-needed -ldl -g -fno-rtti   -lpthread -std=c++17 -O0 -o {tiramisu_program.name}.o -c {tiramisu_program.name}_schedule.cpp",  # noqa: E501
                 # Link generated file with executer
-                f"$CXX -Wl,--no-as-needed -ldl -g -fno-rtti -lpthread -std=c++17 -O0 {tiramisu_program.name}.o -o {tiramisu_program.name}.out   -L$TIRAMISU_ROOT/build  -L$TIRAMISU_ROOT/3rdParty/Halide/install/lib64  -L$TIRAMISU_ROOT/3rdParty/isl/build/lib  -Wl,-rpath,$TIRAMISU_ROOT/build:$TIRAMISU_ROOT/3rdParty/Halide/install/lib64:$TIRAMISU_ROOT/3rdParty/isl/build/lib -ltiramisu -ltiramisu_auto_scheduler -lHalide -lisl",
+                f"$CXX -Wl,--no-as-needed -ldl -g -fno-rtti -lpthread -std=c++17 -O0 {tiramisu_program.name}.o -o {tiramisu_program.name}.out   -L$TIRAMISU_ROOT/build  -L$TIRAMISU_ROOT/3rdParty/Halide/install/lib64  -L$TIRAMISU_ROOT/3rdParty/isl/build/lib  -Wl,-rpath,$TIRAMISU_ROOT/build:$TIRAMISU_ROOT/3rdParty/Halide/install/lib64:$TIRAMISU_ROOT/3rdParty/isl/build/lib -ltiramisu -ltiramisu_auto_scheduler -lHalide -lisl",  # noqa: E501
                 # Run the generator
                 f"./{tiramisu_program.name}.out",
-                f"$CXX -shared -o {tiramisu_program.name}.o.so {tiramisu_program.name}.o",
+                f"$CXX -shared -o {tiramisu_program.name}.o.so {tiramisu_program.name}.o",  # noqa: E501
             ]
 
             if not tiramisu_program.wrapper_obj:
                 shell_script += [
                     # compile the wrapper
-                    f"$CXX -std=c++17 -fno-rtti -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/Halide/install/include -I$TIRAMISU_ROOT/3rdParty/isl/include/ -I$TIRAMISU_ROOT/benchmarks -L$TIRAMISU_ROOT/build -L$TIRAMISU_ROOT/3rdParty/Halide/install/lib64/ -L$TIRAMISU_ROOT/3rdParty/isl/build/lib -o {tiramisu_program.name}_wrapper -ltiramisu -lHalide -ldl -lpthread -lm -Wl,-rpath,$TIRAMISU_ROOT/build {tiramisu_program.name}_wrapper.cpp ./{tiramisu_program.name}.o.so -ltiramisu -lHalide -ldl -lpthread -lm -lisl",
+                    f"$CXX -std=c++17 -fno-rtti -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/Halide/install/include -I$TIRAMISU_ROOT/3rdParty/isl/include/ -I$TIRAMISU_ROOT/benchmarks -L$TIRAMISU_ROOT/build -L$TIRAMISU_ROOT/3rdParty/Halide/install/lib64/ -L$TIRAMISU_ROOT/3rdParty/isl/build/lib -o {tiramisu_program.name}_wrapper -ltiramisu -lHalide -ldl -lpthread -lm -Wl,-rpath,$TIRAMISU_ROOT/build {tiramisu_program.name}_wrapper.cpp ./{tiramisu_program.name}.o.so -ltiramisu -lHalide -ldl -lpthread -lm -lisl",  # noqa: E501
                 ]
 
         else:
             shell_script = [
                 f"cd {BaseConfig.base_config.workspace}",
                 # Compile intermidiate tiramisu file
-                f"$CXX -I$TIRAMISU_ROOT/3rdParty/Halide/include -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/isl/include  -Wl,--no-as-needed -ldl -g -fno-rtti   -lpthread -std=c++11 -O0 -o {tiramisu_program.name}.o -c {tiramisu_program.name}_schedule.cpp",
+                f"$CXX -I$TIRAMISU_ROOT/3rdParty/Halide/include -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/isl/include  -Wl,--no-as-needed -ldl -g -fno-rtti   -lpthread -std=c++11 -O0 -o {tiramisu_program.name}.o -c {tiramisu_program.name}_schedule.cpp",  # noqa: E501
                 # Link generated file with executer
-                f"$CXX -Wl,--no-as-needed -ldl -g -fno-rtti -lpthread -std=c++11 -O0 {tiramisu_program.name}.o -o {tiramisu_program.name}.out   -L$TIRAMISU_ROOT/build  -L$TIRAMISU_ROOT/3rdParty/Halide/lib  -L$TIRAMISU_ROOT/3rdParty/isl/build/lib  -Wl,-rpath,$TIRAMISU_ROOT/build:$TIRAMISU_ROOT/3rdParty/Halide/lib:$TIRAMISU_ROOT/3rdParty/isl/build/lib -ltiramisu -ltiramisu_auto_scheduler -lHalide -lisl",
+                f"$CXX -Wl,--no-as-needed -ldl -g -fno-rtti -lpthread -std=c++11 -O0 {tiramisu_program.name}.o -o {tiramisu_program.name}.out   -L$TIRAMISU_ROOT/build  -L$TIRAMISU_ROOT/3rdParty/Halide/lib  -L$TIRAMISU_ROOT/3rdParty/isl/build/lib  -Wl,-rpath,$TIRAMISU_ROOT/build:$TIRAMISU_ROOT/3rdParty/Halide/lib:$TIRAMISU_ROOT/3rdParty/isl/build/lib -ltiramisu -ltiramisu_auto_scheduler -lHalide -lisl",  # noqa: E501
                 # Run the generator
                 f"./{tiramisu_program.name}.out",
-                f"$CXX -shared -o {tiramisu_program.name}.o.so {tiramisu_program.name}.o",
+                f"$CXX -shared -o {tiramisu_program.name}.o.so {tiramisu_program.name}.o",  # noqa: E501
             ]
 
             if not tiramisu_program.wrapper_obj:
                 shell_script += [
                     # compile the wrapper
-                    f"$CXX -std=c++11 -fno-rtti -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/Halide/include -I$TIRAMISU_ROOT/3rdParty/isl/include/ -I$TIRAMISU_ROOT/benchmarks -L$TIRAMISU_ROOT/build -L$TIRAMISU_ROOT/3rdParty/Halide/lib/ -L$TIRAMISU_ROOT/3rdParty/isl/build/lib -o {tiramisu_program.name}_wrapper -ltiramisu -lHalide -ldl -lpthread -lm -Wl,-rpath,$TIRAMISU_ROOT/build {tiramisu_program.name}_wrapper.cpp ./{tiramisu_program.name}.o.so -ltiramisu -lHalide -ldl -lpthread -lm -lisl",
+                    f"$CXX -std=c++11 -fno-rtti -I$TIRAMISU_ROOT/include -I$TIRAMISU_ROOT/3rdParty/Halide/include -I$TIRAMISU_ROOT/3rdParty/isl/include/ -I$TIRAMISU_ROOT/benchmarks -L$TIRAMISU_ROOT/build -L$TIRAMISU_ROOT/3rdParty/Halide/lib/ -L$TIRAMISU_ROOT/3rdParty/isl/build/lib -o {tiramisu_program.name}_wrapper -ltiramisu -lHalide -ldl -lpthread -lm -Wl,-rpath,$TIRAMISU_ROOT/build {tiramisu_program.name}_wrapper.cpp ./{tiramisu_program.name}.o.so -ltiramisu -lHalide -ldl -lpthread -lm -lisl",  # noqa: E501
                 ]
 
         try:
@@ -579,7 +590,9 @@ class CompilingService:
                         max_runs = int(max_millis_per_run / exec_time)
                         max_runs = min(0, max_runs - 1)
                 else:
-                    raise ScheduleExecutionCrashed("No output from schedule execution")
+                    raise ScheduleExecutionCrashed(
+                        "No output from schedule execution"
+                    )
 
             # run the wrapper and get the execution time
             compiler = subprocess.run(
@@ -599,7 +612,7 @@ class CompilingService:
                 check=True,
             )
 
-            # Extract the execution times from the output and return the minimum
+            # Extract the execution times from the output and return the min
             if compiler.stdout:
                 results += [float(x) for x in compiler.stdout.split()]
                 return results
@@ -608,27 +621,33 @@ class CompilingService:
                 logging.error(compiler.stderr)
                 logging.error(compiler.stdout)
                 logging.error(
-                    f"The following schedule execution crashed: {tiramisu_program.name}, schedule: {optims_list} \n\n {cpp_code}\n\n"
+                    f"The following schedule execution crashed: {tiramisu_program.name}, schedule: {optims_list} \n\n {cpp_code}\n\n"  # noqa: E501
                 )
-                raise ScheduleExecutionCrashed("No output from schedule execution")
+                raise ScheduleExecutionCrashed(
+                    "No output from schedule execution"
+                )
         except subprocess.CalledProcessError as e:
-            logging.error(f"Process terminated with error code: {e.returncode}")
+            logging.error(
+                f"Process terminated with error code: {e.returncode}"
+            )
             logging.error(f"Error output: {e.stderr}")
             logging.error(f"Output: {e.stdout}")
             raise ScheduleExecutionCrashed(
-                f"Schedule execution crashed: function: {tiramisu_program.name}, schedule: {optims_list}"
+                f"Schedule execution crashed: function: {tiramisu_program.name}, schedule: {optims_list}"  # noqa: E501
             )
         except Exception as e:
             raise e
 
     def get_n_runs_script(
-        tiramisu_program: TiramisuProgram, max_runs: int = 1, delete_files=False
+        tiramisu_program: TiramisuProgram,
+        max_runs: int = 1,
+        delete_files=False,
     ):
         return [
             # cd to the workspace
             f"cd {BaseConfig.base_config.workspace}",
             #  set the env variables
-            f"export DYNAMIC_RUNS=0",
+            "export DYNAMIC_RUNS=0",
             f"export MAX_RUNS={max_runs}",
             f"export NB_EXEC={max_runs}",
             # run the wrapper

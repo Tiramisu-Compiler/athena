@@ -2,14 +2,10 @@ from __future__ import annotations
 
 import copy
 import itertools
-import re
-from typing import TYPE_CHECKING, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
 from athena.tiramisu.tiramisu_iterator_node import IteratorIdentifier
 from athena.tiramisu.tiramisu_tree import TiramisuTree
-
-if TYPE_CHECKING:
-    from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
     TiramisuAction,
@@ -62,8 +58,12 @@ class Interchange(TiramisuAction):
         self.tiramisu_optim_str = ""
         levels = [param[1] for param in self.params]
         for comp in self.comps:
-            self.tiramisu_optim_str += f"{comp}.interchange({levels[0]},{levels[1]});\n"
-        self.str_representation = f"I(L{levels[0]},L{levels[1]},comps={self.comps})"
+            self.tiramisu_optim_str += (
+                f"{comp}.interchange({levels[0]},{levels[1]});\n"
+            )
+        self.str_representation = (
+            f"I(L{levels[0]},L{levels[1]},comps={self.comps})"
+        )
 
         self.legality_check_string = self.tiramisu_optim_str
 
@@ -81,6 +81,8 @@ class Interchange(TiramisuAction):
                 # Only consider sections with more than one iterator
                 if len(section) > 1:
                     # Get all possible combinations of 2 iterators
-                    candidates[root].extend(list(itertools.combinations(section, 2)))
+                    candidates[root].extend(
+                        list(itertools.combinations(section, 2))
+                    )
 
         return candidates

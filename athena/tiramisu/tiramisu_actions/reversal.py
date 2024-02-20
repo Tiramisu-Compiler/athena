@@ -1,14 +1,10 @@
 from __future__ import annotations
 
 import copy
-import itertools
-from typing import TYPE_CHECKING, Dict, List, Tuple
+from typing import Dict, List
 
 from athena.tiramisu.tiramisu_iterator_node import IteratorIdentifier
 from athena.tiramisu.tiramisu_tree import TiramisuTree
-
-if TYPE_CHECKING:
-    from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
     TiramisuAction,
@@ -30,7 +26,9 @@ class Reversal(TiramisuAction):
         self.iterator_id = params[0]
         self.params = params
         self.comps = comps
-        super().__init__(type=TiramisuActionType.REVERSAL, params=params, comps=comps)
+        super().__init__(
+            type=TiramisuActionType.REVERSAL, params=params, comps=comps
+        )
 
     def initialize_action_for_tree(self, tiramisu_tree: TiramisuTree):
         # clone the tree to be able to restore it later
@@ -41,10 +39,14 @@ class Reversal(TiramisuAction):
                 self.iterator_id[0], self.iterator_id[1]
             )
 
-            self.comps = tiramisu_tree.get_iterator_subtree_computations(iterator.name)
+            self.comps = tiramisu_tree.get_iterator_subtree_computations(
+                iterator.name
+            )
             # order the computations by their absolute order
             self.comps.sort(
-                key=lambda comp: tiramisu_tree.computations_absolute_order[comp]
+                key=lambda comp: tiramisu_tree.computations_absolute_order[
+                    comp
+                ]
             )
 
         self.set_string_representations(tiramisu_tree)
@@ -63,11 +65,17 @@ class Reversal(TiramisuAction):
         self.legality_check_string = self.tiramisu_optim_str
 
     @classmethod
-    def get_candidates(cls, program_tree: TiramisuTree) -> Dict[str, List[str]]:
+    def get_candidates(
+        cls, program_tree: TiramisuTree
+    ) -> Dict[str, List[str]]:
         candidates: Dict[str, List[str]] = {}
         for root in program_tree.roots:
-            candidates[root] = [root] + program_tree.iterators[root].child_iterators
-            nodes_to_visit = program_tree.iterators[root].child_iterators.copy()
+            candidates[root] = [root] + program_tree.iterators[
+                root
+            ].child_iterators
+            nodes_to_visit = program_tree.iterators[
+                root
+            ].child_iterators.copy()
 
             while nodes_to_visit:
                 node = nodes_to_visit.pop(0)
@@ -81,8 +89,16 @@ class Reversal(TiramisuAction):
         node = program_tree.iterators[self.params[0]]
 
         # Reverse the loop bounds
-        if type(node.lower_bound) == int and type(node.upper_bound) == int:
+        if isinstance(node.lower_bound, int) and isinstance(
+            node.upper_bound, int
+        ):
             # Halide way of reversing to keep increment 1
-            node.lower_bound, node.upper_bound = -node.upper_bound, -node.lower_bound
+            node.lower_bound, node.upper_bound = (
+                -node.upper_bound,
+                -node.lower_bound,
+            )
         else:
-            node.lower_bound, node.upper_bound = node.upper_bound, node.lower_bound
+            node.lower_bound, node.upper_bound = (
+                node.upper_bound,
+                node.lower_bound,
+            )

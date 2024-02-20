@@ -2,15 +2,12 @@ from __future__ import annotations
 
 import copy
 import itertools
-import math
 import random
-from typing import TYPE_CHECKING, Dict, List, Tuple
+from typing import Dict, List, Tuple
 
 from athena.tiramisu.tiramisu_iterator_node import IteratorIdentifier
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 
-if TYPE_CHECKING:
-    from athena.tiramisu.tiramisu_tree import TiramisuTree
 
 from athena.tiramisu.tiramisu_actions.tiramisu_action import (
     TiramisuAction,
@@ -28,7 +25,9 @@ class TilingGeneral(TiramisuAction):
         params: List[IteratorIdentifier | int],
         comps: List[str] | None = None,
     ):
-        # General Tiling takes the iterator to tile and the tile size as parameters: [iterator1, iterator2, ..., iteratorN, tile_size1, tile_size2, ..., tile_sizeN]
+        # General Tiling takes the iterator to tile and the tile size as
+        # parameters: [iterator1, iterator2, ..., iteratorN,
+        #  tile_size1, tile_size2, ..., tile_sizeN]
 
         # assert len(params) == 4
         assert len(params) % 2 == 0
@@ -54,7 +53,9 @@ class TilingGeneral(TiramisuAction):
         self.tree = copy.deepcopy(tiramisu_tree)
 
         self.tiled_iterator_names = [
-            tiramisu_tree.get_iterator_of_computation(iterator[0], iterator[1]).name
+            tiramisu_tree.get_iterator_of_computation(
+                iterator[0], iterator[1]
+            ).name
             for iterator in self.iterators
         ]
 
@@ -66,7 +67,9 @@ class TilingGeneral(TiramisuAction):
         if self.comps is None:
             self.comps = []
             for iterator in self.tiled_iterator_names:
-                self.comps.extend(tiramisu_tree.iterators[iterator].computations_list)
+                self.comps.extend(
+                    tiramisu_tree.iterators[iterator].computations_list
+                )
 
         self.set_string_representations(self.tree)
 
@@ -79,9 +82,10 @@ class TilingGeneral(TiramisuAction):
         all_comps = tiramisu_tree.computations
         if len(all_comps) > 1:
             all_comps.sort(
-                key=lambda comp: tiramisu_tree.computations_absolute_order[comp]
+                key=lambda comp: tiramisu_tree.computations_absolute_order[
+                    comp
+                ]
             )
-            fusion_levels = self.get_fusion_levels(all_comps, tiramisu_tree)
 
         self.tiramisu_optim_str = ""
 
@@ -90,30 +94,33 @@ class TilingGeneral(TiramisuAction):
             tile_sizes = []
             comp_iterator = tiramisu_tree.get_iterator_of_computation(comp)
             while (
-                comp_iterator != None
+                comp_iterator is not None
                 and comp_iterator.name in self.tiled_iterator_names
             ):
                 loop_levels.append(comp_iterator.level)
                 tile_sizes.append(self.tile_sizes_dict[comp_iterator.name])
-                if comp_iterator.parent_iterator == None:
+                if comp_iterator.parent_iterator is None:
                     comp_iterator = None
                 else:
                     comp_iterator = tiramisu_tree.iterators[
                         comp_iterator.parent_iterator
                     ]
 
-            # reverse loop_levels and tile_sizes to have the innermost loop first
+            # reverse loop_levels and tile_sizes to have the innermost
+            # loop first
             loop_levels.reverse()
             tile_sizes.reverse()
-            loop_levels_and_factors = [str(loop_level) for loop_level in loop_levels]
-            loop_levels_and_factors.extend([str(tile_size) for tile_size in tile_sizes])
+            loop_levels_and_factors = [
+                str(loop_level) for loop_level in loop_levels
+            ]
+            loop_levels_and_factors.extend(
+                [str(tile_size) for tile_size in tile_sizes]
+            )
 
             self.tiramisu_optim_str += (
                 f"{comp}.tile({', '.join(loop_levels_and_factors)});\n"
             )
 
-        # if len(all_comps) > 1:
-        #     self.tiramisu_optim_str += f"clear_implicit_function_sched_graph();\n    {all_comps[0]}{''.join([f'.then({comp},{fusion_level})' for comp, fusion_level in zip(all_comps[1:], fusion_levels)])};\n"
         str_levels_and_sizes = [
             f"L{iterator[1]}" if isinstance(iterator, tuple) else str(iterator)
             for iterator in self.params
@@ -141,18 +148,24 @@ class TilingGeneral(TiramisuAction):
                     if len(first_node.child_iterators) > 1:
                         candidates[root].append(tuple(section))
                     else:
-                        # Get all possible combinations of 2 or 3 successive iterators
+                        # Get all possible combinations of
+                        # 2 or 3 successive iterators
                         tmp_candidates = []
-                        tmp_candidates.extend(list(itertools.pairwise(section)))
+                        tmp_candidates.extend(
+                            list(itertools.pairwise(section))
+                        )
                         successive_3_iterators = [
-                            tuple(section[i : i + 3]) for i in range(len(section) - 2)
+                            tuple(section[i : i + 3])  # noqa: E203
+                            for i in range(len(section) - 2)
                         ]
                         tmp_candidates.extend(successive_3_iterators)
 
                         for candidate in tmp_candidates:
                             perfect = True
                             for i in range(len(candidate) - 1):
-                                tmp_iterator = program_tree.iterators[candidate[i]]
+                                tmp_iterator = program_tree.iterators[
+                                    candidate[i]
+                                ]
                                 if tmp_iterator.computations_list:
                                     perfect = False
                                     break
@@ -167,7 +180,8 @@ class TilingGeneral(TiramisuAction):
         tiramisu_tree: TiramisuTree,
     ):
         fusion_levels: List[int] = []
-        # for every pair of successive computations get the shared iterator level
+        # for every pair of successive computations
+        # get the shared iterator level
         for comp1, comp2 in itertools.pairwise(ordered_computations):
             # get the shared iterator level
             iter_comp_1 = tiramisu_tree.get_iterator_of_computation(comp1)
@@ -177,7 +191,8 @@ class TilingGeneral(TiramisuAction):
             # get the shared iterator level
             while iter_comp_1.name != iter_comp_2.name:
                 if iter_comp_1.level > iter_comp_2.level:
-                    # if parent is None then the iterators don't have a common parent
+                    # parent is None ->
+                    # the iterators don't have a common parent
                     if iter_comp_1.parent_iterator is None:
                         fusion_level = -1
                         break
@@ -201,7 +216,7 @@ class TilingGeneral(TiramisuAction):
             if comp1 in self.comps and comp2 in self.comps:
                 nbr_addition = 0
                 tmp_iterator = iter_comp_1
-                while tmp_iterator != None:
+                while tmp_iterator is not None:
                     if tmp_iterator.name in self.tiled_iterator_names:
                         nbr_addition += 1
                     if tmp_iterator.parent_iterator is None:
@@ -222,7 +237,8 @@ class TilingGeneral(TiramisuAction):
         tiramisu_tree: TiramisuTree,
     ) -> Dict[str, List[List[str]]]:
         """
-        Returns a dictionary with lists of candidate sections for each root iterator.
+        Returns a dictionary with lists of candidate sections for
+        each root iterator.
 
         Returns:
         -------

@@ -28,7 +28,9 @@ class Schedule:
         The list of optimizations to be applied to the Tiramisu program.
     """
 
-    def __init__(self, tiramisu_program: TiramisuProgram | None = None) -> None:
+    def __init__(
+        self, tiramisu_program: TiramisuProgram | None = None
+    ) -> None:
         self.tiramisu_program = tiramisu_program
         self.optims_list: List[TiramisuAction] = []
         if tiramisu_program:
@@ -43,7 +45,8 @@ class Schedule:
 
     def add_optimizations(self, list_optim_cmds: List[TiramisuAction]) -> None:
         """
-        Adds a list of optimizations to the schedule while maintaining the schedule tree. The order of the optimizations in the list is important.
+        Adds a list of optimizations to the schedule while maintaining the
+        schedule tree. The order of the optimizations in the list is important.
 
         Parameters
         ----------
@@ -61,7 +64,8 @@ class Schedule:
 
             self.optims_list.append(optim_cmd)
 
-            # Fusion, distribution and tiling are special cases, we need to get the new tree with the new fusion levels
+            # Fusion, distribution and tiling are special cases,
+            # we need to get the new tree with the new fusion levels
             if (
                 optim_cmd.is_fusion()
                 or optim_cmd.is_distribution()
@@ -87,7 +91,8 @@ class Schedule:
         Parameters
         ----------
         `nb_exec_times` : int
-            The number of times the Tiramisu program will be executed after applying the schedule.
+            The number of times the Tiramisu program will be executed after
+            applying the schedule.
         Returns
         -------
         The execution time of the Tiramisu program after applying the schedule.
@@ -97,9 +102,11 @@ class Schedule:
 
         if self.tiramisu_program.server:
             result = self.tiramisu_program.server.run(
-                operation="execution", schedule=self, nbr_executions=nb_exec_times
+                operation="execution",
+                schedule=self,
+                nbr_executions=nb_exec_times,
             )
-            if result.legality == False:
+            if result.legality is False:
                 raise Exception("Schedule is not legal")
 
             return result.exec_times
@@ -107,7 +114,7 @@ class Schedule:
         if self.legality is None and self.optims_list:
             self.is_legal()
 
-        if self.legality == False:
+        if self.legality is False:
             raise Exception("Schedule is not legal")
 
         return CompilingService.get_cpu_exec_times(
@@ -143,7 +150,9 @@ class Schedule:
                     for action in self.optims_list:
                         if action.type == TiramisuActionType.SKEWING:
                             if action.params[2] == 0:
-                                factors = result.additional_info.replace("skewing_factors:", "").split(",")
+                                factors = result.additional_info.replace(
+                                    "skewing_factors:", ""
+                                ).split(",")
                                 factors = [int(factor) for factor in factors]
                                 action.params[2] = factors[0]
                                 action.params[3] = factors[1]
@@ -151,7 +160,9 @@ class Schedule:
                                 action.set_string_representations(self.tree)
             return result.legality
 
-        legality, new_tree = CompilingService.compile_legality(self, with_ast=with_ast)
+        legality, new_tree = CompilingService.compile_legality(
+            self, with_ast=with_ast
+        )
 
         assert isinstance(legality, bool)
         self.legality = legality
@@ -176,7 +187,9 @@ class Schedule:
             isl_ast_str = CompilingService.compile_isl_ast_tree(
                 tiramisu_program=self.tiramisu_program, schedule=self
             )
-            self.tree = TiramisuTree.from_isl_ast_string_list(isl_ast_str.split("\n"))
+            self.tree = TiramisuTree.from_isl_ast_string_list(
+                isl_ast_str.split("\n")
+            )
 
     @classmethod
     def from_sched_str(
@@ -204,7 +217,8 @@ class Schedule:
                     )
 
             elif optimization_str[0] == "U":
-                # extract loop level, factor and comps using U\(L(\d),(\d+),comps=\[([\w',]*)\]\)
+                # extract loop level, factor and comps using
+                # U\(L(\d),(\d+),comps=\[([\w',]*)\]\)
                 regex = r"U\(L(\d),(\d+),comps=\[([\w', ]*)\]\)"
                 match = re.match(regex, optimization_str)
                 if match:
@@ -277,9 +291,7 @@ class Schedule:
                         ]
                     )
             elif optimization_str[:2] == "T3":
-                regex = (
-                    r"T3\(L(\d),L(\d),L(\d),(\d+),(\d+),(\d+),comps=\[([\w', ]*)\]\)"
-                )
+                regex = r"T3\(L(\d),L(\d),L(\d),(\d+),(\d+),(\d+),comps=\[([\w', ]*)\]\)"  # noqa: E501
                 match = re.match(regex, optimization_str)
                 if match:
                     outer_loop_level = int(match.group(1))
@@ -305,7 +317,9 @@ class Schedule:
                         ]
                     )
             elif optimization_str[0] == "S":
-                regex = r"S\(L(\d),L(\d),(-?\d+),(-?\d+),comps=\[([\w', ]*)\]\)"
+                regex = (
+                    r"S\(L(\d),L(\d),(-?\d+),(-?\d+),comps=\[([\w', ]*)\]\)"
+                )
                 match = re.match(regex, optimization_str)
                 if match:
                     outer_loop_level = int(match.group(1))
@@ -344,7 +358,7 @@ class Schedule:
                         ]
                     )
             elif optimization_str[0] == "D":
-                regex = r"D\(L(\d),comps=\[([\w', ]*)\],distribution=([\[\]'\w, ]*)\)"
+                regex = r"D\(L(\d),comps=\[([\w', ]*)\],distribution=([\[\]'\w, ]*)\)"  # noqa: E501
                 match = re.match(regex, optimization_str)
                 if match:
                     loop_level = int(match.group(1))
