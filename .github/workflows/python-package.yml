@@ -44,6 +44,7 @@ jobs:
         export TIRAMISU_HERMESII_PATH=$(pwd)/install
     - name: Create config.yaml
       run: |
+        mkdir workspace
         echo "tiramisu:" > config.yaml
         echo "  is_new_tiramisu: True" >> config.yaml
         echo "env_vars:" >> config.yaml
