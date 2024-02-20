@@ -112,4 +112,4 @@ class Skewing(TiramisuAction):
         if factors is not None:
             return factors
         else:
-            raise ValueError("Skewing did not return any factors")
+            return None
