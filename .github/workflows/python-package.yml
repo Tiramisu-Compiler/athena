@@ -37,7 +37,7 @@ jobs:
       run: |
         git clone https://github.com/skourta/HermesII.git
         cd HermesII
-        cmake . -B build
+        cmake . -B build -DTIRAMISU_ROOT=${TIRAMISU_ROOT}
         cmake --build build
         cmake --install build --prefix install
         export TIRAMISU_HERMESII_PATH=$(pwd)/install
