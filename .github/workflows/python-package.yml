@@ -48,8 +48,8 @@ jobs:
         echo "tiramisu:" > config.yaml
         echo "  is_new_tiramisu: True" >> config.yaml
         echo "env_vars:" >> config.yaml
-        echo "  CXX: \"${CXX}\"" >> config.yaml
-        echo "  CC: \"${CC}\"" >> config.yaml
+        echo "  CXX: g++" >> config.yaml
+        echo "  CC: cc" >> config.yaml
         echo "  TIRAMISU_ROOT: \"${TIRAMISU_ROOT}\"" >> config.yaml
         echo "  LD_LIBRARY_PATH: \"${LD_LIBRARY_PATH}\"" >> config.yaml
         echo "  TIRAMISU_HERMESII_PATH: $(pwd)/HermesII/install" >> config.yaml
