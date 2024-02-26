@@ -40,7 +40,9 @@ def test_initialize_action_for_tree():
     for child_list in distribution.children:
         assert child_list in expected_children
 
-    distribution = Distribution([("comp03", 2)], [[("comp03", 3)], [("comp04", 3)]])
+    distribution = Distribution(
+        [("comp03", 2)], [[("comp03", 3)], [("comp04", 3)]]
+    )
     distribution.initialize_action_for_tree(sample)
     assert distribution.iterator_id == ("comp03", 2)
     expected_children = [["comp03"], ["comp04"]]
@@ -57,7 +59,7 @@ def test_set_string_representations():
     schedule.add_optimizations([distribution])
     assert (
         distribution.tiramisu_optim_str
-        == "clear_implicit_function_sched_graph();\n    nrm_init.then(nrm_comp,0).then(R_diag,0).then(Q_out,0).then(R_up_init,0).then(R_up,0).then(A_out,0);\n"
+        == "clear_implicit_function_sched_graph();\n    nrm_init.then(nrm_comp,0).then(R_diag,0).then(Q_out,0).then(R_up_init,0).then(R_up,0).then(A_out,0);\n"  # noqa: E501
     )
 
 
@@ -74,8 +76,12 @@ def test_get_fusion_levels():
     distribution = Distribution([("R_up_init", 1)])
     distribution.initialize_action_for_tree(sample.tree)
     ordered_computations = sample.tree.computations
-    ordered_computations.sort(key=lambda x: sample.tree.computations_absolute_order[x])
-    assert distribution.get_fusion_levels(ordered_computations, sample.tree) == [
+    ordered_computations.sort(
+        key=lambda x: sample.tree.computations_absolute_order[x]
+    )
+    assert distribution.get_fusion_levels(
+        ordered_computations, sample.tree
+    ) == [
         0,
         0,
         0,
@@ -88,7 +94,9 @@ def test_get_fusion_levels():
     distribution = Distribution([("comp05", 1)])
     distribution.initialize_action_for_tree(t_tree)
     ordered_computations = t_tree.computations
-    ordered_computations.sort(key=lambda x: t_tree.computations_absolute_order[x])
+    ordered_computations.sort(
+        key=lambda x: t_tree.computations_absolute_order[x]
+    )
     assert distribution.get_fusion_levels(ordered_computations, t_tree) == [
         0,
         0,
@@ -103,7 +111,9 @@ def test_get_fusion_levels():
     )
     distribution.initialize_action_for_tree(t_tree)
     ordered_computations = t_tree.computations
-    ordered_computations.sort(key=lambda x: t_tree.computations_absolute_order[x])
+    ordered_computations.sort(
+        key=lambda x: t_tree.computations_absolute_order[x]
+    )
     assert distribution.get_fusion_levels(ordered_computations, t_tree) == [
         0,
         1,
@@ -127,7 +137,7 @@ def test_distribution_application():
 
     assert (
         distribution.tiramisu_optim_str
-        == "clear_implicit_function_sched_graph();\n    nrm_init.then(nrm_comp,-1).then(R_diag,-1).then(Q_out,-1).then(R_up_init,-1).then(R_up,1).then(A_out,1);\n"
+        == "clear_implicit_function_sched_graph();\n    nrm_init.then(nrm_comp,-1).then(R_diag,-1).then(Q_out,-1).then(R_up_init,-1).then(R_up,1).then(A_out,1);\n"  # noqa: E501
     )
     assert not schedule.is_legal()
 
@@ -145,7 +155,7 @@ def test_distribution_application():
 
     assert (
         distribution.tiramisu_optim_str
-        == "clear_implicit_function_sched_graph();\n    nrm_init.then(nrm_comp,0).then(R_diag,0).then(Q_out,0).then(R_up_init,0).then(R_up,0).then(A_out,0);\n"
+        == "clear_implicit_function_sched_graph();\n    nrm_init.then(nrm_comp,0).then(R_diag,0).then(Q_out,0).then(R_up_init,0).then(R_up,0).then(A_out,0);\n"  # noqa: E501
     )
 
     assert schedule.is_legal()

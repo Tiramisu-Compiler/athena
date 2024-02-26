@@ -348,7 +348,9 @@ def interchange_example() -> TiramisuProgram:
     if tiramisu_func.annotations is None:
         raise ValueError("Annotations not found")
 
-    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
+    tiramisu_func.tree = TiramisuTree.from_annotations(
+        tiramisu_func.annotations
+    )
 
     return tiramisu_func
 
@@ -364,7 +366,9 @@ def skewing_example() -> TiramisuProgram:
     if tiramisu_func.annotations is None:
         raise ValueError("Annotations not found")
 
-    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
+    tiramisu_func.tree = TiramisuTree.from_annotations(
+        tiramisu_func.annotations
+    )
 
     return tiramisu_func
 
@@ -380,7 +384,9 @@ def reversal_sample() -> TiramisuProgram:
     if tiramisu_func.annotations is None:
         raise ValueError("Annotations not found")
 
-    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
+    tiramisu_func.tree = TiramisuTree.from_annotations(
+        tiramisu_func.annotations
+    )
 
     return tiramisu_func
 
@@ -396,7 +402,9 @@ def unrolling_sample() -> TiramisuProgram:
     if tiramisu_func.annotations is None:
         raise ValueError("Annotations not found")
 
-    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
+    tiramisu_func.tree = TiramisuTree.from_annotations(
+        tiramisu_func.annotations
+    )
 
     return tiramisu_func
 
@@ -412,7 +420,9 @@ def tiling_2d_sample() -> TiramisuProgram:
     if tiramisu_func.annotations is None:
         raise ValueError("Annotations not found")
 
-    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
+    tiramisu_func.tree = TiramisuTree.from_annotations(
+        tiramisu_func.annotations
+    )
 
     return tiramisu_func
 
@@ -428,7 +438,9 @@ def tiling_3d_sample() -> TiramisuProgram:
     if tiramisu_func.annotations is None:
         raise ValueError("Annotations not found")
 
-    tiramisu_func.tree = TiramisuTree.from_annotations(tiramisu_func.annotations)
+    tiramisu_func.tree = TiramisuTree.from_annotations(
+        tiramisu_func.annotations
+    )
 
     return tiramisu_func
 
@@ -562,7 +574,9 @@ def fusion_sample():
 
 def multiple_roots_sample():
     tiramisu_func = TiramisuProgram.from_file(
-        "examples/function_gemver_MINI_generator.cpp", load_isl_ast=True, load_tree=True
+        "examples/function_gemver_MINI_generator.cpp",
+        load_isl_ast=True,
+        load_tree=True,
     )
     return tiramisu_func
 

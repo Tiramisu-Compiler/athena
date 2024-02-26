@@ -1,9 +1,7 @@
-import pytest
-
 import tests.utils as test_utils
 from athena.tiramisu.schedule import Schedule
 from athena.tiramisu.tiramisu_actions.tiling_2d import Tiling2D
-from athena.tiramisu.tiramisu_actions.tiramisu_action import CannotApplyException
+
 from athena.utils.config import BaseConfig
 
 
@@ -55,5 +53,5 @@ def test_fusion_levels():
     action.initialize_action_for_tree(t_tree)
     assert (
         action.tiramisu_optim_str.split("\n")[-2]
-        == "    comp01.then(comp05,0).then(comp06,1).then(comp07,1).then(comp03,1).then(comp04,6);"
+        == "    comp01.then(comp05,0).then(comp06,1).then(comp07,1).then(comp03,1).then(comp04,6);"  # noqa: E501
     )

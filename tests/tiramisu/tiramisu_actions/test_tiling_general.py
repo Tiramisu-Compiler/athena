@@ -1,9 +1,6 @@
-import pytest
-
 import tests.utils as test_utils
-from athena.tiramisu.schedule import Schedule
 from athena.tiramisu.tiramisu_actions.tiling_general import TilingGeneral
-from athena.tiramisu.tiramisu_actions.tiramisu_action import CannotApplyException
+
 from athena.utils.config import BaseConfig
 
 
@@ -13,7 +10,9 @@ def test_tiling_general_init():
     assert tiling_general.tile_sizes == [32, 32]
     assert tiling_general.comps is None
 
-    tiling_general = TilingGeneral([("comp00", 0), ("comp00", 1), 32, 32], ["comp00"])
+    tiling_general = TilingGeneral(
+        [("comp00", 0), ("comp00", 1), 32, 32], ["comp00"]
+    )
     assert tiling_general.iterators == [("comp00", 0), ("comp00", 1)]
     assert tiling_general.tile_sizes == [32, 32]
     assert tiling_general.comps == ["comp00"]
@@ -55,8 +54,7 @@ def test_set_string_representations():
 
     assert (
         tiling_general.tiramisu_optim_str
-        == "R_up_init.tile(1, 10);\nR_up.tile(1, 2, 10, 5);\nA_out.tile(1, 2, 10, 2);\n"
-        # clear_implicit_function_sched_graph();\n    nrm_init.then(nrm_comp,0).then(R_diag,0).then(Q_out,0).then(R_up_init,0).then(R_up,2).then(A_out,2);\n"
+        == "R_up_init.tile(1, 10);\nR_up.tile(1, 2, 10, 5);\nA_out.tile(1, 2, 10, 2);\n"  # noqa: E501
     )
 
     assert (
@@ -70,7 +68,10 @@ def test_get_candidates():
     sample = test_utils.gramschmidt_sample()
     candidates = TilingGeneral.get_candidates(sample.tree)
     assert candidates == {
-        "c1": [("c1", "c3", "c3_1", "c3_2", "c5", "c5_1"), ("c3_2", "c5", "c5_1")]
+        "c1": [
+            ("c1", "c3", "c3_1", "c3_2", "c5", "c5_1"),
+            ("c3_2", "c5", "c5_1"),
+        ]
     }
 
     candidates = TilingGeneral.get_candidates(test_utils.tree_test_sample())

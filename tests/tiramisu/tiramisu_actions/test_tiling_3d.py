@@ -1,15 +1,12 @@
-import pytest
-
 import tests.utils as test_utils
 from athena.tiramisu.schedule import Schedule
 from athena.tiramisu.tiramisu_actions.tiling_3d import Tiling3D
-from athena.tiramisu.tiramisu_actions.tiramisu_action import CannotApplyException
+
 from athena.utils.config import BaseConfig
 
 
 def test_tiling_3d_init():
     BaseConfig.init()
-    sample = test_utils.tiling_3d_sample()
     tiling_3d = Tiling3D(
         [
             ("comp00", 0),
@@ -75,7 +72,9 @@ def test_set_string_representations():
     )
     schedule = Schedule(sample)
     schedule.add_optimizations([tiling_3d])
-    assert tiling_3d.tiramisu_optim_str == "comp00.tile(0, 1, 2, 32, 32, 32);\n"
+    assert (
+        tiling_3d.tiramisu_optim_str == "comp00.tile(0, 1, 2, 32, 32, 32);\n"
+    )
 
 
 def test_get_candidates():
@@ -91,9 +90,11 @@ def test_get_candidates():
 def test_fusion_levels():
     t_tree = test_utils.tree_test_sample_3()
 
-    action = Tiling3D([("comp03", 2), ("comp03", 3), ("comp03", 4), 32, 32, 32])
+    action = Tiling3D(
+        [("comp03", 2), ("comp03", 3), ("comp03", 4), 32, 32, 32]
+    )
     action.initialize_action_for_tree(t_tree)
     assert (
         action.tiramisu_optim_str.split("\n")[-2]
-        == "    comp01.then(comp05,0).then(comp06,1).then(comp07,1).then(comp03,1).then(comp04,7);"
+        == "    comp01.then(comp05,0).then(comp06,1).then(comp07,1).then(comp03,1).then(comp04,7);"  # noqa: E501
     )

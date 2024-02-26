@@ -5,7 +5,6 @@ from athena.utils.config import BaseConfig
 import tests.utils as test_utils
 
 
-
 def test_init_server():
     BaseConfig.init()
 
@@ -22,16 +21,15 @@ def test_init_server():
     assert sample.comps is not None and len(sample.comps) > 0
 
 
-
 def test_init_server_annotations():
     BaseConfig.init()
-    
+
     sample = TiramisuProgram.init_server(
         "examples/function_gemver_MINI_generator.cpp",
         load_annotations=True,
         load_tree=True,
         from_file=True,
-        reuseServer=True
+        reuseServer=True,
     )
 
     assert sample.name == "function_gemver_MINI"
@@ -40,20 +38,22 @@ def test_init_server_annotations():
 
 def test_get_legality():
     BaseConfig.init()
-    
+
     sample = TiramisuProgram.init_server(
         "examples/function_gemver_MINI_generator.cpp",
         load_isl_ast=True,
         load_tree=True,
         from_file=True,
-        reuseServer=True
+        reuseServer=True,
     )
 
     schedule = Schedule(sample)
 
     schedule.add_optimizations(
         [
-            tiramisu_actions.Interchange(params=[("x_temp", 0), ("x_temp", 1)]),
+            tiramisu_actions.Interchange(
+                params=[("x_temp", 0), ("x_temp", 1)]
+            ),
         ]
     )
 
@@ -68,18 +68,20 @@ def test_get_exec_times():
         load_isl_ast=True,
         load_tree=True,
         from_file=True,
-        reuseServer=True
+        reuseServer=True,
     )
 
     schedule = Schedule(sample)
 
     schedule.add_optimizations(
         [
-            tiramisu_actions.Interchange(params=[("x_temp", 0), ("x_temp", 1)]),
+            tiramisu_actions.Interchange(
+                params=[("x_temp", 0), ("x_temp", 1)]
+            ),
         ]
     )
 
-    len(schedule.execute()) > 0 
+    len(schedule.execute()) > 0
 
 
 def test_get_skewing_factors():
@@ -92,17 +94,15 @@ def test_get_skewing_factors():
         original_code=test_cpps["function550013"],
         load_annotations=True,
         load_tree=True,
-        reuseServer=True
+        reuseServer=True,
     )
 
     schedule = Schedule(tiramisu_func)
 
-    schedule.add_optimizations([
-        tiramisu_actions.Skewing([("comp00", 0), ("comp00", 1), 0, 0])
-    ])
+    schedule.add_optimizations(
+        [tiramisu_actions.Skewing([("comp00", 0), ("comp00", 1), 0, 0])]
+    )
 
     assert schedule.is_legal()
 
     assert schedule.optims_list[0].factors == [1, 1]
-
-
