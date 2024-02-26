@@ -70,8 +70,11 @@ class ResultInterface:
             if result_dict["exec_times"]
             else []
         )
-
-        self.additional_info = result_dict["additional_info"]
+        self.additional_info = (
+            result_dict["additional_info"]
+            if "additional_info" in result_dict
+            else None
+        )
 
     def __str__(self) -> str:
         isl_ast = self.isl_ast.replace("\n", ",")
