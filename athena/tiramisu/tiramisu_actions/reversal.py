@@ -71,9 +71,10 @@ class Reversal(TiramisuAction):
         candidates: Dict[str, List[str]] = {}
         for root in program_tree.roots:
             rootId = program_tree.iterators[root].id
-            candidates[rootId] = [rootId] + program_tree.iterators[
-                root
-            ].child_iterators
+            candidates[rootId] = [rootId] + [
+                program_tree.iterators[iterator].id
+                for iterator in program_tree.iterators[root].child_iterators
+            ]
             nodes_to_visit = program_tree.iterators[
                 root
             ].child_iterators.copy()

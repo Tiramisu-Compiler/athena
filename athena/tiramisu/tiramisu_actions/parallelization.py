@@ -3,8 +3,6 @@ from __future__ import annotations
 import copy
 from typing import Dict, List
 
-from tensorboard import program
-
 from athena.tiramisu.tiramisu_iterator_node import IteratorIdentifier
 from athena.tiramisu.tiramisu_tree import TiramisuTree
 
